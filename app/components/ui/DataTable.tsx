@@ -1,0 +1,74 @@
+import { cn } from "@/app/lib/utils";
+
+interface Column<T> {
+  key: string;
+  header: string;
+  render?: (item: T) => React.ReactNode;
+  className?: string;
+}
+
+interface DataTableProps<T> {
+  columns: Column<T>[];
+  data: T[];
+  keyExtractor: (item: T) => string;
+  emptyMessage?: string;
+}
+
+export function DataTable<T>({
+  columns,
+  data,
+  keyExtractor,
+  emptyMessage = "No data found.",
+}: DataTableProps<T>) {
+  if (data.length === 0) {
+    return (
+      <div className="py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
+        {emptyMessage}
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead>
+          <tr className="border-b border-zinc-200 dark:border-zinc-700">
+            {columns.map((col) => (
+              <th
+                key={col.key}
+                className={cn(
+                  "px-4 py-3 font-medium text-zinc-500 dark:text-zinc-400",
+                  col.className
+                )}
+              >
+                {col.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((item) => (
+            <tr
+              key={keyExtractor(item)}
+              className="border-b border-zinc-100 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+            >
+              {columns.map((col) => (
+                <td
+                  key={col.key}
+                  className={cn(
+                    "px-4 py-3 text-zinc-900 dark:text-zinc-100",
+                    col.className
+                  )}
+                >
+                  {col.render
+                    ? col.render(item)
+                    : (item as Record<string, unknown>)[col.key] as React.ReactNode}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
