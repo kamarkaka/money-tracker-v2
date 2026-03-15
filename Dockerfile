@@ -10,6 +10,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+ENV DATABASE_URL="postgresql://user:pass@localhost:5432/mydb?schema=public"
 RUN npx prisma generate
 
 # Disable telemetry during build
