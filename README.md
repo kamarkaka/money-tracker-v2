@@ -1,3 +1,5 @@
+![Logo](public/logo.png)
+
 # Money Tracker
 
 A personal finance tracking application built with Next.js, PostgreSQL, and the Sophtron API.
