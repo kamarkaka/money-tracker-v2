@@ -38,4 +38,5 @@ jobs:
         with:
           context: .
           push: true
+          no-cache: true
           tags: kamarkaka4/money-tracker-v2:latest,kamarkaka4/money-tracker-v2:${{ github.sha }}
