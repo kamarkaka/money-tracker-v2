@@ -2,6 +2,8 @@
 
 A personal finance tracking application built with Next.js, PostgreSQL, and the Sophtron API.
 
+[![Build and Push Docker Image](https://github.com/kamarkaka/money-tracker-v2/actions/workflows/docker-publish.yml/badge.svg?branch=main)](https://github.com/kamarkaka/money-tracker-v2/actions/workflows/docker-publish.yml)
+
 ## Tech Stack
 
 - **Framework:** Next.js 16 (App Router) with React 19
