@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { FormField } from "@/app/components/ui/FormField";
@@ -27,7 +27,8 @@ const INPUT_NORMAL =
 const INPUT_ERROR =
   `${INPUT_BASE} border-red-500 focus:border-red-500 focus:ring-red-500 dark:border-red-500`;
 
-export default function ResetPasswordPage() {
+
+function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -54,21 +55,17 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
     setTouched({ password: true, confirmPassword: true });
-
     const pwError = validatePassword(password);
     if (pwError) return;
     if (password !== confirmPassword) return;
 
     setLoading(true);
-
     const res = await fetch("/api/reset-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, password }),
     });
-
     setLoading(false);
 
     if (!res.ok) {
@@ -76,24 +73,16 @@ export default function ResetPasswordPage() {
       setError(data.error || "Failed to reset password");
       return;
     }
-
     setSuccess(true);
   };
 
   if (!token) {
     return (
       <>
-        <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-          Reset Password
-        </h1>
-        <p className="text-sm text-red-500">
-          Invalid reset link. Please request a new one.
-        </p>
+        <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">Reset Password</h1>
+        <p className="text-sm text-red-500">Invalid reset link. Please request a new one.</p>
         <p className="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
-          <Link
-            href="/forgot-password"
-            className="font-medium text-zinc-900 hover:underline dark:text-zinc-50"
-          >
+          <Link href="/forgot-password" title="Request new reset link" className="font-medium text-zinc-900 hover:underline dark:text-zinc-50">
             Request new reset link
           </Link>
         </p>
@@ -104,17 +93,10 @@ export default function ResetPasswordPage() {
   if (success) {
     return (
       <>
-        <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-          Reset Password
-        </h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Password reset successfully.
-        </p>
+        <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">Reset Password</h1>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">Password reset successfully.</p>
         <p className="mt-4 text-center">
-          <Link
-            href="/login"
-            className="text-sm font-medium text-zinc-900 hover:underline dark:text-zinc-50"
-          >
+          <Link href="/login" className="text-sm font-medium text-zinc-900 hover:underline dark:text-zinc-50">
             Log in
           </Link>
         </p>
@@ -124,9 +106,7 @@ export default function ResetPasswordPage() {
 
   return (
     <>
-      <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-        Reset Password
-      </h1>
+      <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">Reset Password</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <FormField label="New Password" error={passwordError}>
           <input
@@ -156,5 +136,14 @@ export default function ResetPasswordPage() {
         </button>
       </form>
     </>
+  );
+}
+
+// 2. The default export now just wraps the form in Suspense
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<p>Loading...</p>}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
