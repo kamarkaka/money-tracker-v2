@@ -55,7 +55,7 @@ export default function LoginPage() {
           Personal Budgeting Helper
         </span>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <FormField label="Email" error="">
           <input
