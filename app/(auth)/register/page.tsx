@@ -14,7 +14,7 @@ const PASSWORD_SPECIAL_RE = /[^A-Za-z0-9]/;
 function validatePassword(pw: string): string | null {
   if (!pw) return "Password is required";
   const issues: string[] = [];
-  if (pw.length < 16) issues.push("at least 16 characters");
+  if (pw.length < 8) issues.push("at least 8 characters");
   if (!PASSWORD_DIGIT_RE.test(pw)) issues.push("one digit");
   if (!PASSWORD_UPPER_RE.test(pw)) issues.push("one uppercase letter");
   if (!PASSWORD_SPECIAL_RE.test(pw)) issues.push("one special character");
