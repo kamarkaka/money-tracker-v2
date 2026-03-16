@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
           </p>
           <Link
             href="/login"
-            className="text-center text-sm font-medium text-zinc-900 hover:underline dark:text-zinc-50"
+            className="cursor-pointer text-center text-sm font-medium text-zinc-900 hover:underline dark:text-zinc-50"
           >
             Back to log in
           </Link>
@@ -67,7 +67,7 @@ export default function ForgotPasswordPage() {
           <p className="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
             <Link
               href="/login"
-              className="font-medium text-zinc-900 hover:underline dark:text-zinc-50"
+              className="cursor-pointer font-medium text-zinc-900 hover:underline dark:text-zinc-50"
             >
               Back to log in
             </Link>

@@ -43,7 +43,7 @@ export function Topbar({ userName }: { userName?: string | null }) {
             height={32}
             className="rounded-sm"
           />
-          <Link href="/overview" className="text-lg font-bold text-zinc-900 dark:text-zinc-50 mr-8
+          <Link href="/overview" className="cursor-pointer text-lg font-bold text-zinc-900 dark:text-zinc-50 mr-8
           ">
             Money Tracker 2
             <span className="relative -top-3 -right-1 rounded-full border border-red-500 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-red-500">
@@ -56,7 +56,7 @@ export function Topbar({ userName }: { userName?: string | null }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   pathname === item.href
                     ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
                     : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/50 dark:hover:text-zinc-50"
@@ -82,14 +82,14 @@ export function Topbar({ userName }: { userName?: string | null }) {
                   <Link
                     href="/profile"
                     onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    className="cursor-pointer block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                   >
                     Profile
                   </Link>
                   <Link
                     href="/setting"
                     onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    className="cursor-pointer block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                   >
                     Setting
                   </Link>

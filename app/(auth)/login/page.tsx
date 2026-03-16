@@ -79,7 +79,7 @@ export default function LoginPage() {
         <div className="text-right">
           <Link
             href="/forgot-password"
-            className="text-sm text-zinc-600 hover:underline dark:text-zinc-400"
+            className="cursor-pointer text-sm text-zinc-600 hover:underline dark:text-zinc-400"
           >
             Forgot Password?
           </Link>
@@ -120,7 +120,7 @@ export default function LoginPage() {
 
       <p className="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="font-medium text-zinc-900 hover:underline dark:text-zinc-50">
+        <Link href="/register" className="cursor-pointer font-medium text-zinc-900 hover:underline dark:text-zinc-50">
           Register
         </Link>
       </p>

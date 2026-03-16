@@ -82,7 +82,7 @@ function ResetPasswordForm() {
         <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">Reset Password</h1>
         <p className="text-sm text-red-500">Invalid reset link. Please request a new one.</p>
         <p className="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
-          <Link href="/forgot-password" title="Request new reset link" className="font-medium text-zinc-900 hover:underline dark:text-zinc-50">
+          <Link href="/forgot-password" title="Request new reset link" className="cursor-pointer font-medium text-zinc-900 hover:underline dark:text-zinc-50">
             Request new reset link
           </Link>
         </p>
@@ -96,7 +96,7 @@ function ResetPasswordForm() {
         <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">Reset Password</h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">Password reset successfully.</p>
         <p className="mt-4 text-center">
-          <Link href="/login" className="text-sm font-medium text-zinc-900 hover:underline dark:text-zinc-50">
+          <Link href="/login" className="cursor-pointer text-sm font-medium text-zinc-900 hover:underline dark:text-zinc-50">
             Log in
           </Link>
         </p>

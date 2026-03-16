@@ -45,7 +45,7 @@ export function BucketCard({
     <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center justify-between px-5 py-4 text-left"
+        className="cursor-pointer flex w-full items-center justify-between px-5 py-4 text-left"
       >
         <div className="flex items-center gap-3">
           <svg
