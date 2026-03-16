@@ -82,6 +82,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           // Create Sophtron customer for new Google user
           ensureSophtronCustomer(newUser.id);
         }
+      } else if (account?.provider === "credentials" && user.id) {
+        ensureSophtronCustomer(user.id);
       }
       return true;
     },
