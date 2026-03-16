@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hashSync } from "bcryptjs";
 import { prisma } from "@/app/lib/db";
+import { ensureSophtronCustomer } from "@/app/lib/sophtron/create-customer";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -33,6 +34,9 @@ export async function POST(request: NextRequest) {
     data: { email, passwordHash, name: name || null },
   });
   console.log("Created user:" + JSON.stringify(user));
+
+  // Create Sophtron customer in the background
+  ensureSophtronCustomer(user.id);
 
   return NextResponse.json(
     { id: user.id, email: user.email, name: user.name },

@@ -2,7 +2,8 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from 'next-auth/providers/google';
 import { compareSync } from "bcryptjs";
-import { prisma } from "./db";
+import { prisma } from "@/app/lib/db";
+import { ensureSophtronCustomer } from "@/app/lib/sophtron/create-customer";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -64,8 +65,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               },
             });
           }
+
+          if (!existingUser.sophtronCustomerId) {
+            ensureSophtronCustomer(existingUser.id);
+          }
         } else {
-          await prisma.user.create({
+          const newUser = await prisma.user.create({
             data: {
               email: user.email!,
               name: user.name,
@@ -74,6 +79,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               authProvider: "google",
             }
           });
+          // Create Sophtron customer for new Google user
+          ensureSophtronCustomer(newUser.id);
         }
       }
       return true;
