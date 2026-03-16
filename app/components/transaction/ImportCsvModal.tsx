@@ -8,12 +8,14 @@ interface Account {
   name: string;
 }
 
-type Step = "upload" | "map" | "review" | "done";
+type Step = "upload" | "map" | "done";
 
 const DATE_FORMATS = [
   { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
   { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
   { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
+  { value: "MMM/DD/YYYY", label: "MMM/DD/YYYY (e.g. Feb/09/2026)" },
+  { value: "MMM-DD-YYYY", label: "MMM-DD-YYYY (e.g. Feb-09-2026)" },
 ];
 
 const COLUMN_ROLES = [
@@ -23,6 +25,8 @@ const COLUMN_ROLES = [
   { value: "amount", label: "Amount" },
   { value: "debit", label: "Debit" },
   { value: "credit", label: "Credit" },
+  { value: "category", label: "Category" },
+  { value: "account", label: "Account" },
 ];
 
 function parseCSV(text: string): string[][] {
@@ -77,6 +81,8 @@ function autoDetectMapping(headers: string[]): Record<string, string> {
     else if (lower === "amount") mapping[String(i)] = "amount";
     else if (lower.includes("debit") || lower.includes("withdrawal")) mapping[String(i)] = "debit";
     else if (lower.includes("credit") || lower.includes("deposit")) mapping[String(i)] = "credit";
+    else if (lower.includes("category")) mapping[String(i)] = "category";
+    else if (lower.includes("account")) mapping[String(i)] = "account";
   });
   return mapping;
 }
@@ -103,6 +109,8 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts }: ImportCs
   const headers = allRows.length > 0 ? allRows[0] : [];
   const dataRows = hasHeader ? allRows.slice(1) : allRows;
   const previewRows = dataRows.slice(0, 5);
+
+  const hasAccountColumn = Object.values(columnMapping).includes("account");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -147,12 +155,13 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts }: ImportCs
     const hasDate = roles.includes("date");
     const hasDesc = roles.includes("description");
     const hasAmount = roles.includes("amount") || roles.includes("debit") || roles.includes("credit");
-    return hasDate && hasDesc && hasAmount;
+    const hasAccount = roles.includes("account") || !!accountId;
+    return hasDate && hasDesc && hasAmount && hasAccount;
   };
 
   const handleImport = async () => {
-    if (!accountId) {
-      setError("Please select an account");
+    if (!hasAccountColumn && !accountId) {
+      setError("Please select a target account or map an Account column");
       return;
     }
 
@@ -170,7 +179,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts }: ImportCs
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          accountId,
+          accountId: hasAccountColumn ? undefined : accountId,
           columnMapping: mapping,
           dateFormat,
           rows: dataRows,
@@ -295,16 +304,24 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts }: ImportCs
                 ))}
               </select>
             </div>
-            <div className="flex-1">
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Target Account</label>
-              <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputClass}>
-                <option value="">Select account...</option>
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
-            </div>
+            {!hasAccountColumn && (
+              <div className="flex-1">
+                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Target Account</label>
+                <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputClass}>
+                  <option value="">Select account...</option>
+                  {accounts.map((a) => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
+
+          {hasAccountColumn && (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Account will be matched by name from the CSV. Rows with unrecognized account names will be skipped.
+            </p>
+          )}
 
           {error && (
             <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -323,7 +340,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts }: ImportCs
               </button>
               <button
                 onClick={handleImport}
-                disabled={importing || !hasRequiredMapping() || !accountId}
+                disabled={importing || !hasRequiredMapping()}
                 className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
               >
                 {importing ? "Importing..." : `Import ${dataRows.length} Transactions`}
