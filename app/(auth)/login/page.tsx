@@ -46,8 +46,14 @@ export default function LoginPage() {
           className="mb-4 rounded-lg shadow-lg"
         />
         <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-          Money Tracker V2.1 Log in
+          Money Tracker V2
+          <span className="relative -top-3 -right-1 rounded-full border border-red-500 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-red-500">
+            alpha
+          </span>
         </h1>
+        <span className="text-sm text-zinc-500 dark:text-zinc-400">
+          Personal Budgeting Helper
+        </span>
       </div>
       
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
