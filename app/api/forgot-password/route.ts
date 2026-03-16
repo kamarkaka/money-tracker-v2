@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   const user = await prisma.user.findUnique({ where: { email } });
 
-  if (user) {
+  if (user && user.passwordHash) {
     // Delete any existing tokens for this email
     await prisma.passwordResetToken.deleteMany({ where: { email } });
 

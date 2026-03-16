@@ -54,6 +54,9 @@ export async function PUT(request: NextRequest) {
   }
 
   if (newPassword) {
+    if (!user.passwordHash) {
+      return NextResponse.json({ error: "Password change is not available for Google sign-in accounts" }, { status: 400 });
+    }
     if (!currentPassword) {
       return NextResponse.json({ error: "Current password is required" }, { status: 400 });
     }

@@ -1,4 +1,4 @@
-w-- CreateTable
+-- CreateTable
 CREATE TABLE "user" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "email" VARCHAR(255) NOT NULL,
