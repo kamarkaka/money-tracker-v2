@@ -10,9 +10,9 @@ import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
 const NAV_ITEMS = [
   { href: "/overview", label: "Overview" },
-  { href: "/account", label: "Account" },
-  { href: "/budget", label: "Budget" },
   { href: "/category", label: "Category" },
+  { href: "/budget", label: "Budget" },
+  { href: "/account", label: "Account" },
   { href: "/transaction", label: "Transaction" },
 ];
 
