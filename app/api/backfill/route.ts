@@ -31,34 +31,37 @@ export async function POST() {
   try {
     const client = new SophtronClientV2();
 
-    // Step 1: Get customers and find "Kamar Kaka"
-    console.log("[backfill] Fetching customers from Sophtron...");
-    const customers = await client.getCustomers();
-    console.log(`[backfill] Found ${customers.length} customers`);
+    // Get the current user's Sophtron customer ID
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { sophtronCustomerId: true },
+    });
 
-    const customer = customers.find(
-      (c) => (c.Name || `${c.FirstName} ${c.LastName}`).trim() === "Kamar Kaka"
-    );
+    if (!user?.sophtronCustomerId) {
+      console.log("[backfill] User has no Sophtron customer ID");
+      return NextResponse.json(
+        { error: "No Sophtron customer linked. Please connect a bank account first." },
+        { status: 400 }
+      );
+    }
+
+    const sophtronCustomerId = user.sophtronCustomerId;
+    console.log(`[backfill] Sophtron customer: ${sophtronCustomerId}`);
+
+    // fetch members for this customer
+    console.log("[backfill] Fetching customer details from Sophtron...");
+    const customer = await client.getCustomerById(sophtronCustomerId);
 
     if (!customer) {
-      console.log("[backfill] Customer 'Kamar Kaka' not found");
+      console.log("[backfill] Customer not found");
       return NextResponse.json(
-        { error: 'Customer "Kamar Kaka" not found in Sophtron' },
+        { error: 'Customer not found in Sophtron' },
         { status: 404 }
       );
     }
 
-    const sophtronCustomerId = customer.CustomerID || customer.Id;
     const memberIds = customer.MemberIDs || [];
     console.log(`[backfill] Found customer: ${sophtronCustomerId}, ${memberIds.length} members`);
-
-    // Save sophtronCustomerId on the user
-    console.log("[backfill] Updating user.sophtronCustomerId...");
-    await prisma.user.update({
-      where: { id: userId },
-      data: { sophtronCustomerId },
-    });
-    console.log("[backfill] User updated");
 
     let institutionsUpserted = 0;
     let accountsUpserted = 0;
