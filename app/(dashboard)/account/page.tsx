@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { InstitutionCard } from "@/app/components/account/InstitutionCard";
 import { ConnectInstitutionModal } from "@/app/components/account/ConnectInstitutionModal";
+import { ManualAccountModal } from "@/app/components/account/ManualAccountModal";
 import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
 import { CurrencyDisplay } from "@/app/components/ui/CurrencyDisplay";
 import { EmptyState } from "@/app/components/ui/EmptyState";
@@ -14,12 +15,14 @@ interface Account {
   type: string;
   balance: string | number;
   currency: string;
+  isManual: boolean;
 }
 
 interface Institution {
   id: string;
   name: string;
-  sophtronMemberId: string;
+  sophtronMemberId: string | null;
+  isManual: boolean;
   updatedAt: string;
   accounts: Account[];
 }
@@ -30,6 +33,7 @@ export default function AccountPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const [backfilling, setBackfilling] = useState(false);
   const [refreshData, setRefreshData] = useState<{
     institutionId: string;
@@ -119,10 +123,16 @@ export default function AccountPage() {
             {backfilling ? "Backfilling..." : "Backfill from Sophtron"}
           </button>
           <button
+            onClick={() => setShowManual(true)}
+            className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            Add Manual Account
+          </button>
+          <button
             onClick={() => { setRefreshData(null); setShowAdd(true); }}
             className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            Add Institution
+            Link Bank Account
           </button>
         </div>
       </div>
@@ -160,6 +170,12 @@ export default function AccountPage() {
         onClose={() => { setShowAdd(false); setRefreshData(null); }}
         onComplete={fetchInstitutions}
         refreshData={refreshData}
+      />
+
+      <ManualAccountModal
+        open={showManual}
+        onClose={() => setShowManual(false)}
+        onComplete={fetchInstitutions}
       />
 
       <ConfirmDialog

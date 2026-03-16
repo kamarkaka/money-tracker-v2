@@ -21,7 +21,7 @@ export async function PUT(
   }
 
   const body = await request.json();
-  const { name, isHidden } = body;
+  const { name, isHidden, balance } = body;
 
   const data: Record<string, unknown> = {};
   if (name !== undefined) {
@@ -32,6 +32,9 @@ export async function PUT(
   }
   if (isHidden !== undefined) {
     data.isHidden = isHidden;
+  }
+  if (balance !== undefined && existing.isManual) {
+    data.balance = balance;
   }
 
   const updated = await prisma.account.update({

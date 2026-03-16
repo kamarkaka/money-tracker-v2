@@ -17,6 +17,7 @@ interface InstitutionCardProps {
   institution: {
     id: string;
     name: string;
+    isManual?: boolean;
     updatedAt: string;
     accounts: Account[];
   };
@@ -63,17 +64,24 @@ export function InstitutionCard({ institution, onRemove, onRefresh, onAccountHid
           className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
         />
         <div className="flex items-center gap-2">
+          {institution.isManual && (
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+              Manual
+            </span>
+          )}
           <span className="text-xs text-zinc-400 dark:text-zinc-500">
             {formatRelativeTime(institution.updatedAt)}
           </span>
-          <button
-            onClick={() => onRefresh(institution.id)}
-            disabled={refreshing}
-            className="cursor-pointer rounded-md border border-zinc-300 p-1.5 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            title="Refresh institution"
-          >
-            <ArrowPathIcon className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-          </button>
+          {!institution.isManual && (
+            <button
+              onClick={() => onRefresh(institution.id)}
+              disabled={refreshing}
+              className="cursor-pointer rounded-md border border-zinc-300 p-1.5 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              title="Refresh institution"
+            >
+              <ArrowPathIcon className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            </button>
+          )}
           <button
             onClick={() => onRemove(institution.id)}
             className="cursor-pointer rounded-md border border-red-300 p-1.5 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"

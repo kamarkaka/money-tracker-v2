@@ -64,3 +64,46 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({ transactions, total, page, pageSize });
 }
+
+export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const { accountId, description, amount, date, categoryId } = body;
+
+  if (!accountId || !description || amount === undefined || !date) {
+    return NextResponse.json(
+      { error: "accountId, description, amount, and date are required" },
+      { status: 400 }
+    );
+  }
+
+  // Verify the account belongs to this user
+  const account = await prisma.account.findUnique({
+    where: { id: accountId, userId: session.user.id },
+  });
+  if (!account) {
+    return NextResponse.json({ error: "Account not found" }, { status: 404 });
+  }
+
+  const transaction = await prisma.transaction.create({
+    data: {
+      userId: session.user.id,
+      accountId,
+      description,
+      amount,
+      date: new Date(date),
+      categoryId: categoryId || null,
+      isManual: true,
+    },
+    include: {
+      account: { select: { id: true, name: true } },
+      category: { select: { id: true, name: true } },
+    },
+  });
+
+  return NextResponse.json(transaction, { status: 201 });
+}

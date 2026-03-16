@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { TransactionFilters, FilterValues } from "@/app/components/transaction/TransactionFilters";
 import { TransactionCategoryEditor } from "@/app/components/transaction/TransactionCategoryEditor";
+import { AddTransactionModal } from "@/app/components/transaction/AddTransactionModal";
+import { ImportCsvModal } from "@/app/components/transaction/ImportCsvModal";
+import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
 import { DataTable } from "@/app/components/ui/DataTable";
 import { CurrencyDisplay } from "@/app/components/ui/CurrencyDisplay";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
@@ -15,6 +18,7 @@ interface Transaction {
   date: string;
   categoryId: string | null;
   isHidden: boolean;
+  isManual: boolean;
   account: { id: string; name: string };
   category: { id: string; name: string; parent?: { id: string; name: string } | null } | null;
 }
@@ -48,6 +52,10 @@ export default function TransactionPage() {
   });
   const [page, setPage] = useState(1);
   const pageSize = 50;
+  const [showAdd, setShowAdd] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchTransactions = useCallback(async (f: FilterValues, p: number) => {
     const params = new URLSearchParams();
@@ -106,6 +114,19 @@ export default function TransactionPage() {
     await fetchTransactions(filters, page);
   };
 
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    await fetch(`/api/transaction/${deleteId}`, { method: "DELETE" });
+    setDeleteId(null);
+    setDeleting(false);
+    await fetchTransactions(filters, page);
+  };
+
+  const handleTransactionAdded = () => {
+    fetchTransactions(filters, page);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -135,6 +156,14 @@ export default function TransactionPage() {
           >
             {t.isHidden ? "Unhide" : "Hide"}
           </button>
+          {t.isManual && (
+            <button
+              onClick={() => setDeleteId(t.id)}
+              className="cursor-pointer rounded px-2 py-1 text-xs text-red-400 opacity-0 transition-opacity group-hover/desc:opacity-100 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+            >
+              Delete
+            </button>
+          )}
         </div>
       ),
     },
@@ -169,8 +198,22 @@ export default function TransactionPage() {
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Transactions</h1>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowImport(true)}
+            className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            Import CSV
+          </button>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          >
+            Add Transaction
+          </button>
+        </div>
       </div>
 
       <div className="mb-6">
@@ -216,6 +259,31 @@ export default function TransactionPage() {
           </div>
         </div>
       )}
+
+      <AddTransactionModal
+        open={showAdd}
+        onClose={() => setShowAdd(false)}
+        onComplete={handleTransactionAdded}
+        accounts={accounts}
+        categories={categories}
+      />
+
+      <ImportCsvModal
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        onComplete={handleTransactionAdded}
+        accounts={accounts}
+      />
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Delete Transaction"
+        message="Are you sure you want to delete this transaction? This cannot be undone."
+        confirmLabel="Delete"
+        loading={deleting}
+      />
     </div>
   );
 }

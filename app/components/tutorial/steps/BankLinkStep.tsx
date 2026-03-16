@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ShieldCheckIcon } from "@heroicons/react/24/outline";
 import { ConnectInstitutionModal } from "@/app/components/account/ConnectInstitutionModal";
+import { ManualAccountModal } from "@/app/components/account/ManualAccountModal";
 
 interface BankLinkStepProps {
   onNext: (accountsLinked: number) => void;
@@ -10,7 +11,8 @@ interface BankLinkStepProps {
 }
 
 export function BankLinkStep({ onNext, onSkip }: BankLinkStepProps) {
-  const [showModal, setShowModal] = useState(false);
+  const [showConnect, setShowConnect] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const [linkedCount, setLinkedCount] = useState(0);
 
   const handleComplete = () => {
@@ -20,7 +22,7 @@ export function BankLinkStep({ onNext, onSkip }: BankLinkStepProps) {
   return (
     <div className="flex flex-col items-center px-8 py-8">
       <h2 className="mb-2 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-        Link Bank Accounts
+        Add Bank Accounts
       </h2>
 
       <div className="mb-6 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-900/20">
@@ -33,41 +35,55 @@ export function BankLinkStep({ onNext, onSkip }: BankLinkStepProps) {
       </div>
 
       <p className="mb-6 max-w-md text-center text-sm text-zinc-600 dark:text-zinc-400">
-        Link your bank accounts to automatically import transactions. This helps you track
-        spending without manual entry.
+        Link your bank accounts to automatically import transactions, or add accounts
+        manually if you prefer not to share credentials.
       </p>
 
       {linkedCount > 0 && (
         <div className="mb-4 rounded-md bg-green-50 px-4 py-2 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
-          {linkedCount} institution{linkedCount !== 1 ? "s" : ""} linked successfully!
+          {linkedCount} account{linkedCount !== 1 ? "s" : ""} added successfully!
         </div>
       )}
 
       <div className="flex flex-col items-center gap-3">
-        <button
-          onClick={() => setShowModal(true)}
-          className="cursor-pointer rounded-md bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-        >
-          {linkedCount > 0 ? "Link Another Account" : "Link a Bank Account"}
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowConnect(true)}
+            className="cursor-pointer rounded-md bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          >
+            Link Bank Account
+          </button>
+          <button
+            onClick={() => setShowManual(true)}
+            className="cursor-pointer rounded-md border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            Add Manually
+          </button>
+        </div>
 
         <button
           onClick={() => onNext(linkedCount)}
-          className="cursor-pointer rounded-md border border-zinc-300 px-5 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="cursor-pointer text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
         >
           {linkedCount > 0 ? "Continue" : "Skip for Now"}
         </button>
 
         {linkedCount === 0 && (
           <p className="text-xs text-zinc-400 dark:text-zinc-500">
-            You can always link accounts later from the Accounts page.
+            You can always add accounts later from the Accounts page.
           </p>
         )}
       </div>
 
       <ConnectInstitutionModal
-        open={showModal}
-        onClose={() => setShowModal(false)}
+        open={showConnect}
+        onClose={() => setShowConnect(false)}
+        onComplete={handleComplete}
+      />
+
+      <ManualAccountModal
+        open={showManual}
+        onClose={() => setShowManual(false)}
         onComplete={handleComplete}
       />
     </div>

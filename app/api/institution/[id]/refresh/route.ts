@@ -20,6 +20,9 @@ export async function POST(
   if (!institution) {
     return NextResponse.json({ error: "Institution not found" }, { status: 404 });
   }
+  if (!institution.sophtronMemberId) {
+    return NextResponse.json({ error: "Manual institutions cannot be refreshed" }, { status: 400 });
+  }
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
