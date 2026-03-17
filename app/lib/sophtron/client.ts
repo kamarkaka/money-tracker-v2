@@ -169,7 +169,6 @@ export class SophtronClientV2 {
     challengeType: string,
     data: UpdateJobChallengeAnswer,
   ): Promise<JobInformation> {
-    console.log("answerJobChallenge job: " + id + ", challengeType: " + challengeType + ", data: " + JSON.stringify(data));
     return this.client.put<JobInformation>(
       `/api/v2/job/${id}/challenge/${challengeType}`,
       data,

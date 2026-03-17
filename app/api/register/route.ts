@@ -14,9 +14,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  console.log('Checking for existing user with email: ' + email);
   const existing = await prisma.user.findUnique({ where: { email } });
-  console.log('Found existing user: ' + JSON.stringify(existing));
 
   if (existing) {
     return NextResponse.json(
@@ -25,15 +23,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  console.log('no existing user found, creating new user with email: ' + email);
-
   const passwordHash = hashSync(password, 10);
-  console.log("passwordHash:" + passwordHash);
 
   const user = await prisma.user.create({
     data: { email, passwordHash, name: name || null },
   });
-  console.log("Created user:" + JSON.stringify(user));
 
   // Create Sophtron customer in the background
   ensureSophtronCustomer(user.id);
