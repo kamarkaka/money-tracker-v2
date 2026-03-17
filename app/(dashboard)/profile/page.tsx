@@ -23,8 +23,12 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [profileMessage, setProfileMessage] = useState("");
+  const [profileError, setProfileError] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [purgeMessage, setPurgeMessage] = useState("");
+  const [purgeError, setPurgeError] = useState("");
 
   const [showPurgeFirst, setShowPurgeFirst] = useState(false);
   const [showPurgeFinal, setShowPurgeFinal] = useState(false);
@@ -47,13 +51,13 @@ export default function ProfilePage() {
     const nameUnchanged = name === (profile?.name || "");
     const emailUnchanged = email === (profile?.email || "");
     if (nameUnchanged && emailUnchanged) {
-      setMessage("No changes to save.");
+      setProfileMessage("No changes to save.");
       return;
     }
 
     setSaving(true);
-    setMessage("");
-    setError("");
+    setProfileMessage("");
+    setProfileError("");
 
     try {
       const res = await fetch("/api/profile", {
@@ -63,24 +67,24 @@ export default function ProfilePage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error);
+        setProfileError(data.error);
       } else {
         setProfile(data);
-        setMessage("Profile updated successfully.");
+        setProfileMessage("Profile updated successfully.");
       }
     } catch {
-      setError("Failed to update profile.");
+      setProfileError("Failed to update profile.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleChangePassword = async () => {
-    setMessage("");
-    setError("");
+    setPasswordMessage("");
+    setPasswordError("");
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords do not match.");
+      setPasswordError("New passwords do not match.");
       return;
     }
 
@@ -93,15 +97,15 @@ export default function ProfilePage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error);
+        setPasswordError(data.error);
       } else {
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-        setMessage("Password changed successfully.");
+        setPasswordMessage("Password changed successfully.");
       }
     } catch {
-      setError("Failed to change password.");
+      setPasswordError("Failed to change password.");
     } finally {
       setSaving(false);
     }
@@ -114,18 +118,18 @@ export default function ProfilePage() {
 
   const handlePurgeFinal = async () => {
     setPurging(true);
-    setError("");
-    setMessage("");
+    setPurgeError("");
+    setPurgeMessage("");
     try {
       const res = await fetch("/api/profile/purge", { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed to purge data.");
+        setPurgeError(data.error || "Failed to purge data.");
       } else {
-        setMessage("All data has been purged successfully.");
+        setPurgeMessage("All data has been purged successfully.");
       }
     } catch {
-      setError("Failed to purge data.");
+      setPurgeError("Failed to purge data.");
     } finally {
       setPurging(false);
       setShowPurgeFinal(false);
@@ -149,21 +153,20 @@ export default function ProfilePage() {
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Profile</h1>
       </div>
 
-      {message && (
-        <div className="mb-4 rounded-md bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
-          {message}
-        </div>
-      )}
-      {error && (
-        <div className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          {error}
-        </div>
-      )}
-
       <div className="flex flex-row gap-6">
-        {/* User ID (read-only) */}
+        {/* User Information */}
         <div className="flex-1 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
           <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">User Information</h2>
+          {profileMessage && (
+            <div className="mb-4 rounded-md bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
+              {profileMessage}
+            </div>
+          )}
+          {profileError && (
+            <div className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+              {profileError}
+            </div>
+          )}
           <div className="mb-4">
             <label className="mb-1 block text-sm font-medium text-zinc-500 dark:text-zinc-400">User ID</label>
             <p className="font-mono text-sm text-zinc-700 dark:text-zinc-300">{profile?.id}</p>
@@ -202,6 +205,16 @@ export default function ProfilePage() {
         {profile?.authProvider === "credentials" && (
           <div className="flex-1 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">Change Password</h2>
+            {passwordMessage && (
+              <div className="mb-4 rounded-md bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
+                {passwordMessage}
+              </div>
+            )}
+            {passwordError && (
+              <div className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                {passwordError}
+              </div>
+            )}
 
             <div className="mb-4">
               <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Current Password</label>
@@ -246,6 +259,16 @@ export default function ProfilePage() {
 
       <div className="mt-6 rounded-lg border border-red-200 bg-white p-6 dark:border-red-900 dark:bg-zinc-900">
         <h2 className="mb-2 text-lg font-semibold text-red-600 dark:text-red-400">Danger Zone</h2>
+        {purgeMessage && (
+          <div className="mb-4 rounded-md bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
+            {purgeMessage}
+          </div>
+        )}
+        {purgeError && (
+          <div className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+            {purgeError}
+          </div>
+        )}
         <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
           Permanently delete all your transactions, accounts, institutions, categories, budgets, and settings.
           Your user account will be kept but all data will be erased. This action cannot be undone.
