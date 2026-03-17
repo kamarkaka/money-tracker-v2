@@ -129,6 +129,55 @@ export default function TransactionPage() {
     fetchTransactions(filters, page);
   };
 
+  const handleDownloadCsv = async () => {
+    const params = new URLSearchParams();
+    params.set("includeHidden", "true");
+    params.set("pageSize", "0");
+    if (filters.search) params.set("search", filters.search);
+    if (filters.accountId) params.set("accountId", filters.accountId);
+    if (filters.categoryId) params.set("categoryId", filters.categoryId);
+    if (filters.startDate) params.set("startDate", filters.startDate);
+    if (filters.endDate) params.set("endDate", filters.endDate);
+    if (filters.minAmount) params.set("minAmount", filters.minAmount);
+    if (filters.maxAmount) params.set("maxAmount", filters.maxAmount);
+
+    const res = await fetch(`/api/transaction?${params.toString()}`);
+    const data = await res.json();
+    const rows: Transaction[] = data.transactions;
+
+    const csvEscape = (val: string) => {
+      if (val.includes(",") || val.includes('"') || val.includes("\n")) {
+        return `"${val.replace(/"/g, '""')}"`;
+      }
+      return val;
+    };
+
+    const categoryLabel = (t: Transaction) => {
+      if (!t.category) return "";
+      if (t.category.parent) return `${t.category.parent.name} > ${t.category.name}`;
+      return t.category.name;
+    };
+
+    const header = "Date,Description,Account,Category,Amount";
+    const lines = rows.map((t) =>
+      [
+        t.date.split("T")[0],
+        csvEscape(t.description),
+        csvEscape(t.account.name),
+        csvEscape(categoryLabel(t)),
+        Number(t.amount).toFixed(2),
+      ].join(",")
+    );
+
+    const blob = new Blob([header + "\n" + lines.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `transactions-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -205,6 +254,13 @@ export default function TransactionPage() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Transactions</h1>
         <div className="flex gap-3">
+          <button
+            onClick={handleDownloadCsv}
+            disabled={transactions.length === 0}
+            className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            Download CSV
+          </button>
           <button
             onClick={() => setShowImport(true)}
             className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
