@@ -22,6 +22,15 @@ export async function PUT(
     return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
   }
 
+  if (categoryId) {
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId, userId: session.user.id },
+    });
+    if (!category) {
+      return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    }
+  }
+
   const data: Record<string, unknown> = {};
   if (categoryId !== undefined) data.categoryId = categoryId || null;
   if (isHidden !== undefined) data.isHidden = isHidden;

@@ -36,8 +36,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
 
-  // Verify none of the categoryIds are already assigned to another bucket
+  // Verify categoryIds belong to this user and are not already assigned
   if (categoryIds && categoryIds.length > 0) {
+    const ownedCategories = await prisma.category.findMany({
+      where: { id: { in: categoryIds }, userId: session.user.id },
+      select: { id: true },
+    });
+    if (ownedCategories.length !== categoryIds.length) {
+      return NextResponse.json(
+        { error: "One or more categories not found" },
+        { status: 404 }
+      );
+    }
+
     const existing = await prisma.budgetCategory.findMany({
       where: { categoryId: { in: categoryIds } },
     });

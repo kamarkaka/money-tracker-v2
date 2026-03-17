@@ -89,6 +89,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }
 
+  if (categoryId) {
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId, userId: session.user.id },
+    });
+    if (!category) {
+      return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    }
+  }
+
   const transaction = await prisma.transaction.create({
     data: {
       userId: session.user.id,

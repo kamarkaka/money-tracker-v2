@@ -22,8 +22,19 @@ export async function PUT(
     return NextResponse.json({ error: "Budget not found" }, { status: 404 });
   }
 
-  // If categoryIds are provided, check for conflicts with other buckets
+  // If categoryIds are provided, verify ownership and check for conflicts
   if (categoryIds) {
+    const ownedCategories = await prisma.category.findMany({
+      where: { id: { in: categoryIds }, userId: session.user.id },
+      select: { id: true },
+    });
+    if (ownedCategories.length !== categoryIds.length) {
+      return NextResponse.json(
+        { error: "One or more categories not found" },
+        { status: 404 }
+      );
+    }
+
     const conflicts = await prisma.budgetCategory.findMany({
       where: {
         categoryId: { in: categoryIds },
