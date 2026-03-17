@@ -343,6 +343,7 @@ export default function TransactionPage() {
         onClose={() => setShowImport(false)}
         onComplete={handleTransactionAdded}
         accounts={accounts}
+        categories={categories}
       />
 
       <ConfirmDialog

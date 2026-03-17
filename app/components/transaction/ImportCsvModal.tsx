@@ -8,6 +8,13 @@ interface Account {
   name: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  parentId: string | null;
+  children?: Category[];
+}
+
 type Step = "upload" | "map" | "done";
 
 const DATE_FORMATS = [
@@ -71,20 +78,297 @@ function parseCSV(text: string): string[][] {
   return rows;
 }
 
-function autoDetectMapping(headers: string[]): Record<string, string> {
-  const mapping: Record<string, string> = {};
-  headers.forEach((h, i) => {
-    const lower = h.toLowerCase().trim();
-    if (lower.includes("date")) mapping[String(i)] = "date";
-    else if (lower.includes("description") || lower.includes("memo") || lower.includes("payee"))
-      mapping[String(i)] = "description";
-    else if (lower === "amount") mapping[String(i)] = "amount";
-    else if (lower.includes("debit") || lower.includes("withdrawal")) mapping[String(i)] = "debit";
-    else if (lower.includes("credit") || lower.includes("deposit")) mapping[String(i)] = "credit";
-    else if (lower.includes("category")) mapping[String(i)] = "category";
-    else if (lower.includes("account")) mapping[String(i)] = "account";
+// --- Content-based column auto-detection ---
+
+const MONTH_ABBRS = new Set([
+  "jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec",
+]);
+
+function tryParseDate(value: string, format: string): boolean {
+  const clean = value.trim();
+  if (!clean) return false;
+  if (format === "YYYY-MM-DD") {
+    const m = clean.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (!m) return false;
+    const [, y, mo, d] = m.map(Number);
+    return y > 1900 && y < 2100 && mo >= 1 && mo <= 12 && d >= 1 && d <= 31;
+  }
+  if (format === "MM/DD/YYYY") {
+    const m = clean.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (!m) return false;
+    const [, mo, d, y] = m.map(Number);
+    return mo >= 1 && mo <= 12 && d >= 1 && d <= 31 && y > 0;
+  }
+  if (format === "DD/MM/YYYY") {
+    const m = clean.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (!m) return false;
+    const [, d, mo, y] = m.map(Number);
+    return mo >= 1 && mo <= 12 && d >= 1 && d <= 31 && y > 0;
+  }
+  if (format === "MMM/DD/YYYY") {
+    const parts = clean.split("/");
+    if (parts.length !== 3) return false;
+    return MONTH_ABBRS.has(parts[0].trim().toLowerCase().slice(0, 3));
+  }
+  if (format === "MMM-DD-YYYY") {
+    const parts = clean.split("-");
+    if (parts.length !== 3) return false;
+    return MONTH_ABBRS.has(parts[0].trim().toLowerCase().slice(0, 3));
+  }
+  return false;
+}
+
+function scoreDateColumn(values: string[]): { score: number; format: string } {
+  const nonEmpty = values.filter((v) => v.trim());
+  if (nonEmpty.length === 0) return { score: 0, format: "MM/DD/YYYY" };
+  let bestScore = 0;
+  let bestFormat = "MM/DD/YYYY";
+  for (const fmt of DATE_FORMATS) {
+    const matched = nonEmpty.filter((v) => tryParseDate(v, fmt.value)).length;
+    const ratio = matched / nonEmpty.length;
+    if (ratio > bestScore) {
+      bestScore = ratio;
+      bestFormat = fmt.value;
+    }
+  }
+  return { score: bestScore, format: bestFormat };
+}
+
+function parseNumericValue(value: string): number | null {
+  const clean = value.trim();
+  if (!clean) return null;
+  // Handle parenthetical negatives: (50.00) → -50.00
+  const parenMatch = clean.match(/^\(([0-9,. ]+)\)$/);
+  const normalized = parenMatch
+    ? "-" + parenMatch[1].replace(/[^0-9.\-]/g, "")
+    : clean.replace(/[^0-9.\-+]/g, "");
+  if (!normalized || normalized === "-" || normalized === "+") return null;
+  const num = parseFloat(normalized);
+  return isNaN(num) ? null : num;
+}
+
+function scoreNumericColumn(values: string[]): {
+  score: number;
+  hasNegatives: boolean;
+  hasMixed: boolean;
+} {
+  const nonEmpty = values.filter((v) => v.trim());
+  if (nonEmpty.length === 0) return { score: 0, hasNegatives: false, hasMixed: false };
+  let parsed = 0;
+  let positives = 0;
+  let negatives = 0;
+  for (const v of nonEmpty) {
+    const num = parseNumericValue(v);
+    if (num !== null) {
+      parsed++;
+      if (num > 0) positives++;
+      if (num < 0) negatives++;
+    }
+  }
+  return {
+    score: parsed / nonEmpty.length,
+    hasNegatives: negatives > 0,
+    hasMixed: positives > 0 && negatives > 0,
+  };
+}
+
+function scoreDescriptionColumn(values: string[]): number {
+  const nonEmpty = values.filter((v) => v.trim());
+  if (nonEmpty.length === 0) return 0;
+  // Must be mostly non-numeric, non-date text
+  const textValues = nonEmpty.filter((v) => {
+    if (parseNumericValue(v) !== null) return false;
+    if (/^\d{1,4}[\/\-]\d{1,2}[\/\-]\d{1,4}$/.test(v.trim())) return false;
+    return true;
   });
-  return mapping;
+  const textRatio = textValues.length / nonEmpty.length;
+  if (textRatio < 0.5) return 0;
+  const unique = new Set(nonEmpty.map((v) => v.trim().toLowerCase()));
+  const cardinality = unique.size / nonEmpty.length;
+  const avgLen = nonEmpty.reduce((sum, v) => sum + v.trim().length, 0) / nonEmpty.length;
+  const lenScore = Math.min(avgLen / 20, 1);
+  return textRatio * 0.3 + cardinality * 0.4 + lenScore * 0.3;
+}
+
+function scoreCategoryColumn(values: string[], knownCategories: string[]): number {
+  const nonEmpty = values.filter((v) => v.trim());
+  if (nonEmpty.length === 0) return 0;
+  const textValues = nonEmpty.filter((v) => parseNumericValue(v) === null);
+  if (textValues.length / nonEmpty.length < 0.5) return 0;
+  const unique = new Set(nonEmpty.map((v) => v.trim().toLowerCase()));
+  const cardinality = unique.size / nonEmpty.length;
+  const lowCardScore = Math.max(0, 1 - cardinality * 2);
+  let overlapScore = 0;
+  if (knownCategories.length > 0) {
+    const knownSet = new Set(knownCategories.map((c) => c.toLowerCase()));
+    const matched = [...unique].filter((v) => knownSet.has(v)).length;
+    overlapScore = unique.size > 0 ? matched / unique.size : 0;
+  }
+  return lowCardScore * 0.5 + overlapScore * 0.5;
+}
+
+function scoreAccountColumn(values: string[], knownAccounts: string[]): number {
+  const nonEmpty = values.filter((v) => v.trim());
+  if (nonEmpty.length === 0) return 0;
+  const textValues = nonEmpty.filter((v) => parseNumericValue(v) === null);
+  if (textValues.length / nonEmpty.length < 0.5) return 0;
+  const unique = new Set(nonEmpty.map((v) => v.trim().toLowerCase()));
+  const veryLowCardScore = unique.size <= 5 ? 1 - unique.size / 10 : 0;
+  let overlapScore = 0;
+  if (knownAccounts.length > 0) {
+    const knownSet = new Set(knownAccounts.map((a) => a.toLowerCase()));
+    const matched = [...unique].filter((v) => knownSet.has(v)).length;
+    overlapScore = unique.size > 0 ? matched / unique.size : 0;
+  }
+  return veryLowCardScore * 0.4 + overlapScore * 0.6;
+}
+
+const HEADER_HINTS: Record<string, string[]> = {
+  date: ["date", "transaction date", "posted", "posting date", "txn date"],
+  description: ["description", "memo", "payee", "narrative", "details", "transaction", "name"],
+  amount: ["amount", "total", "sum"],
+  debit: ["debit", "withdrawal", "debit amount", "money out"],
+  credit: ["credit", "deposit", "credit amount", "money in"],
+  category: ["category", "type", "label", "group"],
+  account: ["account", "account name", "source"],
+};
+
+function headerBoost(header: string): Record<string, number> {
+  const lower = header.toLowerCase().trim();
+  const boosts: Record<string, number> = {};
+  for (const [role, keywords] of Object.entries(HEADER_HINTS)) {
+    if (keywords.some((kw) => lower === kw || lower.includes(kw))) {
+      boosts[role] = 0.3;
+    }
+  }
+  return boosts;
+}
+
+type Role = "date" | "description" | "amount" | "debit" | "credit" | "category" | "account";
+const ALL_ROLES: Role[] = ["date", "description", "amount", "debit", "credit", "category", "account"];
+
+interface InferResult {
+  mapping: Record<string, string>;
+  dateFormat: string;
+}
+
+function inferColumnMapping(
+  dataRows: string[][],
+  headers: string[] | null,
+  knownCategories: string[],
+  knownAccounts: string[],
+): InferResult {
+  if (dataRows.length === 0) return { mapping: {}, dateFormat: "MM/DD/YYYY" };
+
+  const sampleRows = dataRows.slice(0, 20);
+  const numCols = Math.max(...sampleRows.map((r) => r.length), headers?.length ?? 0);
+
+  const scores: Record<string, number>[] = [];
+  const dateFormats: string[] = [];
+  const numericInfo: { hasNegatives: boolean; hasMixed: boolean }[] = [];
+  let numericColCount = 0;
+
+  for (let col = 0; col < numCols; col++) {
+    const values = sampleRows.map((r) => r[col] ?? "");
+    const colScores: Record<string, number> = {};
+
+    const dateResult = scoreDateColumn(values);
+    colScores.date = dateResult.score;
+    dateFormats.push(dateResult.format);
+
+    const numResult = scoreNumericColumn(values);
+    if (numResult.score >= 0.6) numericColCount++;
+    numericInfo.push({ hasNegatives: numResult.hasNegatives, hasMixed: numResult.hasMixed });
+    colScores._numeric = numResult.score;
+
+    colScores.description = scoreDescriptionColumn(values);
+    colScores.category = scoreCategoryColumn(values, knownCategories);
+    colScores.account = scoreAccountColumn(values, knownAccounts);
+
+    if (headers && headers[col]) {
+      const boosts = headerBoost(headers[col]);
+      for (const [role, boost] of Object.entries(boosts)) {
+        colScores[role] = (colScores[role] || 0) + boost;
+      }
+    }
+
+    scores.push(colScores);
+  }
+
+  // Assign amount vs debit/credit based on how many numeric columns exist
+  for (let col = 0; col < numCols; col++) {
+    const rawNumeric = scores[col]._numeric || 0;
+    delete scores[col]._numeric;
+
+    if (numericColCount === 1) {
+      scores[col].amount = rawNumeric;
+      scores[col].debit = 0;
+      scores[col].credit = 0;
+    } else if (numericColCount >= 2 && rawNumeric >= 0.6) {
+      if (numericInfo[col].hasMixed) {
+        scores[col].amount = rawNumeric;
+        scores[col].debit = rawNumeric * 0.3;
+        scores[col].credit = rawNumeric * 0.3;
+      } else {
+        scores[col].amount = rawNumeric * 0.4;
+        scores[col].debit = rawNumeric * 0.7;
+        scores[col].credit = rawNumeric * 0.7;
+      }
+    } else {
+      scores[col].amount = rawNumeric;
+      scores[col].debit = rawNumeric;
+      scores[col].credit = rawNumeric;
+    }
+
+    // Re-apply header boosts for amount/debit/credit
+    if (headers && headers[col]) {
+      const boosts = headerBoost(headers[col]);
+      if (boosts.amount) scores[col].amount = (scores[col].amount || 0) + boosts.amount;
+      if (boosts.debit) scores[col].debit = (scores[col].debit || 0) + boosts.debit;
+      if (boosts.credit) scores[col].credit = (scores[col].credit || 0) + boosts.credit;
+    }
+  }
+
+  // Greedy assignment
+  const mapping: Record<string, string> = {};
+  const assignedCols = new Set<number>();
+  const assignedRoles = new Set<string>();
+
+  type Candidate = { role: Role; col: number; score: number };
+  const candidates: Candidate[] = [];
+  for (let col = 0; col < numCols; col++) {
+    for (const role of ALL_ROLES) {
+      const score = scores[col][role] || 0;
+      if (score > 0) candidates.push({ role, col, score });
+    }
+  }
+  candidates.sort((a, b) => b.score - a.score);
+
+  const MIN_THRESHOLD: Record<string, number> = {
+    date: 0.4, description: 0.2, amount: 0.4,
+    debit: 0.4, credit: 0.4, category: 0.3, account: 0.3,
+  };
+
+  for (const { role, col, score } of candidates) {
+    if (assignedCols.has(col) || assignedRoles.has(role)) continue;
+    if (score < (MIN_THRESHOLD[role] || 0.3)) continue;
+    if (role === "amount" && (assignedRoles.has("debit") || assignedRoles.has("credit"))) continue;
+    if ((role === "debit" || role === "credit") && assignedRoles.has("amount")) continue;
+
+    mapping[String(col)] = role;
+    assignedCols.add(col);
+    assignedRoles.add(role);
+  }
+
+  let bestDateFormat = "MM/DD/YYYY";
+  for (const [colStr, role] of Object.entries(mapping)) {
+    if (role === "date") {
+      bestDateFormat = dateFormats[parseInt(colStr, 10)] || "MM/DD/YYYY";
+      break;
+    }
+  }
+
+  return { mapping, dateFormat: bestDateFormat };
 }
 
 interface ImportCsvModalProps {
@@ -92,9 +376,10 @@ interface ImportCsvModalProps {
   onClose: () => void;
   onComplete: () => void;
   accounts: Account[];
+  categories: Category[];
 }
 
-export function ImportCsvModal({ open, onClose, onComplete, accounts }: ImportCsvModalProps) {
+export function ImportCsvModal({ open, onClose, onComplete, accounts, categories }: ImportCsvModalProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>("upload");
   const [allRows, setAllRows] = useState<string[][]>([]);
@@ -125,7 +410,25 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts }: ImportCs
         return;
       }
       setAllRows(rows);
-      setColumnMapping(autoDetectMapping(rows[0]));
+
+      // Build flat name lists for content-based inference
+      const categoryNames: string[] = [];
+      for (const cat of categories.filter((c) => !c.parentId)) {
+        categoryNames.push(cat.name);
+        if (cat.children) {
+          for (const child of cat.children) categoryNames.push(child.name);
+        }
+      }
+      const accountNames = accounts.map((a) => a.name);
+
+      const { mapping, dateFormat: inferredFormat } = inferColumnMapping(
+        rows.slice(1).slice(0, 20),
+        rows[0],
+        categoryNames,
+        accountNames,
+      );
+      setColumnMapping(mapping);
+      setDateFormat(inferredFormat);
       setError("");
       setStep("map");
     };
