@@ -48,14 +48,16 @@ export async function PUT(
       );
     }
 
-    // Replace all category mappings
-    await prisma.budgetCategory.deleteMany({ where: { budgetBucketId: id } });
-    await prisma.budgetCategory.createMany({
-      data: categoryIds.map((categoryId: string) => ({
-        budgetBucketId: id,
-        categoryId,
-      })),
-    });
+    // Replace all category mappings atomically
+    await prisma.$transaction([
+      prisma.budgetCategory.deleteMany({ where: { budgetBucketId: id } }),
+      prisma.budgetCategory.createMany({
+        data: categoryIds.map((categoryId: string) => ({
+          budgetBucketId: id,
+          categoryId,
+        })),
+      }),
+    ]);
   }
 
   const budget = await prisma.budget.update({
