@@ -40,7 +40,15 @@ export async function PUT(
     if (description !== undefined) data.description = description;
     if (amount !== undefined) data.amount = amount;
     if (date !== undefined) data.date = new Date(date);
-    if (accountId !== undefined) data.accountId = accountId;
+    if (accountId !== undefined) {
+      const account = await prisma.account.findUnique({
+        where: { id: accountId, userId: session.user.id },
+      });
+      if (!account) {
+        return NextResponse.json({ error: "Account not found" }, { status: 404 });
+      }
+      data.accountId = accountId;
+    }
   }
 
   const transaction = await prisma.transaction.update({
