@@ -31,6 +31,7 @@ interface EditTransactionModalProps {
   open: boolean;
   onClose: () => void;
   onComplete: () => void;
+  onNext?: () => void;
   transaction: Transaction | null;
   accounts: Account[];
   categories: Category[];
@@ -40,6 +41,7 @@ export function EditTransactionModal({
   open,
   onClose,
   onComplete,
+  onNext,
   transaction,
   accounts,
   categories,
@@ -99,9 +101,15 @@ export function EditTransactionModal({
     return false;
   };
 
-  const handleSubmit = async () => {
-    if (!hasChanges()) {
-      onClose();
+  const handleSubmit = async (mode: "close" | "next") => {
+    const changed = hasChanges();
+
+    if (!changed) {
+      if (mode === "next" && onNext) {
+        onNext();
+      } else {
+        onClose();
+      }
       return;
     }
 
@@ -144,8 +152,12 @@ export function EditTransactionModal({
         return;
       }
 
-      onClose();
       onComplete();
+      if (mode === "next" && onNext) {
+        onNext();
+      } else {
+        onClose();
+      }
     } catch {
       setError("Failed to update transaction");
     } finally {
@@ -298,12 +310,22 @@ export function EditTransactionModal({
           </button>
           <button
             type="button"
-            onClick={handleSubmit}
+            onClick={() => handleSubmit("close")}
             disabled={saving}
             className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? "Saving..." : "Save & Close"}
           </button>
+          {onNext && (
+            <button
+              type="button"
+              onClick={() => handleSubmit("next")}
+              disabled={saving}
+              className="cursor-pointer rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-600"
+            >
+              {saving ? "Saving..." : "Save & Next"}
+            </button>
+          )}
         </div>
       </div>
     </Modal>
