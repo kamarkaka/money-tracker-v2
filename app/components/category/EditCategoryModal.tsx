@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal } from "@/app/components/ui/Modal";
 import { FormField } from "@/app/components/ui/FormField";
 
@@ -29,11 +29,13 @@ export function EditCategoryModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Reset form when category changes
-  if (category && name === "" && !loading) {
-    setName(category.name);
-    setParentId(category.parentId ?? "");
-  }
+  useEffect(() => {
+    if (category && open) {
+      setName(category.name);
+      setParentId(category.parentId ?? "");
+      setError("");
+    }
+  }, [category, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
