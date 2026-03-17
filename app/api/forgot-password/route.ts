@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/app/lib/db";
 import { sendPasswordResetEmail } from "@/app/lib/email";
+import { rateLimit } from "@/app/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, { maxRequests: 3, windowMs: 60_000, prefix: "forgot-pw" });
+  if (limited) return limited;
+
   const { email } = await request.json();
 
   if (!email) {

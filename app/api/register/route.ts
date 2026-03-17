@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { hashSync } from "bcryptjs";
 import { prisma } from "@/app/lib/db";
 import { ensureSophtronCustomer } from "@/app/lib/sophtron/create-customer";
+import { rateLimit } from "@/app/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, { maxRequests: 5, windowMs: 60_000, prefix: "register" });
+  if (limited) return limited;
+
   const body = await request.json();
   const { email, password, name } = body;
 

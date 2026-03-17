@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { hashSync } from "bcryptjs";
 import { prisma } from "@/app/lib/db";
+import { rateLimit } from "@/app/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, { maxRequests: 5, windowMs: 60_000, prefix: "reset-pw" });
+  if (limited) return limited;
+
   const { token, password } = await request.json();
 
   if (!token || !password) {
