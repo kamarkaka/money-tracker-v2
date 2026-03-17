@@ -49,9 +49,24 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Check for duplicate name under the same parent
+  const duplicate = await prisma.category.findFirst({
+    where: {
+      userId: session.user.id,
+      name: name.trim(),
+      parentId: parentId || null,
+    },
+  });
+  if (duplicate) {
+    return NextResponse.json(
+      { error: "A category with this name already exists" },
+      { status: 409 }
+    );
+  }
+
   const category = await prisma.category.create({
     data: {
-      name,
+      name: name.trim(),
       parentId: parentId || null,
       userId: session.user.id,
     },

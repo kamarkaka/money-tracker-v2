@@ -26,6 +26,12 @@ export async function POST(request: NextRequest) {
         for (const cat of categories) {
             if (!cat.name?.trim()) continue;
 
+            // Skip if a top-level category with this name already exists
+            const existingParent = await tx.category.findFirst({
+                where: { userId: session.user!.id!, name: cat.name.trim(), parentId: null },
+            });
+            if (existingParent) continue;
+
             const parent = await tx.category.create({
                 data: {
                     name: cat.name.trim(),
@@ -37,6 +43,13 @@ export async function POST(request: NextRequest) {
             if (cat.children && Array.isArray(cat.children)) {
                 for (const childName of cat.children) {
                     if (!childName?.trim()) continue;
+
+                    // Skip if a child with this name already exists under this parent
+                    const existingChild = await tx.category.findFirst({
+                        where: { userId: session.user!.id!, name: childName.trim(), parentId: parent.id },
+                    });
+                    if (existingChild) continue;
+
                     const child = await tx.category.create({
                         data: {
                             name: childName.trim(),

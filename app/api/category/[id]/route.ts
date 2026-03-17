@@ -50,10 +50,30 @@ export async function PUT(
     }
   }
 
+  // Check for duplicate name under the target parent
+  const newName = name !== undefined ? name.trim() : existing.name;
+  const newParentId = parentId !== undefined ? (parentId || null) : existing.parentId;
+  if (newName !== existing.name || newParentId !== existing.parentId) {
+    const duplicate = await prisma.category.findFirst({
+      where: {
+        userId: session.user.id,
+        name: newName,
+        parentId: newParentId,
+        id: { not: id },
+      },
+    });
+    if (duplicate) {
+      return NextResponse.json(
+        { error: "A category with this name already exists" },
+        { status: 409 }
+      );
+    }
+  }
+
   const category = await prisma.category.update({
     where: { id },
     data: {
-      ...(name !== undefined && { name }),
+      ...(name !== undefined && { name: name.trim() }),
       ...(parentId !== undefined && { parentId: parentId || null }),
     },
   });

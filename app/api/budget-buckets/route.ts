@@ -36,6 +36,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
 
+  // Check for duplicate budget name
+  const duplicate = await prisma.budget.findFirst({
+    where: { userId: session.user.id, name: name.trim() },
+  });
+  if (duplicate) {
+    return NextResponse.json(
+      { error: "A budget with this name already exists" },
+      { status: 409 }
+    );
+  }
+
   // Verify categoryIds belong to this user and are not already assigned
   if (categoryIds && categoryIds.length > 0) {
     const ownedCategories = await prisma.category.findMany({
