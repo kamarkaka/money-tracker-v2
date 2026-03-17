@@ -24,18 +24,44 @@ interface BudgetBucket {
 export default function BudgetPage() {
   const [budgets, setBudgets] = useState<BudgetBucket[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [spending, setSpending] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const fetchData = useCallback(async () => {
-    const [budgetRes, catRes] = await Promise.all([
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+
+    const [budgetRes, catRes, txRes] = await Promise.all([
       fetch("/api/budget-buckets"),
       fetch("/api/category"),
+      fetch(`/api/transaction?startDate=${startDate}&endDate=${endDate}&pageSize=0`),
     ]);
-    const [budgetData, catData] = await Promise.all([budgetRes.json(), catRes.json()]);
+    const [budgetData, catData, txData] = await Promise.all([budgetRes.json(), catRes.json(), txRes.json()]);
     setBudgets(budgetData);
     setCategories(catData);
+
+    // Compute spending per bucket
+    const categoryToBucket = new Map<string, string>();
+    for (const b of budgetData) {
+      for (const bc of b.categories) {
+        categoryToBucket.set(bc.category.id, b.id);
+      }
+    }
+    const spendingMap: Record<string, number> = {};
+    const txns = txData.transactions || txData;
+    for (const tx of txns) {
+      if (tx.categoryId && categoryToBucket.has(tx.categoryId)) {
+        const bucketId = categoryToBucket.get(tx.categoryId)!;
+        const amt = parseFloat(String(tx.amount));
+        if (amt < 0) {
+          spendingMap[bucketId] = (spendingMap[bucketId] || 0) + Math.abs(amt);
+        }
+      }
+    }
+    setSpending(spendingMap);
     setLoading(false);
   }, []);
 
@@ -126,6 +152,7 @@ export default function BudgetPage() {
           budgets={budgets}
           allCategories={allFlatCategories}
           assignedCategoryIds={assignedCategoryIds}
+          spending={spending}
           onUpdate={handleUpdate}
           onDelete={(id) => setDeleteId(id)}
         />

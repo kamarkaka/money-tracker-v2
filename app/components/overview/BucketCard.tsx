@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { CurrencyDisplay } from "@/app/components/ui/CurrencyDisplay";
 import { formatCurrency } from "@/app/lib/utils";
 import { BucketTransactionList } from "./BucketTransactionList";
 
@@ -41,6 +40,28 @@ export function BucketCard({
 }: BucketCardProps) {
   const [expanded, setExpanded] = useState(false);
 
+  const isIncome = total > 0;
+  const spent = Math.abs(total);
+  const pct = budgetAmount > 0 ? Math.min((spent / budgetAmount) * 100, 100) : 0;
+  const isOver = budgetAmount > 0 && spent > budgetAmount;
+
+  // Expense: green at ≤50%, gradient to red at 100%
+  // Income: red at ≤50%, gradient to green at 100%
+  const ratio = budgetAmount > 0 ? Math.min(spent / budgetAmount, 1) : 0;
+  const t = ratio <= 0.5 ? 0 : (ratio - 0.5) / 0.5;
+  let barColor: string;
+  if (isIncome) {
+    const r = Math.round(239 - t * (205));   // red(239) → green(34)
+    const g = Math.round(68 + t * (129));    // red(68)  → green(197)
+    const b = Math.round(68 + t * (26));     // red(68)  → green(94)
+    barColor = spent > budgetAmount ? "rgb(34, 197, 94)" : `rgb(${r}, ${g}, ${b})`;
+  } else {
+    const r = Math.round(34 + t * (205));    // green(34)  → red(239)
+    const g = Math.round(197 - t * (129));   // green(197) → red(68)
+    const b = Math.round(94 - t * (26));     // green(94)  → red(68)
+    barColor = spent > budgetAmount ? "rgb(239, 68, 68)" : `rgb(${r}, ${g}, ${b})`;
+  }
+
   return (
     <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
       <button
@@ -61,15 +82,25 @@ export function BucketCard({
             ({transactions.length} transaction{transactions.length !== 1 ? "s" : ""})
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <CurrencyDisplay amount={total} />
-          {budgetAmount > 0 && (
-            <span className="text-sm text-zinc-400 dark:text-zinc-500">
-              / {formatCurrency(budgetAmount)}
-            </span>
-          )}
-        </div>
       </button>
+      {budgetAmount > 0 && (
+        <div className="px-5 pb-3">
+          <div className="relative h-8 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${pct}%`, backgroundColor: barColor }}
+            />
+            <div className="absolute inset-0 flex items-center justify-between px-3 text-sm font-semibold">
+              <span className={pct > 15 ? "text-white" : "text-zinc-600 dark:text-zinc-300"}>
+                {formatCurrency(spent)} {isIncome ? "earned" : "spent"}
+              </span>
+              <span className={pct > 85 ? "text-white" : "text-zinc-500 dark:text-zinc-400"}>
+                {isOver ? `${formatCurrency(spent - budgetAmount)} over` : `${formatCurrency(budgetAmount - spent)} left`}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
       {expanded && (
         <div className="border-t border-zinc-200 dark:border-zinc-700">
           <BucketTransactionList
