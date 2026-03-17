@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         account: { select: { id: true, name: true } },
         category: { select: { id: true, name: true, parent: { select: { id: true, name: true } } } },
       },
-      orderBy: { date: "desc" },
+      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
       skip,
       take,
     }),
