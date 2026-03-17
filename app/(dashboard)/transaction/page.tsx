@@ -327,12 +327,18 @@ export default function TransactionPage() {
         open={!!editTransaction}
         onClose={() => setEditTransaction(null)}
         onComplete={handleTransactionAdded}
+        onPrev={() => {
+          if (!editTransaction) return;
+          const idx = transactions.findIndex((t) => t.id === editTransaction.id);
+          if (idx > 0) setEditTransaction(transactions[idx - 1]);
+        }}
         onNext={() => {
           if (!editTransaction) return;
           const idx = transactions.findIndex((t) => t.id === editTransaction.id);
-          const next = transactions[idx + 1];
-          setEditTransaction(next || null);
+          if (idx < transactions.length - 1) setEditTransaction(transactions[idx + 1]);
         }}
+        hasPrev={!!editTransaction && transactions.findIndex((t) => t.id === editTransaction.id) > 0}
+        hasNext={!!editTransaction && transactions.findIndex((t) => t.id === editTransaction.id) < transactions.length - 1}
         transaction={editTransaction}
         accounts={accounts}
         categories={categories}

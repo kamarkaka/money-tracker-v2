@@ -32,6 +32,9 @@ interface EditTransactionModalProps {
   onClose: () => void;
   onComplete: () => void;
   onNext?: () => void;
+  onPrev?: () => void;
+  hasNext?: boolean;
+  hasPrev?: boolean;
   transaction: Transaction | null;
   accounts: Account[];
   categories: Category[];
@@ -42,6 +45,9 @@ export function EditTransactionModal({
   onClose,
   onComplete,
   onNext,
+  onPrev,
+  hasNext = false,
+  hasPrev = false,
   transaction,
   accounts,
   categories,
@@ -178,6 +184,27 @@ export function EditTransactionModal({
   return (
     <Modal open={open} onClose={handleClose} title="Edit Transaction" className="w-full max-w-md">
       <div className="flex flex-col gap-4">
+        {(onPrev || onNext) && (
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={onPrev}
+              disabled={!hasPrev}
+              className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              &#8592; Prev
+            </button>
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={!hasNext}
+              className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Next &#8594;
+            </button>
+          </div>
+        )}
+
         {error && (
           <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
             {error}
