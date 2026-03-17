@@ -38,6 +38,14 @@ export function EditCategoryModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!category || !name.trim()) return;
+
+    const nameUnchanged = name.trim() === category.name;
+    const parentUnchanged = (parentId || null) === (category.parentId || null);
+    if (nameUnchanged && parentUnchanged) {
+      onClose();
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {

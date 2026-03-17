@@ -82,7 +82,29 @@ export function EditTransactionModal({
     }
   }
 
+  const hasChanges = () => {
+    if (!transaction) return false;
+    const origAmount = Number(transaction.amount);
+    const newCategoryId = categoryId || null;
+    if (newCategoryId !== (transaction.categoryId || null)) return true;
+    if (isHidden !== transaction.isHidden) return true;
+    if (isManual) {
+      if (accountId !== transaction.account.id) return true;
+      if (description.trim() !== transaction.description) return true;
+      if (date !== transaction.date.split("T")[0]) return true;
+      const parsedAmount = parseFloat(amount);
+      const newAmount = isExpense ? -Math.abs(parsedAmount) : Math.abs(parsedAmount);
+      if (newAmount !== origAmount) return true;
+    }
+    return false;
+  };
+
   const handleSubmit = async () => {
+    if (!hasChanges()) {
+      onClose();
+      return;
+    }
+
     setSaving(true);
     setError("");
 

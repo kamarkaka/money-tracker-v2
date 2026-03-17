@@ -42,6 +42,16 @@ export function BucketEditor({
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
+    const origIds = bucket.categories.map((bc) => bc.category.id).sort().join(",");
+    const newIds = [...selectedIds].sort().join(",");
+    const nameUnchanged = name === bucket.name;
+    const amountUnchanged = (parseFloat(amount) || 0) === Number(bucket.amount);
+    const categoriesUnchanged = origIds === newIds;
+    if (nameUnchanged && amountUnchanged && categoriesUnchanged) {
+      setEditing(false);
+      return;
+    }
+
     setLoading(true);
     try {
       await onUpdate(bucket.id, name, selectedIds, parseFloat(amount) || 0);

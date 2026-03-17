@@ -44,6 +44,13 @@ export default function ProfilePage() {
   }, [fetchProfile]);
 
   const handleSaveProfile = async () => {
+    const nameUnchanged = name === (profile?.name || "");
+    const emailUnchanged = email === (profile?.email || "");
+    if (nameUnchanged && emailUnchanged) {
+      setMessage("No changes to save.");
+      return;
+    }
+
     setSaving(true);
     setMessage("");
     setError("");
