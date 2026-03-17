@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
+import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
 
 interface UserProfile {
   id: string;
@@ -24,6 +25,10 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  const [showPurgeFirst, setShowPurgeFirst] = useState(false);
+  const [showPurgeFinal, setShowPurgeFinal] = useState(false);
+  const [purging, setPurging] = useState(false);
 
   const fetchProfile = useCallback(async () => {
     const res = await fetch("/api/profile");
@@ -92,6 +97,31 @@ export default function ProfilePage() {
       setError("Failed to change password.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePurgeFirstConfirm = () => {
+    setShowPurgeFirst(false);
+    setShowPurgeFinal(true);
+  };
+
+  const handlePurgeFinal = async () => {
+    setPurging(true);
+    setError("");
+    setMessage("");
+    try {
+      const res = await fetch("/api/profile/purge", { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Failed to purge data.");
+      } else {
+        setMessage("All data has been purged successfully.");
+      }
+    } catch {
+      setError("Failed to purge data.");
+    } finally {
+      setPurging(false);
+      setShowPurgeFinal(false);
     }
   };
 
@@ -206,6 +236,39 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      <div className="mt-6 rounded-lg border border-red-200 bg-white p-6 dark:border-red-900 dark:bg-zinc-900">
+        <h2 className="mb-2 text-lg font-semibold text-red-600 dark:text-red-400">Danger Zone</h2>
+        <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+          Permanently delete all your transactions, accounts, institutions, categories, budgets, and settings.
+          Your user account will be kept but all data will be erased. This action cannot be undone.
+        </p>
+        <button
+          onClick={() => setShowPurgeFirst(true)}
+          className="cursor-pointer rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+        >
+          Purge All Data
+        </button>
+      </div>
+
+      <ConfirmDialog
+        open={showPurgeFirst}
+        onClose={() => setShowPurgeFirst(false)}
+        onConfirm={handlePurgeFirstConfirm}
+        title="Purge All Data"
+        message="This will permanently delete all your transactions, accounts, institutions, categories, budgets, and settings. Are you sure you want to continue?"
+        confirmLabel="Continue"
+      />
+
+      <ConfirmDialog
+        open={showPurgeFinal}
+        onClose={() => setShowPurgeFinal(false)}
+        onConfirm={handlePurgeFinal}
+        title="Final Confirmation"
+        message="This is your last chance. All your data will be permanently erased and cannot be recovered. Are you absolutely sure?"
+        confirmLabel="Purge Everything"
+        loading={purging}
+      />
     </div>
   );
 }
