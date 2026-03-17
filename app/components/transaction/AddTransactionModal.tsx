@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal } from "@/app/components/ui/Modal";
 
 interface Account {
@@ -38,6 +38,18 @@ export function AddTransactionModal({
   const [categoryId, setCategoryId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setAccountId("");
+      setDescription("");
+      setAmount("");
+      setIsExpense(true);
+      setDate(new Date().toISOString().split("T")[0]);
+      setCategoryId("");
+      setError("");
+    }
+  }, [open]);
 
   // Build flat category options with "Parent > Child" format
   const categoryOptions: { id: string; label: string }[] = [];
