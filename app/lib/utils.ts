@@ -18,7 +18,7 @@ export function formatDate(date: Date | string): string {
 
 export function getMonthRange(year: number, month: number) {
   const start = new Date(year, month, 1);
-  const end = new Date(year, month + 1, 0);
+  const end = new Date(year, month + 1, 0, 23, 59, 59, 999);
   return { start, end };
 }
 
