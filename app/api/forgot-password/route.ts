@@ -13,28 +13,32 @@ export async function POST(request: NextRequest) {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (user && user.passwordHash) {
-    // Delete any existing tokens for this email
-    await prisma.passwordResetToken.deleteMany({ where: { email } });
+    try {
+      // Delete any existing tokens for this email
+      await prisma.passwordResetToken.deleteMany({ where: { email } });
 
-    // Generate token
-    const rawToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(rawToken)
-      .digest("hex");
+      // Generate token
+      const rawToken = crypto.randomBytes(32).toString("hex");
+      const hashedToken = crypto
+        .createHash("sha256")
+        .update(rawToken)
+        .digest("hex");
 
-    // Store hashed token with 1-hour expiry
-    await prisma.passwordResetToken.create({
-      data: {
-        email,
-        token: hashedToken,
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
-      },
-    });
+      // Store hashed token with 1-hour expiry
+      await prisma.passwordResetToken.create({
+        data: {
+          email,
+          token: hashedToken,
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        },
+      });
 
-    // Send email with raw token
-    const resetUrl = `${process.env.APP_URL}/reset-password?token=${rawToken}`;
-    await sendPasswordResetEmail(email, resetUrl);
+      // Send email with raw token
+      const resetUrl = `${process.env.APP_URL}/reset-password?token=${rawToken}`;
+      await sendPasswordResetEmail(email, resetUrl);
+    } catch {
+      // Swallow errors to prevent email enumeration
+    }
   }
 
   // Always return success to prevent email enumeration
