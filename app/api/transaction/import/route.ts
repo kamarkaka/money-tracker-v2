@@ -66,10 +66,11 @@ function parseDate(value: string, format: string): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
-function parseAmount(value: string): number {
+function parseAmount(value: string): number | null {
   const clean = value.replace(/[^0-9.\-+]/g, "");
+  if (!clean) return null;
   const num = parseFloat(clean);
-  return isNaN(num) ? 0 : num;
+  return isNaN(num) ? null : num;
 }
 
 export async function POST(request: NextRequest) {
@@ -190,10 +191,15 @@ export async function POST(request: NextRequest) {
       // Resolve amount
       let amount: number;
       if (hasAmountCol) {
-        amount = parseAmount(row[columnMapping.amount!]);
+        const parsed = parseAmount(row[columnMapping.amount!]);
+        if (parsed === null) {
+          skipped++;
+          continue;
+        }
+        amount = parsed;
       } else {
-        const debit = columnMapping.debit !== undefined ? parseAmount(row[columnMapping.debit] || "0") : 0;
-        const credit = columnMapping.credit !== undefined ? parseAmount(row[columnMapping.credit] || "0") : 0;
+        const debit = columnMapping.debit !== undefined ? (parseAmount(row[columnMapping.debit] || "0") ?? 0) : 0;
+        const credit = columnMapping.credit !== undefined ? (parseAmount(row[columnMapping.credit] || "0") ?? 0) : 0;
         amount = credit - debit;
       }
 
