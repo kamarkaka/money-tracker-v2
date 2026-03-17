@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { TransactionFilters, FilterValues } from "@/app/components/transaction/TransactionFilters";
 import { TransactionCategoryEditor } from "@/app/components/transaction/TransactionCategoryEditor";
 import { AddTransactionModal } from "@/app/components/transaction/AddTransactionModal";
+import { EditTransactionModal } from "@/app/components/transaction/EditTransactionModal";
 import { ImportCsvModal } from "@/app/components/transaction/ImportCsvModal";
 import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
 import { DataTable } from "@/app/components/ui/DataTable";
@@ -54,6 +55,7 @@ export default function TransactionPage() {
   const pageSize = 50;
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -151,14 +153,14 @@ export default function TransactionPage() {
             {t.description}
           </span>
           <button
-            onClick={() => handleToggleHidden(t.id, !t.isHidden)}
+            onClick={(e) => { e.stopPropagation(); handleToggleHidden(t.id, !t.isHidden); }}
             className="cursor-pointer rounded px-2 py-1 text-xs text-zinc-400 opacity-0 transition-opacity group-hover/desc:opacity-100 hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
           >
             {t.isHidden ? "Unhide" : "Hide"}
           </button>
           {t.isManual && (
             <button
-              onClick={() => setDeleteId(t.id)}
+              onClick={(e) => { e.stopPropagation(); setDeleteId(t.id); }}
               className="cursor-pointer rounded px-2 py-1 text-xs text-red-400 opacity-0 transition-opacity group-hover/desc:opacity-100 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
             >
               Delete
@@ -177,12 +179,14 @@ export default function TransactionPage() {
       key: "category",
       header: "Category",
       render: (t: Transaction) => (
-        <TransactionCategoryEditor
-          transactionId={t.id}
-          currentCategoryId={t.categoryId}
-          categories={categories}
-          onUpdate={handleUpdateCategory}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <TransactionCategoryEditor
+            transactionId={t.id}
+            currentCategoryId={t.categoryId}
+            categories={categories}
+            onUpdate={handleUpdateCategory}
+          />
+        </div>
       ),
       className: "w-48",
     },
@@ -230,6 +234,7 @@ export default function TransactionPage() {
           data={transactions}
           keyExtractor={(t) => t.id}
           emptyMessage="No transactions found."
+          onRowClick={(t) => setEditTransaction(t)}
         />
       </div>
 
@@ -259,6 +264,15 @@ export default function TransactionPage() {
           </div>
         </div>
       )}
+
+      <EditTransactionModal
+        open={!!editTransaction}
+        onClose={() => setEditTransaction(null)}
+        onComplete={handleTransactionAdded}
+        transaction={editTransaction}
+        accounts={accounts}
+        categories={categories}
+      />
 
       <AddTransactionModal
         open={showAdd}

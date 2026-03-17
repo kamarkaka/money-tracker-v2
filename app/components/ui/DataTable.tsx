@@ -12,6 +12,7 @@ interface DataTableProps<T> {
   data: T[];
   keyExtractor: (item: T) => string;
   emptyMessage?: string;
+  onRowClick?: (item: T) => void;
 }
 
 export function DataTable<T>({
@@ -19,6 +20,7 @@ export function DataTable<T>({
   data,
   keyExtractor,
   emptyMessage = "No data found.",
+  onRowClick,
 }: DataTableProps<T>) {
   if (data.length === 0) {
     return (
@@ -50,7 +52,11 @@ export function DataTable<T>({
           {data.map((item) => (
             <tr
               key={keyExtractor(item)}
-              className="border-b border-zinc-100 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+              onClick={() => onRowClick?.(item)}
+              className={cn(
+                "border-b border-zinc-100 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50",
+                onRowClick && "cursor-pointer"
+              )}
             >
               {columns.map((col) => (
                 <td
