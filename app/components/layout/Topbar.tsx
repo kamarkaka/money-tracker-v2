@@ -6,7 +6,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@/app/lib/utils";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import { useTheme } from "@/app/components/ThemeProvider";
+import { ChevronDownIcon, SunIcon, MoonIcon } from "@heroicons/react/24/outline";
 
 const NAV_ITEMS = [
   { href: "/overview", label: "Overview" },
@@ -18,8 +19,15 @@ const NAV_ITEMS = [
 
 export function Topbar({ userName }: { userName?: string | null }) {
   const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const isDark = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  const toggleTheme = () => {
+    setTheme(isDark ? "light" : "dark");
+  };
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -93,6 +101,28 @@ export function Topbar({ userName }: { userName?: string | null }) {
                   >
                     Setting
                   </Link>
+                  <div className="border-t border-zinc-200 dark:border-zinc-700">
+                    <button
+                      onClick={toggleTheme}
+                      className="cursor-pointer flex w-full items-center justify-between px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    >
+                      <span className="flex items-center gap-2">
+                        {isDark ? <MoonIcon className="h-4 w-4" /> : <SunIcon className="h-4 w-4" />}
+                        {isDark ? "Dark" : "Light"}
+                      </span>
+                      <div
+                        className={`relative h-5 w-9 rounded-full transition-colors ${
+                          isDark ? "bg-zinc-600" : "bg-zinc-300"
+                        }`}
+                      >
+                        <div
+                          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                            isDark ? "translate-x-4" : "translate-x-0.5"
+                          }`}
+                        />
+                      </div>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
