@@ -90,7 +90,9 @@ export default function TransactionPage() {
 
   useEffect(() => {
     Promise.all([fetchTransactions(filters, page), fetchMeta()]).then(() => setLoading(false));
-  }, [fetchTransactions, fetchMeta, filters, page]);
+  // Only run on mount — filter/page changes are handled by their own callbacks
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFilter = (newFilters: FilterValues) => {
     setFilters(newFilters);
@@ -301,7 +303,7 @@ export default function TransactionPage() {
           </span>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => { const p = Math.max(1, page - 1); setPage(p); fetchTransactions(filters, p); }}
               disabled={page === 1}
               className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
@@ -311,7 +313,7 @@ export default function TransactionPage() {
               Page {page} of {totalPages}
             </span>
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => { const p = Math.min(totalPages, page + 1); setPage(p); fetchTransactions(filters, p); }}
               disabled={page === totalPages}
               className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
