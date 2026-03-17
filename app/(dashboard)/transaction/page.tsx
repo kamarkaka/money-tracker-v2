@@ -11,6 +11,7 @@ import { DataTable } from "@/app/components/ui/DataTable";
 import { CurrencyDisplay } from "@/app/components/ui/CurrencyDisplay";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { formatDate } from "@/app/lib/utils";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
 
 interface Transaction {
   id: string;
@@ -60,6 +61,9 @@ export default function TransactionPage() {
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkCategoryId, setBulkCategoryId] = useState("");
+  const [bulkApplying, setBulkApplying] = useState(false);
 
   const fetchTransactions = useCallback(async (f: FilterValues, p: number, sk?: string, so?: "asc" | "desc") => {
     const params = new URLSearchParams();
@@ -101,6 +105,7 @@ export default function TransactionPage() {
   const handleFilter = (newFilters: FilterValues) => {
     setFilters(newFilters);
     setPage(1);
+    setSelectedIds(new Set());
     fetchTransactions(newFilters, 1, sortKey, sortOrder);
   };
 
@@ -109,6 +114,7 @@ export default function TransactionPage() {
     setSortKey(key);
     setSortOrder(newOrder);
     setPage(1);
+    setSelectedIds(new Set());
     fetchTransactions(filters, 1, key, newOrder);
   };
 
@@ -141,6 +147,41 @@ export default function TransactionPage() {
 
   const handleTransactionAdded = () => {
     fetchTransactions(filters, page, sortKey, sortOrder);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === transactions.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(transactions.map((t) => t.id)));
+    }
+  };
+
+  const handleBulkCategorize = async () => {
+    if (!bulkCategoryId && bulkCategoryId !== "uncategorize") return;
+    setBulkApplying(true);
+    const catId = bulkCategoryId === "uncategorize" ? null : bulkCategoryId;
+    await Promise.all(
+      [...selectedIds].map((id) =>
+        fetch(`/api/transaction/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ categoryId: catId }),
+        })
+      )
+    );
+    setSelectedIds(new Set());
+    setBulkCategoryId("");
+    setBulkApplying(false);
+    await fetchTransactions(filters, page, sortKey, sortOrder);
   };
 
   const handleDownloadCsv = async () => {
@@ -200,7 +241,40 @@ export default function TransactionPage() {
     );
   }
 
+  // Build flat category options for bulk categorize
+  const bulkCategoryOptions: { id: string; label: string }[] = [];
+  for (const parent of categories.filter((c) => !c.parentId)) {
+    bulkCategoryOptions.push({ id: parent.id, label: parent.name });
+    if (parent.children) {
+      for (const child of parent.children) {
+        bulkCategoryOptions.push({ id: child.id, label: `${parent.name} > ${child.name}` });
+      }
+    }
+  }
+
   const columns = [
+    {
+      key: "select",
+      header: (
+        <input
+          type="checkbox"
+          checked={transactions.length > 0 && selectedIds.size === transactions.length}
+          onChange={toggleSelectAll}
+          className="accent-zinc-900 dark:accent-zinc-50"
+        />
+      ),
+      render: (t: Transaction) => (
+        <div onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={selectedIds.has(t.id)}
+            onChange={() => toggleSelect(t.id)}
+            className="accent-zinc-900 dark:accent-zinc-50"
+          />
+        </div>
+      ),
+      className: "w-10",
+    },
     {
       key: "date",
       header: "Date",
@@ -263,6 +337,20 @@ export default function TransactionPage() {
       render: (t: Transaction) => <CurrencyDisplay amount={t.amount} />,
       className: "w-28 text-right",
     },
+    {
+      key: "actions",
+      header: "",
+      render: (t: Transaction) => (
+        <button
+          onClick={(e) => { e.stopPropagation(); setEditTransaction(t); }}
+          className="cursor-pointer rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+          title="Edit transaction"
+        >
+          <PencilSquareIcon className="h-4 w-4" />
+        </button>
+      ),
+      className: "w-16 text-right",
+    },
   ];
 
   const totalPages = Math.ceil(total / pageSize);
@@ -302,13 +390,45 @@ export default function TransactionPage() {
         />
       </div>
 
+      {selectedIds.size > 0 && (
+        <div className="sticky top-0 z-10 mb-4 flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            {selectedIds.size} selected
+          </span>
+          <select
+            value={bulkCategoryId}
+            onChange={(e) => setBulkCategoryId(e.target.value)}
+            className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-50"
+          >
+            <option value="">Assign category...</option>
+            <option value="uncategorize">Remove category</option>
+            {bulkCategoryOptions.map((c) => (
+              <option key={c.id} value={c.id}>{c.label}</option>
+            ))}
+          </select>
+          <button
+            onClick={handleBulkCategorize}
+            disabled={bulkApplying || !bulkCategoryId}
+            className="cursor-pointer rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          >
+            {bulkApplying ? "Applying..." : "Apply"}
+          </button>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="cursor-pointer text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
       <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         <DataTable
           columns={columns}
           data={transactions}
           keyExtractor={(t) => t.id}
           emptyMessage="No transactions found."
-          onRowClick={(t) => setEditTransaction(t)}
+          onRowClick={(t) => toggleSelect(t.id)}
           sortKey={sortKey}
           sortOrder={sortOrder}
           onSort={handleSort}
