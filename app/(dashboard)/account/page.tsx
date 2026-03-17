@@ -46,7 +46,7 @@ export default function AccountPage() {
       return inst.accounts.reduce((sum, acct) => {
         const bal = typeof acct.balance === "string" ? parseFloat(acct.balance) : acct.balance;
         const isLiability = LIABILITY_TYPES.includes(acct.type.toLowerCase());
-        return sum + (isLiability ? -Math.abs(bal) : Math.abs(bal));
+        return sum + (isLiability ? -Math.abs(bal) : bal);
       }, total);
     }, 0);
   }, [institutions]);
