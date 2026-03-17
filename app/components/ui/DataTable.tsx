@@ -5,6 +5,7 @@ interface Column<T> {
   header: string;
   render?: (item: T) => React.ReactNode;
   className?: string;
+  sortable?: boolean;
 }
 
 interface DataTableProps<T> {
@@ -13,6 +14,9 @@ interface DataTableProps<T> {
   keyExtractor: (item: T) => string;
   emptyMessage?: string;
   onRowClick?: (item: T) => void;
+  sortKey?: string;
+  sortOrder?: "asc" | "desc";
+  onSort?: (key: string) => void;
 }
 
 export function DataTable<T>({
@@ -21,6 +25,9 @@ export function DataTable<T>({
   keyExtractor,
   emptyMessage = "No data found.",
   onRowClick,
+  sortKey,
+  sortOrder,
+  onSort,
 }: DataTableProps<T>) {
   if (data.length === 0) {
     return (
@@ -35,17 +42,30 @@ export function DataTable<T>({
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-zinc-200 dark:border-zinc-700">
-            {columns.map((col) => (
-              <th
-                key={col.key}
-                className={cn(
-                  "px-4 py-3 font-medium text-zinc-500 dark:text-zinc-400",
-                  col.className
-                )}
-              >
-                {col.header}
-              </th>
-            ))}
+            {columns.map((col) => {
+              const isSorted = sortKey === col.key;
+              const canSort = col.sortable && onSort;
+              return (
+                <th
+                  key={col.key}
+                  onClick={canSort ? () => onSort(col.key) : undefined}
+                  className={cn(
+                    "px-4 py-3 font-medium text-zinc-500 dark:text-zinc-400",
+                    canSort && "cursor-pointer select-none hover:text-zinc-700 dark:hover:text-zinc-200",
+                    col.className
+                  )}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    {col.header}
+                    {canSort && (
+                      <span className={cn("text-[10px]", isSorted ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-300 dark:text-zinc-600")}>
+                        {isSorted && sortOrder === "asc" ? "▲" : isSorted && sortOrder === "desc" ? "▼" : "⇅"}
+                      </span>
+                    )}
+                  </span>
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>

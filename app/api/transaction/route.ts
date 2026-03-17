@@ -48,6 +48,20 @@ export async function GET(request: NextRequest) {
   const skip = pageSize === 0 ? undefined : (page - 1) * pageSize;
   const take = pageSize === 0 ? undefined : pageSize;
 
+  const sortBy = searchParams.get("sortBy") || "date";
+  const sortOrder = searchParams.get("sortOrder") === "asc" ? "asc" : "desc";
+
+  const SORTABLE_FIELDS: Record<string, object> = {
+    date: { date: sortOrder },
+    description: { description: sortOrder },
+    amount: { amount: sortOrder },
+    account: { account: { name: sortOrder } },
+  };
+  const orderBy = [
+    SORTABLE_FIELDS[sortBy] || { date: sortOrder },
+    { createdAt: sortOrder },
+  ];
+
   const [transactions, total] = await Promise.all([
     prisma.transaction.findMany({
       where,
@@ -55,7 +69,7 @@ export async function GET(request: NextRequest) {
         account: { select: { id: true, name: true } },
         category: { select: { id: true, name: true, parent: { select: { id: true, name: true } } } },
       },
-      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+      orderBy,
       skip,
       take,
     }),

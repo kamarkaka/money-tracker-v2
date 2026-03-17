@@ -52,6 +52,8 @@ export default function TransactionPage() {
     maxAmount: "",
   });
   const [page, setPage] = useState(1);
+  const [sortKey, setSortKey] = useState("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const pageSize = 50;
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -59,11 +61,13 @@ export default function TransactionPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchTransactions = useCallback(async (f: FilterValues, p: number) => {
+  const fetchTransactions = useCallback(async (f: FilterValues, p: number, sk?: string, so?: "asc" | "desc") => {
     const params = new URLSearchParams();
     params.set("includeHidden", "true");
     params.set("page", String(p));
     params.set("pageSize", String(pageSize));
+    if (sk) params.set("sortBy", sk);
+    if (so) params.set("sortOrder", so);
     if (f.search) params.set("search", f.search);
     if (f.accountId) params.set("accountId", f.accountId);
     if (f.categoryId) params.set("categoryId", f.categoryId);
@@ -89,15 +93,23 @@ export default function TransactionPage() {
   }, []);
 
   useEffect(() => {
-    Promise.all([fetchTransactions(filters, page), fetchMeta()]).then(() => setLoading(false));
-  // Only run on mount — filter/page changes are handled by their own callbacks
+    Promise.all([fetchTransactions(filters, page, sortKey, sortOrder), fetchMeta()]).then(() => setLoading(false));
+  // Only run on mount — filter/page/sort changes are handled by their own callbacks
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleFilter = (newFilters: FilterValues) => {
     setFilters(newFilters);
     setPage(1);
-    fetchTransactions(newFilters, 1);
+    fetchTransactions(newFilters, 1, sortKey, sortOrder);
+  };
+
+  const handleSort = (key: string) => {
+    const newOrder = sortKey === key && sortOrder === "desc" ? "asc" : "desc";
+    setSortKey(key);
+    setSortOrder(newOrder);
+    setPage(1);
+    fetchTransactions(filters, 1, key, newOrder);
   };
 
   const handleUpdateCategory = async (transactionId: string, categoryId: string | null) => {
@@ -106,7 +118,7 @@ export default function TransactionPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ categoryId }),
     });
-    await fetchTransactions(filters, page);
+    await fetchTransactions(filters, page, sortKey, sortOrder);
   };
 
   const handleToggleHidden = async (transactionId: string, isHidden: boolean) => {
@@ -115,7 +127,7 @@ export default function TransactionPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isHidden }),
     });
-    await fetchTransactions(filters, page);
+    await fetchTransactions(filters, page, sortKey, sortOrder);
   };
 
   const handleDelete = async () => {
@@ -124,11 +136,11 @@ export default function TransactionPage() {
     await fetch(`/api/transaction/${deleteId}`, { method: "DELETE" });
     setDeleteId(null);
     setDeleting(false);
-    await fetchTransactions(filters, page);
+    await fetchTransactions(filters, page, sortKey, sortOrder);
   };
 
   const handleTransactionAdded = () => {
-    fetchTransactions(filters, page);
+    fetchTransactions(filters, page, sortKey, sortOrder);
   };
 
   const handleDownloadCsv = async () => {
@@ -192,12 +204,14 @@ export default function TransactionPage() {
     {
       key: "date",
       header: "Date",
+      sortable: true,
       render: (t: Transaction) => formatDate(t.date),
       className: "w-28",
     },
     {
       key: "description",
       header: "Description",
+      sortable: true,
       render: (t: Transaction) => (
         <div className="group/desc flex items-center gap-2">
           <span className={t.isHidden ? "line-through text-zinc-400 dark:text-zinc-500" : ""}>
@@ -223,6 +237,7 @@ export default function TransactionPage() {
     {
       key: "account",
       header: "Account",
+      sortable: true,
       render: (t: Transaction) => t.account.name,
       className: "w-36",
     },
@@ -244,6 +259,7 @@ export default function TransactionPage() {
     {
       key: "amount",
       header: "Amount",
+      sortable: true,
       render: (t: Transaction) => <CurrencyDisplay amount={t.amount} />,
       className: "w-28 text-right",
     },
@@ -293,6 +309,9 @@ export default function TransactionPage() {
           keyExtractor={(t) => t.id}
           emptyMessage="No transactions found."
           onRowClick={(t) => setEditTransaction(t)}
+          sortKey={sortKey}
+          sortOrder={sortOrder}
+          onSort={handleSort}
         />
       </div>
 
@@ -303,7 +322,7 @@ export default function TransactionPage() {
           </span>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => { const p = Math.max(1, page - 1); setPage(p); fetchTransactions(filters, p); }}
+              onClick={() => { const p = Math.max(1, page - 1); setPage(p); fetchTransactions(filters, p, sortKey, sortOrder); }}
               disabled={page === 1}
               className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
@@ -313,7 +332,7 @@ export default function TransactionPage() {
               Page {page} of {totalPages}
             </span>
             <button
-              onClick={() => { const p = Math.min(totalPages, page + 1); setPage(p); fetchTransactions(filters, p); }}
+              onClick={() => { const p = Math.min(totalPages, page + 1); setPage(p); fetchTransactions(filters, p, sortKey, sortOrder); }}
               disabled={page === totalPages}
               className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
