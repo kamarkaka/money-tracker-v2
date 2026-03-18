@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { FormField } from "@/app/components/ui/FormField";
 
 interface Account {
@@ -36,6 +37,8 @@ export function TransactionFilters({
   categories,
   onFilter,
 }: TransactionFiltersProps) {
+  const i18n = useTranslations("transaction");
+  const i18nOverview = useTranslations("overview");
   const [filters, setFilters] = useState<FilterValues>({
     search: "",
     accountId: "",
@@ -61,41 +64,41 @@ export function TransactionFilters({
 
   return (
     <div className="grid grid-cols-2 gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 md:grid-cols-4">
-      <FormField label="Search" className="col-span-2">
+      <FormField label={i18n("search")} className="col-span-2">
         <input
           type="text"
           value={filters.search}
           onChange={(e) => update("search", e.target.value)}
-          placeholder="Search descriptions..."
+          placeholder={i18n("searchPlaceholder")}
           className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
         />
       </FormField>
-      <FormField label="Account">
+      <FormField label={i18n("account")}>
         <select
           value={filters.accountId}
           onChange={(e) => update("accountId", e.target.value)}
           className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
         >
-          <option value="">All</option>
+          <option value="">{i18n("all")}</option>
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>{a.name}</option>
           ))}
         </select>
       </FormField>
-      <FormField label="Category">
+      <FormField label={i18n("categoryOptional")}>
         <select
           value={filters.categoryId}
           onChange={(e) => update("categoryId", e.target.value)}
           className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
         >
-          <option value="">All</option>
-          <option value="uncategorized">Uncategorized</option>
+          <option value="">{i18n("all")}</option>
+          <option value="uncategorized">{i18nOverview("uncategorized")}</option>
           {flatCategories.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
       </FormField>
-      <FormField label="From Date">
+      <FormField label={i18n("fromDate")}>
         <input
           type="date"
           value={filters.startDate}
@@ -103,7 +106,7 @@ export function TransactionFilters({
           className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
         />
       </FormField>
-      <FormField label="To Date">
+      <FormField label={i18n("toDate")}>
         <input
           type="date"
           value={filters.endDate}
@@ -111,7 +114,7 @@ export function TransactionFilters({
           className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
         />
       </FormField>
-      <FormField label="Min Amount">
+      <FormField label={i18n("minAmount")}>
         <input
           type="number"
           step="0.01"
@@ -121,7 +124,7 @@ export function TransactionFilters({
           className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
         />
       </FormField>
-      <FormField label="Max Amount">
+      <FormField label={i18n("maxAmount")}>
         <input
           type="number"
           step="0.01"

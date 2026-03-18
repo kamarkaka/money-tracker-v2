@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { FormField } from "@/app/components/ui/FormField";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -31,6 +32,8 @@ const INPUT_ERROR =
 
 export default function RegisterPage() {
   const router = useRouter();
+  const i18n = useTranslations("auth");
+  const i18nc = useTranslations("common");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,7 +41,6 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Track which fields have been touched (blurred)
   const [touched, setTouched] = useState({
     name: false,
     email: false,
@@ -49,26 +51,23 @@ export default function RegisterPage() {
   const markTouched = (field: keyof typeof touched) =>
     setTouched((prev) => ({ ...prev, [field]: true }));
 
-  // Field-level errors (only shown after blur)
-  const nameError = touched.name && !name.trim() ? "Name is required" : "";
+  const nameError = touched.name && !name.trim() ? i18nc("required") : "";
   const emailError = touched.email
     ? !email.trim()
-      ? "Email is required"
+      ? i18n("emailRequired")
       : !EMAIL_RE.test(email)
-        ? "Please enter a valid email address"
+        ? i18nc("error")
         : ""
     : "";
   const passwordError = touched.password ? validatePassword(password) ?? "" : "";
   const confirmPasswordError =
     touched.confirmPassword && confirmPassword !== password
-      ? "Passwords do not match"
+      ? i18nc("error")
       : "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    // Touch all fields to show any remaining errors
     setTouched({ name: true, email: true, password: true, confirmPassword: true });
 
     if (!name.trim() || !email.trim() || !EMAIL_RE.test(email)) return;
@@ -86,12 +85,11 @@ export default function RegisterPage() {
 
     if (!res.ok) {
       const data = await res.json();
-      setError(data.error || "Registration failed");
+      setError(data.error || i18nc("error"));
       setLoading(false);
       return;
     }
 
-    // Auto sign-in after registration
     const result = await signIn("credentials", {
       email,
       password,
@@ -101,7 +99,7 @@ export default function RegisterPage() {
     setLoading(false);
 
     if (result?.error) {
-      setError("Registration succeeded but auto-login failed. Please log in manually.");
+      setError(i18nc("error"));
     } else {
       router.push("/overview");
     }
@@ -110,10 +108,10 @@ export default function RegisterPage() {
   return (
     <>
       <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-        Create an account
+        {i18n("register")}
       </h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <FormField label="Name" error={nameError}>
+        <FormField label={i18nc("name")} error={nameError}>
           <input
             type="text"
             value={name}
@@ -122,7 +120,7 @@ export default function RegisterPage() {
             className={nameError ? INPUT_ERROR : INPUT_NORMAL}
           />
         </FormField>
-        <FormField label="Email" error={emailError}>
+        <FormField label={i18nc("email")} error={emailError}>
           <input
             type="email"
             value={email}
@@ -131,7 +129,7 @@ export default function RegisterPage() {
             className={emailError ? INPUT_ERROR : INPUT_NORMAL}
           />
         </FormField>
-        <FormField label="Password" error={passwordError}>
+        <FormField label={i18nc("password")} error={passwordError}>
           <input
             type="password"
             value={password}
@@ -140,7 +138,7 @@ export default function RegisterPage() {
             className={passwordError ? INPUT_ERROR : INPUT_NORMAL}
           />
         </FormField>
-        <FormField label="Confirm Password" error={confirmPasswordError}>
+        <FormField label={i18n("confirmPassword")} error={confirmPasswordError}>
           <input
             type="password"
             value={confirmPassword}
@@ -155,13 +153,13 @@ export default function RegisterPage() {
           disabled={loading}
           className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
-          {loading ? "Creating account..." : "Register"}
+          {loading ? i18nc("loading") : i18n("register")}
         </button>
       </form>
       <p className="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
-        Already have an account?{" "}
+        {i18n("hasAccount")}{" "}
         <Link href="/login" className="cursor-pointer font-medium text-zinc-900 hover:underline dark:text-zinc-50">
-          Log in
+          {i18n("login")}
         </Link>
       </p>
     </>

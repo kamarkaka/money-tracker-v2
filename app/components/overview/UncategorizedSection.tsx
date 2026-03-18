@@ -1,6 +1,7 @@
 "use client";
 
 import { BucketTransactionList } from "./BucketTransactionList";
+import { useTranslations } from "next-intl";
 
 interface Transaction {
   id: string;
@@ -30,13 +31,14 @@ export function UncategorizedSection({
   categories,
   onUpdateCategory,
 }: UncategorizedSectionProps) {
+  const i18n = useTranslations("overview");
   if (transactions.length === 0) return null;
 
   return (
     <div className="rounded-lg border border-dashed border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900">
       <div className="px-5 py-4">
         <h3 className="text-base font-semibold text-zinc-500 dark:text-zinc-400">
-          Uncategorized ({transactions.length})
+          {i18n("uncategorized")} ({transactions.length})
         </h3>
       </div>
       <div className="border-t border-zinc-200 dark:border-zinc-700">

@@ -34,6 +34,7 @@ model UserSetting {
   id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String @unique @map("user_id") @db.Uuid
   theme     String @default("system") @db.VarChar(20)
+  language  String @default("en") @map("language") @db.VarChar(10)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

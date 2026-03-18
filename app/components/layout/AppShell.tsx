@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Topbar } from "./Topbar";
 import { TutorialOverlay } from "@/app/components/tutorial/TutorialOverlay";
 import { ThemeProvider } from "@/app/components/ThemeProvider";
+import { LocaleProvider } from "@/app/components/LocaleProvider";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -35,11 +36,13 @@ export function AppShell({ children, userName }: AppShellProps) {
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-        <Topbar userName={userName} />
-        <main className="mx-auto min-w-[960px] max-w-7xl px-6 py-8">{children}</main>
-        {showTutorial && <TutorialOverlay onClose={() => setShowTutorial(false)} />}
-      </div>
+      <LocaleProvider>
+        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+          <Topbar userName={userName} />
+          <main className="mx-auto min-w-[960px] max-w-7xl px-6 py-8">{children}</main>
+          {showTutorial && <TutorialOverlay onClose={() => setShowTutorial(false)} />}
+        </div>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

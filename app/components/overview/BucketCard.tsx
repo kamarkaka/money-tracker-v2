@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatCurrency } from "@/app/lib/utils";
+import { useTranslations } from "next-intl";
 import { BucketTransactionList } from "./BucketTransactionList";
 
 interface Transaction {
@@ -39,6 +40,7 @@ export function BucketCard({
   onUpdateCategory,
 }: BucketCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const i18n = useTranslations("overview");
 
   const isIncome = total > 0;
   const spent = Math.abs(total);
@@ -79,7 +81,7 @@ export function BucketCard({
           </svg>
           <span className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{name}</span>
           <span className="text-sm text-zinc-500 dark:text-zinc-400">
-            ({transactions.length} transaction{transactions.length !== 1 ? "s" : ""})
+            ({i18n("transactions", { count: transactions.length })})
           </span>
         </div>
       </button>
@@ -92,10 +94,10 @@ export function BucketCard({
             />
             <div className="absolute inset-0 flex items-center justify-between px-3 text-sm font-semibold">
               <span className={pct > 15 ? "text-white" : "text-zinc-600 dark:text-zinc-300"}>
-                {formatCurrency(spent)} {isIncome ? "earned" : "spent"}
+                {isIncome ? i18n("earned", { amount: formatCurrency(spent) }) : i18n("spent", { amount: formatCurrency(spent) })}
               </span>
               <span className={pct > 85 ? "text-white" : "text-zinc-500 dark:text-zinc-400"}>
-                {isOver ? `${formatCurrency(spent - budgetAmount)} over` : `${formatCurrency(budgetAmount - spent)} left`}
+                {isOver ? i18n("over", { amount: formatCurrency(spent - budgetAmount) }) : i18n("left", { amount: formatCurrency(budgetAmount - spent) })}
               </span>
             </div>
           </div>

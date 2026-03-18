@@ -12,6 +12,7 @@ import { CurrencyDisplay } from "@/app/components/ui/CurrencyDisplay";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { formatDate } from "@/app/lib/utils";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import { useTranslations } from "next-intl";
 
 interface Transaction {
   id: string;
@@ -38,6 +39,8 @@ interface Account {
 }
 
 export default function TransactionPage() {
+  const i18n = useTranslations("transaction");
+  const i18nc = useTranslations("common");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [total, setTotal] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -277,14 +280,14 @@ export default function TransactionPage() {
     },
     {
       key: "date",
-      header: "Date",
+      header: i18n("date"),
       sortable: true,
       render: (t: Transaction) => formatDate(t.date),
       className: "w-28",
     },
     {
       key: "description",
-      header: "Description",
+      header: i18n("description"),
       sortable: true,
       render: (t: Transaction) => (
         <div className="group/desc flex items-center gap-2">
@@ -295,7 +298,7 @@ export default function TransactionPage() {
             onClick={(e) => { e.stopPropagation(); handleToggleHidden(t.id, !t.isHidden); }}
             className="cursor-pointer rounded px-2 py-1 text-xs text-zinc-400 opacity-0 transition-opacity group-hover/desc:opacity-100 hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
           >
-            {t.isHidden ? "Unhide" : "Hide"}
+            {t.isHidden ? i18n("unhide") : i18n("hide")}
           </button>
           {t.isManual && (
             <button
@@ -310,14 +313,14 @@ export default function TransactionPage() {
     },
     {
       key: "account",
-      header: "Account",
+      header: i18n("account"),
       sortable: true,
       render: (t: Transaction) => t.account.name,
       className: "w-36",
     },
     {
       key: "category",
-      header: "Category",
+      header: i18n("categoryOptional"),
       render: (t: Transaction) => (
         <div onClick={(e) => e.stopPropagation()}>
           <TransactionCategoryEditor
@@ -332,7 +335,7 @@ export default function TransactionPage() {
     },
     {
       key: "amount",
-      header: "Amount",
+      header: i18n("amount"),
       sortable: true,
       render: (t: Transaction) => <CurrencyDisplay amount={t.amount} />,
       className: "w-28 text-right",
@@ -358,26 +361,26 @@ export default function TransactionPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Transactions</h1>
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
         <div className="flex gap-3">
           <button
             onClick={handleDownloadCsv}
             disabled={transactions.length === 0}
             className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
-            Download CSV
+            {i18n("downloadCsv")}
           </button>
           <button
             onClick={() => setShowImport(true)}
             className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
-            Import CSV
+            {i18n("importCsv")}
           </button>
           <button
             onClick={() => setShowAdd(true)}
             className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            Add Transaction
+            {i18n("addTransaction")}
           </button>
         </div>
       </div>
@@ -393,15 +396,15 @@ export default function TransactionPage() {
       {selectedIds.size > 0 && (
         <div className="sticky top-0 z-10 mb-4 flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            {selectedIds.size} selected
+            {i18nc("selected", { count: selectedIds.size })}
           </span>
           <select
             value={bulkCategoryId}
             onChange={(e) => setBulkCategoryId(e.target.value)}
             className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-50"
           >
-            <option value="">Assign category...</option>
-            <option value="uncategorize">Remove category</option>
+            <option value="">{i18n("assignCategory")}</option>
+            <option value="uncategorize">{i18n("removeCategory")}</option>
             {bulkCategoryOptions.map((c) => (
               <option key={c.id} value={c.id}>{c.label}</option>
             ))}
@@ -411,13 +414,13 @@ export default function TransactionPage() {
             disabled={bulkApplying || !bulkCategoryId}
             className="cursor-pointer rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            {bulkApplying ? "Applying..." : "Apply"}
+            {bulkApplying ? i18nc("applying") : i18nc("apply")}
           </button>
           <button
             onClick={() => setSelectedIds(new Set())}
             className="cursor-pointer text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
           >
-            Clear
+            {i18nc("clear")}
           </button>
         </div>
       )}
@@ -427,7 +430,7 @@ export default function TransactionPage() {
           columns={columns}
           data={transactions}
           keyExtractor={(t) => t.id}
-          emptyMessage="No transactions found."
+          emptyMessage={i18n("noTransactions")}
           onRowClick={(t) => toggleSelect(t.id)}
           sortKey={sortKey}
           sortOrder={sortOrder}
@@ -438,7 +441,7 @@ export default function TransactionPage() {
       {totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
           <span className="text-sm text-zinc-500 dark:text-zinc-400">
-            Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
+            {i18nc("showingRange", { start: (page - 1) * pageSize + 1, end: Math.min(page * pageSize, total), total })}
           </span>
           <div className="flex items-center gap-2">
             <button
@@ -446,17 +449,17 @@ export default function TransactionPage() {
               disabled={page === 1}
               className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
-              Previous
+              {i18nc("previous")}
             </button>
             <span className="text-sm text-zinc-600 dark:text-zinc-400">
-              Page {page} of {totalPages}
+              {i18nc("pageOf", { page, totalPages })}
             </span>
             <button
               onClick={() => { const p = Math.min(totalPages, page + 1); setPage(p); fetchTransactions(filters, p, sortKey, sortOrder); }}
               disabled={page === totalPages}
               className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
-              Next
+              {i18nc("next")}
             </button>
           </div>
         </div>
@@ -503,9 +506,9 @@ export default function TransactionPage() {
         open={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
-        title="Delete Transaction"
-        message="Are you sure you want to delete this transaction? This cannot be undone."
-        confirmLabel="Delete"
+        title={i18n("deleteTransaction")}
+        message={i18n("deleteWarning")}
+        confirmLabel={i18nc("delete")}
         loading={deleting}
       />
     </div>

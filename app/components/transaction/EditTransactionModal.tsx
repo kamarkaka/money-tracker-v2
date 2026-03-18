@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Modal } from "@/app/components/ui/Modal";
 
 interface Account {
@@ -76,6 +77,9 @@ export function EditTransactionModal({
     }
   }, [transaction, open]);
 
+  const i18n = useTranslations("transaction");
+  const i18nc = useTranslations("common");
+
   if (!transaction) return null;
 
   const isManual = transaction.isManual;
@@ -130,13 +134,13 @@ export function EditTransactionModal({
 
       if (isManual) {
         if (!accountId || !description.trim() || !amount || !date) {
-          setError("Account, description, amount, and date are required");
+          setError(i18nc("error"));
           setSaving(false);
           return;
         }
         const parsedAmount = parseFloat(amount);
         if (isNaN(parsedAmount) || parsedAmount === 0) {
-          setError("Please enter a valid amount");
+          setError(i18nc("error"));
           setSaving(false);
           return;
         }
@@ -154,7 +158,7 @@ export function EditTransactionModal({
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed to update transaction");
+        setError(data.error || i18nc("error"));
         return;
       }
 
@@ -165,7 +169,7 @@ export function EditTransactionModal({
         onClose();
       }
     } catch {
-      setError("Failed to update transaction");
+      setError(i18nc("error"));
     } finally {
       setSaving(false);
     }
@@ -182,7 +186,7 @@ export function EditTransactionModal({
     "w-full rounded-md border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-500";
 
   return (
-    <Modal open={open} onClose={handleClose} title="Edit Transaction" className="w-full max-w-md">
+    <Modal open={open} onClose={handleClose} title={i18n("editTransaction")} className="w-full max-w-md">
       <div className="flex flex-col gap-4">
         {(onPrev || onNext) && (
           <div className="flex items-center justify-between">
@@ -192,7 +196,7 @@ export function EditTransactionModal({
               disabled={!hasPrev}
               className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
-              &#8592; Prev
+              &#8592; {i18nc("prev")}
             </button>
             <button
               type="button"
@@ -200,7 +204,7 @@ export function EditTransactionModal({
               disabled={!hasNext}
               className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
-              Next &#8594;
+              {i18nc("next")} &#8594;
             </button>
           </div>
         )}
@@ -213,15 +217,15 @@ export function EditTransactionModal({
 
         {!isManual && (
           <div className="rounded-md bg-zinc-50 px-3 py-2 text-sm text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-            This is a bank-synced transaction. Only category and visibility can be changed.
+            {i18n("bankSyncedNote")}
           </div>
         )}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Account</label>
+          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{i18n("account")}</label>
           {isManual ? (
             <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputClass}>
-              <option value="">Select account...</option>
+              <option value="">{i18n("selectAccount")}</option>
               {accounts.map((a) => (
                 <option key={a.id} value={a.id}>{a.name}</option>
               ))}
@@ -232,7 +236,7 @@ export function EditTransactionModal({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Description</label>
+          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{i18n("description")}</label>
           {isManual ? (
             <input
               type="text"
@@ -246,7 +250,7 @@ export function EditTransactionModal({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Amount</label>
+          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{i18n("amount")}</label>
           {isManual ? (
             <div className="flex gap-2">
               <div className="flex rounded-md border border-zinc-300 dark:border-zinc-600">
@@ -259,7 +263,7 @@ export function EditTransactionModal({
                       : "bg-white text-zinc-700 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300"
                   }`}
                 >
-                  Expense
+                  {i18n("expense")}
                 </button>
                 <button
                   type="button"
@@ -270,7 +274,7 @@ export function EditTransactionModal({
                       : "bg-white text-zinc-700 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300"
                   }`}
                 >
-                  Income
+                  {i18n("income")}
                 </button>
               </div>
               <input
@@ -289,7 +293,7 @@ export function EditTransactionModal({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Date</label>
+          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{i18n("date")}</label>
           {isManual ? (
             <input
               type="date"
@@ -304,10 +308,10 @@ export function EditTransactionModal({
 
         <div>
           <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            Category <span className="text-zinc-400">(optional)</span>
+            {i18n("categoryOptional")}
           </label>
           <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={inputClass}>
-            <option value="">None</option>
+            <option value="">{i18n("none")}</option>
             {categoryOptions.map((c) => (
               <option key={c.id} value={c.id}>{c.label}</option>
             ))}
@@ -323,7 +327,7 @@ export function EditTransactionModal({
             className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600"
           />
           <label htmlFor="edit-hidden" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            Hidden from reports
+            {i18n("hiddenFromReports")}
           </label>
         </div>
 
@@ -333,7 +337,7 @@ export function EditTransactionModal({
             onClick={handleClose}
             className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
-            Cancel
+            {i18nc("cancel")}
           </button>
           <button
             type="button"
@@ -341,7 +345,7 @@ export function EditTransactionModal({
             disabled={saving}
             className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            {saving ? "Saving..." : "Save & Close"}
+            {saving ? i18nc("saving") : i18n("saveAndClose")}
           </button>
           {onNext && (
             <button
@@ -350,7 +354,7 @@ export function EditTransactionModal({
               disabled={saving}
               className="cursor-pointer rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-600"
             >
-              {saving ? "Saving..." : "Save & Next"}
+              {saving ? i18nc("saving") : i18n("saveAndNext")}
             </button>
           )}
         </div>

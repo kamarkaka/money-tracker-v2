@@ -5,10 +5,13 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { FormField } from "@/app/components/ui/FormField";
 
 export default function LoginPage() {
   const router = useRouter();
+  const i18n = useTranslations("auth");
+  const i18nc = useTranslations("common");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -28,7 +31,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result?.error) {
-      setError("Invalid email or password");
+      setError(i18n("invalidCredentials"));
     } else {
       router.push("/overview");
     }
@@ -40,9 +43,9 @@ export default function LoginPage() {
         <Image
           src="/logo.png"
           alt="App Logo"
-          width={256}      // Adjust width as needed
-          height={256}     // Adjust height as needed
-          priority        // Ensures the logo loads quickly as an LCP element
+          width={256}
+          height={256}
+          priority
           className="mb-4 rounded-lg shadow-lg"
         />
         <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
@@ -51,13 +54,10 @@ export default function LoginPage() {
             alpha
           </span>
         </h1>
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">
-          Personal Budgeting Helper
-        </span>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <FormField label="Email" error="">
+        <FormField label={i18nc("email")} error="">
           <input
             type="email"
             value={email}
@@ -66,7 +66,7 @@ export default function LoginPage() {
             className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
           />
         </FormField>
-        <FormField label="Password" error="">
+        <FormField label={i18nc("password")} error="">
           <input
             type="password"
             value={password}
@@ -81,7 +81,7 @@ export default function LoginPage() {
             href="/forgot-password"
             className="cursor-pointer text-sm text-zinc-600 hover:underline dark:text-zinc-400"
           >
-            Forgot Password?
+            {i18n("forgotPassword")}
           </Link>
         </div>
         <button
@@ -89,16 +89,13 @@ export default function LoginPage() {
           disabled={loading}
           className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
-          {loading ? "Logging in..." : "Log in"}
+          {loading ? i18nc("loading") : i18n("login")}
         </button>
       </form>
 
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-zinc-300 dark:border-zinc-600" />
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="bg-white px-2 text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">or</span>
         </div>
       </div>
 
@@ -114,14 +111,13 @@ export default function LoginPage() {
           <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
           <path fill="none" d="M0 0h48v48H0z"></path>
         </svg>
-        Sign in with Google
+        {i18n("signInWithGoogle")}
       </button>
 
-
       <p className="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
-        Don&apos;t have an account?{" "}
+        {i18n("noAccount")}{" "}
         <Link href="/register" className="cursor-pointer font-medium text-zinc-900 hover:underline dark:text-zinc-50">
-          Register
+          {i18n("register")}
         </Link>
       </p>
     </>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { MonthPicker } from "@/app/components/MonthPicker";
 import { MonthlySummaryHeader } from "@/app/components/overview/MonthlySummaryHeader";
 import { BucketCard } from "@/app/components/overview/BucketCard";
@@ -40,6 +41,7 @@ interface BucketGroup {
 }
 
 export default function OverviewPage() {
+  const i18n = useTranslations("overview");
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -162,7 +164,7 @@ export default function OverviewPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="mb-4 text-2xl font-bold text-zinc-900 dark:text-zinc-50">Overview</h1>
+        <h1 className="mb-4 text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
         <MonthPicker year={year} month={month} onChange={handleMonthChange} />
       </div>
 
@@ -172,8 +174,8 @@ export default function OverviewPage() {
 
       {transactions.length === 0 ? (
         <EmptyState
-          title="No transactions this month"
-          description="Transactions will appear here once your accounts are synced."
+          title={i18n("noTransactions")}
+          description={i18n("noTransactionsDesc")}
         />
       ) : (
         <div className="flex flex-col gap-4">

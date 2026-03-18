@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { BucketList } from "@/app/components/budget/BucketList";
 import { CreateBucketForm } from "@/app/components/budget/CreateBucketForm";
 import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
@@ -22,6 +23,8 @@ interface BudgetBucket {
 }
 
 export default function BudgetPage() {
+  const i18n = useTranslations("budget");
+  const i18nc = useTranslations("common");
   const [budgets, setBudgets] = useState<BudgetBucket[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [spending, setSpending] = useState<Record<string, number>>({});
@@ -128,12 +131,12 @@ export default function BudgetPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Budgets</h1>
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
       </div>
 
       <div className="mb-8 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-          Create New Budget
+          {i18n("createBudget")}
         </h2>
         <CreateBucketForm
           allCategories={allFlatCategories}
@@ -144,8 +147,8 @@ export default function BudgetPage() {
 
       {budgets.length === 0 ? (
         <EmptyState
-          title="No budgets yet"
-          description="Create your first budget above to start grouping categories."
+          title={i18n("noBudgets")}
+          description={i18n("noBudgetsDesc")}
         />
       ) : (
         <BucketList
@@ -162,8 +165,8 @@ export default function BudgetPage() {
         open={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
-        title="Delete Budget"
-        message="Are you sure you want to delete this budget? Categories will be unassigned but not deleted."
+        title={i18n("deleteBudget")}
+        message={i18n("deleteWarning")}
         loading={deleting}
       />
     </div>

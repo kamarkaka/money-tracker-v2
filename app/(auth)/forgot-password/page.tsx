@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { FormField } from "@/app/components/ui/FormField";
 
 export default function ForgotPasswordPage() {
+  const i18n = useTranslations("auth");
+  const i18nc = useTranslations("common");
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -26,28 +29,24 @@ export default function ForgotPasswordPage() {
   return (
     <>
       <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-        Forgot Password
+        {i18n("forgotPassword")}
       </h1>
       {submitted ? (
         <div className="flex flex-col gap-4">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            If an account with that email exists, we&apos;ve sent a reset link.
+            {i18n("resetSent")}
           </p>
           <Link
             href="/login"
             className="cursor-pointer text-center text-sm font-medium text-zinc-900 hover:underline dark:text-zinc-50"
           >
-            Back to log in
+            {i18n("backToLogin")}
           </Link>
         </div>
       ) : (
         <>
-          <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
-            Enter your email address and we&apos;ll send you a link to reset
-            your password.
-          </p>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <FormField label="Email" error="">
+            <FormField label={i18nc("email")} error="">
               <input
                 type="email"
                 value={email}
@@ -61,7 +60,7 @@ export default function ForgotPasswordPage() {
               disabled={loading}
               className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
-              {loading ? "Sending..." : "Send reset link"}
+              {loading ? i18nc("loading") : i18n("sendResetLink")}
             </button>
           </form>
           <p className="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
@@ -69,7 +68,7 @@ export default function ForgotPasswordPage() {
               href="/login"
               className="cursor-pointer font-medium text-zinc-900 hover:underline dark:text-zinc-50"
             >
-              Back to log in
+              {i18n("backToLogin")}
             </Link>
           </p>
         </>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { CategoryTree } from "@/app/components/category/CategoryTree";
 import { CreateCategoryForm } from "@/app/components/category/CreateCategoryForm";
 import { EditCategoryModal } from "@/app/components/category/EditCategoryModal";
@@ -16,6 +17,8 @@ interface Category {
 }
 
 export default function CategoryPage() {
+  const i18n = useTranslations("category");
+  const i18nc = useTranslations("common");
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [editCategory, setEditCategory] = useState<Category | null>(null);
@@ -82,12 +85,12 @@ export default function CategoryPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Categories</h1>
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
       </div>
 
       <div className="mb-8 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-          Add New Category
+          {i18n("addCategory")}
         </h2>
         <CreateCategoryForm parentCategories={parentCategories} onSubmit={handleCreate} />
       </div>
@@ -95,8 +98,8 @@ export default function CategoryPage() {
       <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         {categories.length === 0 ? (
           <EmptyState
-            title="No categories yet"
-            description="Create your first category above to get started."
+            title={i18n("title")}
+            description={i18n("addCategory")}
           />
         ) : (
           <CategoryTree
@@ -119,8 +122,8 @@ export default function CategoryPage() {
         open={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
-        title="Delete Category"
-        message="Are you sure you want to delete this category? Transactions assigned to it will become uncategorized."
+        title={i18n("deleteCategory")}
+        message={i18n("deleteWarning")}
         loading={deleting}
       />
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Modal } from "@/app/components/ui/Modal";
 
 interface Account {
@@ -380,6 +381,8 @@ interface ImportCsvModalProps {
 }
 
 export function ImportCsvModal({ open, onClose, onComplete, accounts, categories }: ImportCsvModalProps) {
+  const i18n = useTranslations("csv");
+  const i18nc = useTranslations("common");
   const fileRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>("upload");
   const [allRows, setAllRows] = useState<string[][]>([]);
@@ -406,7 +409,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
       const text = ev.target?.result as string;
       const rows = parseCSV(text);
       if (rows.length < 2) {
-        setError("CSV file must have at least 2 rows");
+        setError(i18n("minRows"));
         return;
       }
       setAllRows(rows);
@@ -464,7 +467,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
 
   const handleImport = async () => {
     if (!hasAccountColumn && !accountId) {
-      setError("Please select a target account or map an Account column");
+      setError(i18nc("error"));
       return;
     }
 
@@ -491,7 +494,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Import failed");
+        setError(data.error || i18nc("error"));
         return;
       }
 
@@ -499,7 +502,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
       setResult(data);
       setStep("done");
     } catch {
-      setError("Import failed");
+      setError(i18nc("error"));
     } finally {
       setImporting(false);
     }
@@ -521,12 +524,12 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
     "w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50";
 
   return (
-    <Modal open={open} onClose={handleClose} title="Import CSV" className="w-full max-w-2xl">
+    <Modal open={open} onClose={handleClose} title={i18n("title")} className="w-full max-w-2xl">
       {/* Step 1: Upload */}
       {step === "upload" && (
         <div className="flex flex-col items-center gap-4 py-4">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Upload a CSV file exported from your bank.
+            {i18n("uploadPrompt")}
           </p>
           <input
             ref={fileRef}
@@ -552,7 +555,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
                 onChange={(e) => setHasHeader(e.target.checked)}
                 className="accent-zinc-900 dark:accent-zinc-50"
               />
-              First row is a header
+              {i18n("firstRowHeader")}
             </label>
           </div>
 
@@ -600,7 +603,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
 
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Date Format</label>
+              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{i18n("dateFormat")}</label>
               <select value={dateFormat} onChange={(e) => setDateFormat(e.target.value)} className={inputClass}>
                 {DATE_FORMATS.map((f) => (
                   <option key={f.value} value={f.value}>{f.label}</option>
@@ -609,7 +612,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
             </div>
             {!hasAccountColumn && (
               <div className="flex-1">
-                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Target Account</label>
+                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{i18n("targetAccount")}</label>
                 <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputClass}>
                   <option value="">Select account...</option>
                   {accounts.map((a) => (
@@ -622,7 +625,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
 
           {hasAccountColumn && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Account will be matched by name from the CSV. Rows with unrecognized account names will be skipped.
+              {i18n("accountMatchNote")}
             </p>
           )}
 
@@ -639,14 +642,14 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
                 onClick={() => { setStep("upload"); setAllRows([]); setColumnMapping({}); }}
                 className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
-                Back
+                {i18nc("back")}
               </button>
               <button
                 onClick={handleImport}
                 disabled={importing || !hasRequiredMapping()}
                 className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
               >
-                {importing ? "Importing..." : `Import ${dataRows.length} Transactions`}
+                {importing ? i18nc("importing") : i18n("importButton", { count: dataRows.length })}
               </button>
             </div>
           </div>
@@ -671,7 +674,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
             onClick={handleClose}
             className="cursor-pointer rounded-md bg-zinc-900 px-6 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            Done
+            {i18nc("done")}
           </button>
         </div>
       )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale } from "@/app/components/LocaleProvider";
 
 interface MonthPickerProps {
   year: number;
@@ -8,10 +9,12 @@ interface MonthPickerProps {
   onChange: (year: number, month: number) => void;
 }
 
-const SHORT_MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
+function getShortMonths(locale: string): string[] {
+  const formatter = new Intl.DateTimeFormat(locale, { month: "short" });
+  return Array.from({ length: 12 }, (_, i) =>
+    formatter.format(new Date(2000, i, 1))
+  );
+}
 
 function addMonths(y: number, m: number, delta: number): { y: number; m: number } {
   let newM = m + delta;
@@ -28,8 +31,9 @@ function addMonths(y: number, m: number, delta: number): { y: number; m: number 
 }
 
 export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
-  // anchorEnd is the rightmost (most recent) month shown in the 12-month window.
-  // Defaults to the current calendar month.
+  const { locale } = useLocale();
+  const shortMonths = getShortMonths(locale);
+
   const now = new Date();
   const [anchorEnd, setAnchorEnd] = useState({ y: now.getFullYear(), m: now.getMonth() });
 
@@ -78,7 +82,7 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
                   : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
               }`}
             >
-              {SHORT_MONTHS[m]}
+              {shortMonths[m]}
               {showYear && <span className="ml-1 text-xs opacity-60">{y}</span>}
             </button>
           );

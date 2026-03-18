@@ -5,23 +5,27 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/app/lib/utils";
 import { useTheme } from "@/app/components/ThemeProvider";
 import { ChevronDownIcon, SunIcon, MoonIcon } from "@heroicons/react/24/outline";
 
-const NAV_ITEMS = [
-  { href: "/overview", label: "Overview" },
-  { href: "/category", label: "Category" },
-  { href: "/budget", label: "Budget" },
-  { href: "/account", label: "Account" },
-  { href: "/transaction", label: "Transaction" },
-];
-
 export function Topbar({ userName }: { userName?: string | null }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
+  const i18n = useTranslations("nav");
+  const i18nAuth = useTranslations("auth");
+  const i18nSetting = useTranslations("setting");
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const NAV_ITEMS = [
+    { href: "/overview", label: i18n("overview") },
+    { href: "/category", label: i18n("category") },
+    { href: "/budget", label: i18n("budget") },
+    { href: "/account", label: i18n("account") },
+    { href: "/transaction", label: i18n("transaction") },
+  ];
 
   const isDark = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
@@ -82,7 +86,7 @@ export function Topbar({ userName }: { userName?: string | null }) {
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="flex cursor-pointer items-center gap-1 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
               >
-                Welcome, {userName}
+                {i18n("welcome", { name: userName })}
                 <ChevronDownIcon className={`h-3.5 w-3.5 transition-transform ${menuOpen ? "rotate-180" : ""}`} />
               </button>
               {menuOpen && (
@@ -92,14 +96,14 @@ export function Topbar({ userName }: { userName?: string | null }) {
                     onClick={() => setMenuOpen(false)}
                     className="cursor-pointer block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                   >
-                    Profile
+                    {i18n("profile")}
                   </Link>
                   <Link
                     href="/setting"
                     onClick={() => setMenuOpen(false)}
                     className="cursor-pointer block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                   >
-                    Setting
+                    {i18n("setting")}
                   </Link>
                   <div className="border-t border-zinc-200 dark:border-zinc-700">
                     <button
@@ -108,7 +112,7 @@ export function Topbar({ userName }: { userName?: string | null }) {
                     >
                       <span className="flex items-center gap-2">
                         {isDark ? <MoonIcon className="h-4 w-4" /> : <SunIcon className="h-4 w-4" />}
-                        {isDark ? "Dark" : "Light"}
+                        {isDark ? i18nSetting("dark") : i18nSetting("light")}
                       </span>
                       <div
                         className={`relative h-5 w-9 rounded-full transition-colors ${
@@ -131,7 +135,7 @@ export function Topbar({ userName }: { userName?: string | null }) {
             onClick={() => signOut({ redirectTo: "/login" })}
             className="cursor-pointer rounded-md bg-red-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
           >
-            Log out
+            {i18nAuth("logout")}
           </button>
         </div>
       </div>
