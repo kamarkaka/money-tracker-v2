@@ -14,6 +14,7 @@ interface DataTableProps<T> {
   keyExtractor: (item: T) => string;
   emptyMessage?: string;
   onRowClick?: (item: T) => void;
+  selectedKeys?: Set<string>;
   sortKey?: string;
   sortOrder?: "asc" | "desc";
   onSort?: (key: string) => void;
@@ -25,6 +26,7 @@ export function DataTable<T>({
   keyExtractor,
   emptyMessage = "No data found.",
   onRowClick,
+  selectedKeys,
   sortKey,
   sortOrder,
   onSort,
@@ -69,12 +71,17 @@ export function DataTable<T>({
           </tr>
         </thead>
         <tbody>
-          {data.map((item) => (
+          {data.map((item, index) => {
+            const isSelected = selectedKeys?.has(keyExtractor(item));
+            return (
             <tr
               key={keyExtractor(item)}
               onClick={() => onRowClick?.(item)}
               className={cn(
-                "border-b border-zinc-100 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50",
+                "border-b border-zinc-100 hover:bg-blue-100 dark:border-zinc-800 dark:hover:bg-blue-900/40",
+                isSelected
+                  ? "bg-blue-50 dark:bg-blue-900/30"
+                  : index % 2 === 1 && "bg-zinc-100 dark:bg-zinc-800/70",
                 onRowClick && "cursor-pointer"
               )}
             >
@@ -92,7 +99,8 @@ export function DataTable<T>({
                 </td>
               ))}
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>

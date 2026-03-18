@@ -432,6 +432,7 @@ export default function TransactionPage() {
           keyExtractor={(t) => t.id}
           emptyMessage={i18n("noTransactions")}
           onRowClick={(t) => toggleSelect(t.id)}
+          selectedKeys={selectedIds}
           sortKey={sortKey}
           sortOrder={sortOrder}
           onSort={handleSort}
