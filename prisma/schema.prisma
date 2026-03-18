@@ -12,91 +12,86 @@ model User {
   email                String        @unique @db.VarChar(255)
   passwordHash         String?       @map("password_hash") @db.VarChar(255)
   name                 String?       @db.VarChar(100)
+  sophtronCustomerId   String?       @map("sophtron_customer_id") @db.Uuid
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   image                String?       @db.VarChar(500)
   authProvider         String        @default("credentials") @map("auth_provider") @db.VarChar(50)
   googleId             String?       @unique @map("google_id") @db.VarChar(255)
-  sophtronCustomerId   String?       @map("sophtron_customer_id") @db.Uuid
   hasCompletedTutorial Boolean       @default(false) @map("has_completed_tutorial")
-  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt            DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
-
-  institutions Institution[]
-  accounts     Account[]
-  categories   Category[]
-  budgets      Budget[]
-  transactions Transaction[]
-  setting      UserSetting?
+  accounts             Account[]
+  budgets              Budget[]
+  categories           Category[]
+  institutions         Institution[]
+  transactions         Transaction[]
+  setting              UserSetting?
 
   @@map("user")
 }
 
 model UserSetting {
-  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String @unique @map("user_id") @db.Uuid
-  theme     String @default("system") @db.VarChar(20)
-  language  String @default("en") @map("language") @db.VarChar(10)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId   String  @unique @map("user_id") @db.Uuid
+  theme    String  @default("system") @db.VarChar(20)
+  language String? @default("en") @db.VarChar(10)
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_setting")
 }
 
 model Institution {
-  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId                String   @map("user_id") @db.Uuid
-  sophtronMemberId      String?  @map("sophtron_member_id") @db.Uuid
-  name                  String   @db.VarChar(255)
-  isManual              Boolean  @default(false) @map("is_manual")
-  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  sophtronMemberId String?   @map("sophtron_member_id") @db.Uuid
+  name             String    @db.VarChar(255)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  isManual         Boolean   @default(false) @map("is_manual")
+  accounts         Account[]
+  user             User      @relation(fields: [userId], references: [id])
 
-  user     User      @relation(fields: [userId], references: [id])
-  accounts Account[]
-
-  @@index([userId])
   @@unique([userId, sophtronMemberId])
+  @@index([userId])
   @@map("institution")
 }
 
 model Account {
-  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  institutionId     String   @map("institution_id") @db.Uuid
-  userId            String   @map("user_id") @db.Uuid
-  sophtronAccountId String?  @map("sophtron_account_id") @db.Uuid
-  sophtronMemberId  String?  @map("sophtron_member_id") @db.Uuid
-  name              String   @db.VarChar(255)
-  type              String   @db.VarChar(50)
-  subtype           String?  @db.VarChar(50)
-  balance           Decimal  @default(0) @db.Decimal(14, 2)
-  currency          String   @default("USD") @db.VarChar(3)
-  isHidden          Boolean  @default(false) @map("is_hidden")
-  isManual          Boolean  @default(false) @map("is_manual")
-  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  institutionId     String        @map("institution_id") @db.Uuid
+  userId            String        @map("user_id") @db.Uuid
+  sophtronAccountId String?       @map("sophtron_account_id") @db.Uuid
+  sophtronMemberId  String?       @map("sophtron_member_id") @db.Uuid
+  name              String        @db.VarChar(255)
+  type              String        @db.VarChar(50)
+  subtype           String?       @db.VarChar(50)
+  balance           Decimal       @default(0) @db.Decimal(14, 2)
+  currency          String        @default("USD") @db.VarChar(3)
+  isHidden          Boolean       @default(false) @map("is_hidden")
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  isManual          Boolean       @default(false) @map("is_manual")
+  institution       Institution   @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  user              User          @relation(fields: [userId], references: [id])
+  transactions      Transaction[]
 
-  institution  Institution   @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-  user         User          @relation(fields: [userId], references: [id])
-  transactions Transaction[]
-
+  @@unique([userId, sophtronAccountId])
   @@index([institutionId])
   @@index([userId])
-  @@unique([userId, sophtronAccountId])
   @@map("account")
 }
 
 model Category {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  name      String   @db.VarChar(100)
-  parentId  String?  @map("parent_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
-
-  user           User              @relation(fields: [userId], references: [id])
-  parent         Category?         @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children       Category[]        @relation("CategoryHierarchy")
-  transactions   Transaction[]
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String          @map("user_id") @db.Uuid
+  name           String          @db.VarChar(100)
+  parentId       String?         @map("parent_id") @db.Uuid
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   budgetCategory BudgetCategory?
+  parent         Category?       @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children       Category[]      @relation("CategoryHierarchy")
+  user           User            @relation(fields: [userId], references: [id])
+  transactions   Transaction[]
 
   @@index([userId])
   @@index([parentId])
@@ -104,13 +99,12 @@ model Category {
 }
 
 model Budget {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  name      String   @db.VarChar(100)
-  amount    Decimal  @default(0) @db.Decimal(14, 2)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
-
+  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String           @map("user_id") @db.Uuid
+  name       String           @db.VarChar(100)
+  amount     Decimal          @default(0) @db.Decimal(14, 2)
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   user       User             @relation(fields: [userId], references: [id])
   categories BudgetCategory[]
 
@@ -119,12 +113,11 @@ model Budget {
 }
 
 model BudgetCategory {
-  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  budgetBucketId String @map("budget_bucket_id") @db.Uuid
-  categoryId     String @unique @map("category_id") @db.Uuid
-
-  budget   Budget   @relation(fields: [budgetBucketId], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  budgetBucketId String   @map("budget_bucket_id") @db.Uuid
+  categoryId     String   @unique @map("category_id") @db.Uuid
+  budget         Budget   @relation(fields: [budgetBucketId], references: [id], onDelete: Cascade)
+  category       Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@index([budgetBucketId])
   @@map("budget_category")
@@ -134,35 +127,34 @@ model PasswordResetToken {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email     String   @db.VarChar(255)
   token     String   @unique @db.VarChar(255)
-  expiresAt DateTime @map("expires_at") @db.Timestamptz()
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([email])
   @@map("password_reset_token")
 }
 
 model Transaction {
-  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId                String   @map("user_id") @db.Uuid
-  accountId             String   @map("account_id") @db.Uuid
-  categoryId            String?  @map("category_id") @db.Uuid
-  sophtronTransactionId String?  @map("sophtron_transaction_id") @db.VarChar(255)
-  description           String   @db.VarChar(500)
-  amount                Decimal  @db.Decimal(14, 2)
-  date                  DateTime @db.Date
-  isHidden              Boolean  @default(false) @map("is_hidden")
-  isManual              Boolean  @default(false) @map("is_manual")
-  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String    @map("user_id") @db.Uuid
+  accountId             String    @map("account_id") @db.Uuid
+  categoryId            String?   @map("category_id") @db.Uuid
+  sophtronTransactionId String?   @map("sophtron_transaction_id") @db.VarChar(255)
+  description           String    @db.VarChar(500)
+  amount                Decimal   @db.Decimal(14, 2)
+  date                  DateTime  @db.Date
+  isHidden              Boolean   @default(false) @map("is_hidden")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  isManual              Boolean   @default(false) @map("is_manual")
+  account               Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category              Category? @relation(fields: [categoryId], references: [id])
+  user                  User      @relation(fields: [userId], references: [id])
 
-  user     User      @relation(fields: [userId], references: [id])
-  account  Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-
+  @@unique([userId, sophtronTransactionId])
   @@index([userId, date])
   @@index([accountId])
   @@index([categoryId])
   @@index([sophtronTransactionId])
-  @@unique([userId, sophtronTransactionId])
   @@map("transaction")
 }
