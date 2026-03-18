@@ -67,14 +67,13 @@ export function AddTransactionModal({
   }
 
   const handleSubmit = async (mode: "close" | "next") => {
-    if (!accountId || !description.trim() || !amount || !date) {
-      setError(i18nc("error"));
-      return;
-    }
+    if (!accountId) { setError(i18n("accountRequired")); return; }
+    if (!description.trim()) { setError(i18n("descriptionRequired")); return; }
+    if (!date) { setError(i18n("dateRequired")); return; }
 
     const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount) || parsedAmount === 0) {
-      setError(i18nc("error"));
+    if (!amount || isNaN(parsedAmount) || parsedAmount === 0) {
+      setError(i18n("amountRequired"));
       return;
     }
 

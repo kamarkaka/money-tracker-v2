@@ -133,14 +133,12 @@ export function EditTransactionModal({
       };
 
       if (isManual) {
-        if (!accountId || !description.trim() || !amount || !date) {
-          setError(i18nc("error"));
-          setSaving(false);
-          return;
-        }
+        if (!accountId) { setError(i18n("accountRequired")); setSaving(false); return; }
+        if (!description.trim()) { setError(i18n("descriptionRequired")); setSaving(false); return; }
+        if (!date) { setError(i18n("dateRequired")); setSaving(false); return; }
         const parsedAmount = parseFloat(amount);
-        if (isNaN(parsedAmount) || parsedAmount === 0) {
-          setError(i18nc("error"));
+        if (!amount || isNaN(parsedAmount) || parsedAmount === 0) {
+          setError(i18n("amountRequired"));
           setSaving(false);
           return;
         }
