@@ -66,7 +66,7 @@ export function AddTransactionModal({
     }
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (mode: "close" | "next") => {
     if (!accountId || !description.trim() || !amount || !date) {
       setError(i18nc("error"));
       return;
@@ -100,13 +100,13 @@ export function AddTransactionModal({
         return;
       }
 
-      // Reset form
-      setDescription("");
-      setAmount("");
-      setDate(new Date().toISOString().split("T")[0]);
-      setCategoryId("");
-      onClose();
       onComplete();
+
+      if (mode === "next") {
+        setAmount("");
+      } else {
+        onClose();
+      }
     } catch {
       setError(i18nc("error"));
     } finally {
@@ -223,11 +223,19 @@ export function AddTransactionModal({
           </button>
           <button
             type="button"
-            onClick={handleSubmit}
+            onClick={() => handleSubmit("close")}
             disabled={saving}
             className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            {saving ? i18nc("adding") : i18n("addTransaction")}
+            {saving ? i18nc("adding") : i18n("addAndClose")}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSubmit("next")}
+            disabled={saving}
+            className="cursor-pointer rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-600"
+          >
+            {saving ? i18nc("adding") : i18n("addAndNext")}
           </button>
         </div>
       </div>

@@ -145,6 +145,8 @@
     "bankSyncedNote": "This is a bank-synced transaction. Only category and visibility can be changed.",
     "selectAccount": "Select account...",
     "none": "None",
+    "addAndClose": "Add & Close",
+    "addAndNext": "Add & Next",
     "saveAndClose": "Save & Close",
     "saveAndNext": "Save & Next",
     "assignCategory": "Assign category...",

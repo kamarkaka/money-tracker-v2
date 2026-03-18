@@ -76,6 +76,7 @@ export default function SettingPage() {
                     : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
                 }`}
               >
+                <span className="text-3xl">{loc.flag}</span>
                 <span className={`text-base font-medium ${selected ? "text-zinc-900 dark:text-zinc-50" : "text-zinc-600 dark:text-zinc-400"}`}>
                   {loc.nativeLabel}
                 </span>
