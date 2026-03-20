@@ -64,6 +64,7 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
             alt="App Logo"
             width={32}
             height={32}
+            unoptimized
             className="rounded-sm"
           />
           <Link href="/overview" className="cursor-pointer text-lg font-bold text-zinc-900 dark:text-zinc-50 mr-8
