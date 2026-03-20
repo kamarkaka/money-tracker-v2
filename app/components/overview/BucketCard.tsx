@@ -47,22 +47,35 @@ export function BucketCard({
   const pct = budgetAmount > 0 ? Math.min((spent / budgetAmount) * 100, 100) : 0;
   const isOver = budgetAmount > 0 && spent > budgetAmount;
 
-  // Expense: green at ≤50%, gradient to red at 100%
-  // Income: red at ≤50%, gradient to green at 100%
+  // Green until 50%, then green -> yellow -> orange -> red from 50%-100%
   const ratio = budgetAmount > 0 ? Math.min(spent / budgetAmount, 1) : 0;
-  const t = ratio <= 0.5 ? 0 : (ratio - 0.5) / 0.5;
-  let barColor: string;
-  if (isIncome) {
-    const r = Math.round(239 - t * (205));   // red(239) → green(34)
-    const g = Math.round(68 + t * (129));    // red(68)  → green(197)
-    const b = Math.round(68 + t * (26));     // red(68)  → green(94)
-    barColor = spent > budgetAmount ? "rgb(34, 197, 94)" : `rgb(${r}, ${g}, ${b})`;
-  } else {
-    const r = Math.round(34 + t * (205));    // green(34)  → red(239)
-    const g = Math.round(197 - t * (129));   // green(197) → red(68)
-    const b = Math.round(94 - t * (26));     // green(94)  → red(68)
-    barColor = spent > budgetAmount ? "rgb(239, 68, 68)" : `rgb(${r}, ${g}, ${b})`;
+
+  function interpolateColor(t: number, colorStops: number[][]): string {
+    // Stay green until 50%, then transition across stops from 50%-100%
+    if (t <= 0.5) return `rgb(${colorStops[0][0]}, ${colorStops[0][1]}, ${colorStops[0][2]})`;
+    if (t > 1) return  `rgb(${colorStops[colorStops.length - 1][0]}, ${colorStops[colorStops.length - 1][1]}, ${colorStops[colorStops.length - 1][2]})`;
+
+    const adjusted = (t - 0.5) / 0.5; // remap 0.5-1.0 -> 0-1
+    const segment = adjusted * (colorStops.length - 1);
+    const si = Math.min(Math.floor(segment), colorStops.length - 2);
+    const sf = segment - si;
+    const cr = Math.round(colorStops[si][0] + sf * (colorStops[si + 1][0] - colorStops[si][0]));
+    const cg = Math.round(colorStops[si][1] + sf * (colorStops[si + 1][1] - colorStops[si][1]));
+    const cb = Math.round(colorStops[si][2] + sf * (colorStops[si + 1][2] - colorStops[si][2]));
+    return `rgb(${cr}, ${cg}, ${cb})`;
   }
+
+  let stops = [
+    [34, 197, 94],  // green
+    [220, 200, 40], // yellow
+    [230, 126,34],  // orange
+    [239, 68, 68],  // red
+  ];
+  if (isIncome) {
+    stops = stops.reverse();
+  }
+
+  const barColor = interpolateColor(ratio, stops);
 
   return (
     <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
@@ -90,7 +103,7 @@ export function BucketCard({
           <div className="relative h-8 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
             <div
               className="h-full rounded-full transition-all"
-              style={{ width: `${pct}%`, backgroundColor: barColor }}
+              style={{ width: `${pct}%`, backgroundColor: `${barColor}` }}
             />
             <div className="absolute inset-0 flex items-center justify-between px-3 text-sm font-semibold">
               <span className={pct > 15 ? "text-white" : "text-zinc-600 dark:text-zinc-300"}>

@@ -204,6 +204,15 @@ export default function OverviewPage() {
               onUpdateCategory={handleUpdateCategory}
             />
           )}
+          {[50,55,60,65,70,75,80,85,90,95,100].map((pct) => (
+            <BucketCard
+              key={`demo-${pct}`}
+              name={`demo-${pct}%`}
+              total={-pct}
+              budgetAmount={100}
+              transactions={[]}
+            />
+          ))}
           <UncategorizedSection
             transactions={uncategorized}
             categories={categories}

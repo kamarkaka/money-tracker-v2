@@ -23,7 +23,6 @@ interface BucketEditorProps {
   bucket: BudgetBucket;
   allCategories: Category[];
   assignedCategoryIds: Set<string>;
-  spent: number;
   onUpdate: (id: string, name: string, categoryIds: string[], amount: number) => Promise<void>;
   onDelete: (id: string) => void;
 }
@@ -32,7 +31,6 @@ export function BucketEditor({
   bucket,
   allCategories,
   assignedCategoryIds,
-  spent,
   onUpdate,
   onDelete,
 }: BucketEditorProps) {
@@ -149,37 +147,6 @@ export function BucketEditor({
                 ))
               )}
             </div>
-            {Number(bucket.amount) > 0 && (() => {
-              const budgetAmt = Number(bucket.amount);
-              const pct = Math.min((spent / budgetAmt) * 100, 100);
-              const isOver = spent > budgetAmt;
-              const ratio = Math.min(spent / budgetAmt, 1);
-              const interpolation = ratio <= 0.5 ? 0 : (ratio - 0.5) / 0.5;
-              const r = Math.round(34 + interpolation * 205);
-              const g = Math.round(197 - interpolation * 135);
-              const b = Math.round(94 - interpolation * 26);
-              const barColor = isOver ? "rgb(239, 68, 68)" : `rgb(${r}, ${g}, ${b})`;
-              return (
-              <div className="mt-3">
-                <div className="relative h-8 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{ width: `${pct}%`, backgroundColor: barColor }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-between px-3 text-sm font-semibold">
-                    <span className={pct > 15 ? "text-white" : "text-zinc-600 dark:text-zinc-300"}>
-                      {formatCurrency(spent)} spent
-                    </span>
-                    <span className={pct > 85 ? "text-white" : "text-zinc-500 dark:text-zinc-400"}>
-                      {isOver
-                        ? `${formatCurrency(spent - budgetAmt)} over`
-                        : `${formatCurrency(budgetAmt - spent)} left`}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              );
-            })()}
           </div>
           <div className="flex gap-2">
             <button
