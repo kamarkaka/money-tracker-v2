@@ -394,7 +394,7 @@ export default function TransactionPage() {
       </div>
 
       {selectedIds.size > 0 && (
-        <div className="sticky top-0 z-10 mb-4 flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="sticky top-16 z-10 mb-4 flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             {i18nc("selected", { count: selectedIds.size })}
           </span>
