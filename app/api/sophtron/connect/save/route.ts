@@ -3,6 +3,7 @@ import { auth } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/db";
 import { SophtronClientV2 } from "@/app/lib/sophtron";
 import { randomUUID } from "crypto";
+import { getUserRules, matchRuleFromList } from "@/app/lib/rules";
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -35,6 +36,9 @@ export async function POST(request: NextRequest) {
     let institutionsUpserted = 0;
     let accountsUpserted = 0;
     let transactionsUpserted = 0;
+
+    // Fetch rules once for batch matching
+    const rules = await getUserRules(userId);
 
     let membersToSync: string[];
 
@@ -157,6 +161,7 @@ export async function POST(request: NextRequest) {
                 },
               });
             } else {
+              const ruleCategory = matchRuleFromList(rules, txn.Description || "");
               await prisma.transaction.create({
                 data: {
                   id: randomUUID(),
@@ -166,6 +171,7 @@ export async function POST(request: NextRequest) {
                   description: txn.Description || "Unknown",
                   amount,
                   date: new Date(txn.TransactionDate),
+                  categoryId: ruleCategory,
                 },
               });
             }

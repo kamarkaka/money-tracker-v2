@@ -11,10 +11,14 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, name: true, email: true, authProvider: true, hasCompletedTutorial: true },
+    select: { id: true, name: true, email: true, authProvider: true, hasCompletedTutorial: true, passwordHash: true },
   });
 
-  return NextResponse.json(user);
+  return NextResponse.json({
+    ...user,
+    hasPassword: !!user?.passwordHash,
+    passwordHash: undefined,
+  });
 }
 
 export async function PUT(request: NextRequest) {

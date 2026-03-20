@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/db";
+import { getUserRules, matchRuleFromList } from "@/app/lib/rules";
 
 interface ColumnMapping {
   date: number;
@@ -155,6 +156,9 @@ export async function POST(request: NextRequest) {
   let imported = 0;
   let skipped = 0;
 
+  // Fetch rules once for batch matching
+  const rules = await getUserRules(session.user.id);
+
   await prisma.$transaction(async (tx) => {
     for (const row of rows) {
       const dateStr = row[columnMapping.date];
@@ -210,6 +214,11 @@ export async function POST(request: NextRequest) {
         if (catName) {
           categoryId = categoryByName.get(catName.toLowerCase()) || null;
         }
+      }
+
+      // Apply category rules if no category resolved
+      if (!categoryId) {
+        categoryId = matchRuleFromList(rules, description);
       }
 
       await tx.transaction.create({

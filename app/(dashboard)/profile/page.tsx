@@ -10,6 +10,7 @@ interface UserProfile {
   name: string | null;
   email: string;
   authProvider: string;
+  hasPassword: boolean;
 }
 
 export default function ProfilePage() {
@@ -206,7 +207,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Change Password - only for credentials users */}
-        {profile?.authProvider === "credentials" && (
+        {profile?.hasPassword && (
           <div className="flex-1 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">{i18n("changePassword")}</h2>
             {passwordMessage && (

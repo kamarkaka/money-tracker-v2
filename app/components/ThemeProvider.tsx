@@ -18,19 +18,27 @@ export function useTheme() {
   return useContext(ThemeContext);
 }
 
-function applyTheme(theme: Theme) {
+function applyTheme(theme: Theme, animate = false) {
   const root = document.documentElement;
+
+  if (animate) {
+    root.classList.add("theme-transitioning");
+  }
+
   if (theme === "dark") {
     root.classList.add("dark");
   } else if (theme === "light") {
     root.classList.remove("dark");
   } else {
-    // system - check media query
     if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
     }
+  }
+
+  if (animate) {
+    setTimeout(() => root.classList.remove("theme-transitioning"), 1100);
   }
 }
 
@@ -67,7 +75,7 @@ export function ThemeProvider({ children } : { children: React.ReactNode}) {
 
   const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
-    applyTheme(newTheme);
+    applyTheme(newTheme, true);
 
     // Persist to server (fire-and-forget)
     fetch("/api/setting", {

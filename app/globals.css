@@ -31,6 +31,13 @@ button {
   user-select: none;
 }
 
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+  transition: background-color 1s ease, color 1s ease, border-color 1s ease, box-shadow 1s ease !important;
+}
+
 @keyframes fade-in-up {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }

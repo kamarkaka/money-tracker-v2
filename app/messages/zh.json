@@ -58,6 +58,7 @@
     "budget": "预算",
     "account": "账户",
     "transaction": "交易",
+    "rule": "规则",
     "profile": "个人资料",
     "setting": "设置",
     "welcome": "欢迎，{name}"
@@ -142,6 +143,7 @@
     "hide": "隐藏",
     "unhide": "取消隐藏",
     "hiddenFromReports": "从报告中隐藏",
+    "createRule": "为此描述创建规则",
     "bankSyncedNote": "这是银行同步的交易。只能更改分类和可见性。",
     "accountRequired": "请选择一个账户",
     "descriptionRequired": "请输入描述",
@@ -215,6 +217,19 @@
     "systemDesc": "跟随浏览器设置",
     "language": "语言",
     "languageDesc": "选择您偏好的显示语言。"
+  },
+  "rule": {
+    "title": "规则",
+    "addRule": "添加规则",
+    "editRule": "编辑规则",
+    "deleteRule": "删除规则",
+    "matchString": "匹配字符串",
+    "targetCategory": "目标分类",
+    "deleteWarning": "确定要删除此规则吗？",
+    "noRules": "还没有规则",
+    "noRulesDesc": "创建规则以根据交易描述自动分类交易。",
+    "matchPlaceholder": "例如：costco、amazon、netflix",
+    "selectCategory": "选择分类..."
   },
   "tutorial": {
     "welcome": "欢迎使用 Money Tracker 2！",

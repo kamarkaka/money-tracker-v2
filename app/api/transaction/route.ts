@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/db";
+import { matchRule } from "@/app/lib/rules";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -112,6 +113,12 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Apply category rules if no category specified
+  let resolvedCategoryId = categoryId || null;
+  if (!resolvedCategoryId) {
+    resolvedCategoryId = await matchRule(session.user.id, description);
+  }
+
   const transaction = await prisma.transaction.create({
     data: {
       userId: session.user.id,
@@ -119,7 +126,7 @@ export async function POST(request: NextRequest) {
       description,
       amount,
       date: new Date(date),
-      categoryId: categoryId || null,
+      categoryId: resolvedCategoryId,
       isManual: true,
     },
     include: {

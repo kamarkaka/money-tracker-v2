@@ -60,6 +60,7 @@ export function EditTransactionModal({
   const [date, setDate] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [isHidden, setIsHidden] = useState(false);
+  const [createRule, setCreateRule] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -73,6 +74,7 @@ export function EditTransactionModal({
       setDate(transaction.date.split("T")[0]);
       setCategoryId(transaction.categoryId || "");
       setIsHidden(transaction.isHidden);
+      setCreateRule(true);
       setError("");
     }
   }, [transaction, open]);
@@ -111,15 +113,12 @@ export function EditTransactionModal({
     return false;
   };
 
-  const handleSubmit = async (mode: "close" | "next") => {
+  const handleSubmit = async (mode: "save" | "next") => {
     const changed = hasChanges();
+    const wantsRule = createRule && !!categoryId;
 
-    if (!changed) {
-      if (mode === "next" && onNext) {
-        onNext();
-      } else {
-        onClose();
-      }
+    if (!changed && !wantsRule) {
+      if (mode === "next" && onNext) onNext();
       return;
     }
 
@@ -148,23 +147,33 @@ export function EditTransactionModal({
         body.date = date;
       }
 
-      const res = await fetch(`/api/transaction/${transaction.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      if (changed) {
+        const res = await fetch(`/api/transaction/${transaction.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
 
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || i18nc("error"));
-        return;
+        if (!res.ok) {
+          const data = await res.json();
+          setError(data.error || i18nc("error"));
+          return;
+        }
       }
 
-      onComplete();
+      // Create a category rule if requested
+      if (createRule && categoryId) {
+        const desc = isManual ? description.trim() : transaction.description;
+        await fetch("/api/rules", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ match: desc, categoryId }),
+        });
+      }
+
+      if (changed) onComplete();
       if (mode === "next" && onNext) {
         onNext();
-      } else {
-        onClose();
       }
     } catch {
       setError(i18nc("error"));
@@ -191,7 +200,7 @@ export function EditTransactionModal({
             <button
               type="button"
               onClick={onPrev}
-              disabled={!hasPrev}
+              disabled={!hasPrev || hasChanges()}
               className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               &#8592; {i18nc("prev")}
@@ -199,7 +208,7 @@ export function EditTransactionModal({
             <button
               type="button"
               onClick={onNext}
-              disabled={!hasNext}
+              disabled={!hasNext || hasChanges()}
               className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               {i18nc("next")} &#8594;
@@ -316,17 +325,33 @@ export function EditTransactionModal({
           </select>
         </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="edit-hidden"
-            checked={isHidden}
-            onChange={(e) => setIsHidden(e.target.checked)}
-            className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600"
-          />
-          <label htmlFor="edit-hidden" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            {i18n("hiddenFromReports")}
-          </label>
+        <div className="flex flex-col gap-2">
+          {categoryId && (
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="edit-create-rule"
+                checked={createRule}
+                onChange={(e) => setCreateRule(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600"
+              />
+              <label htmlFor="edit-create-rule" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                {i18n("createRule")}
+              </label>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="edit-hidden"
+              checked={isHidden}
+              onChange={(e) => setIsHidden(e.target.checked)}
+              className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600"
+            />
+            <label htmlFor="edit-hidden" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              {i18n("hiddenFromReports")}
+            </label>
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
@@ -339,11 +364,11 @@ export function EditTransactionModal({
           </button>
           <button
             type="button"
-            onClick={() => handleSubmit("close")}
+            onClick={() => handleSubmit("save")}
             disabled={saving}
             className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            {saving ? i18nc("saving") : i18n("saveAndClose")}
+            {saving ? i18nc("saving") : i18nc("save")}
           </button>
           {onNext && (
             <button

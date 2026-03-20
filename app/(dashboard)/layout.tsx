@@ -12,5 +12,5 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  return <AppShell userName={session.user.name}>{children}</AppShell>;
+  return <AppShell userName={session.user.name} userImage={session.user.image}>{children}</AppShell>;
 }

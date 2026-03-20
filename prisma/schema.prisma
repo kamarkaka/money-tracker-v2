@@ -22,6 +22,7 @@ model User {
   accounts             Account[]
   budgets              Budget[]
   categories           Category[]
+  categoryRules        CategoryRule[]
   institutions         Institution[]
   transactions         Transaction[]
   setting              UserSetting?
@@ -88,6 +89,7 @@ model Category {
   createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   budgetCategory BudgetCategory?
+  categoryRules  CategoryRule[]
   parent         Category?       @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children       Category[]      @relation("CategoryHierarchy")
   user           User            @relation(fields: [userId], references: [id])
@@ -157,4 +159,20 @@ model Transaction {
   @@index([categoryId])
   @@index([sophtronTransactionId])
   @@map("transaction")
+}
+
+model CategoryRule {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  sequence   Int      @default(0)
+  match      String   @db.VarChar(255)
+  categoryId String   @map("category_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user     User     @relation(fields: [userId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([userId, sequence])
+  @@map("category_rule")
 }

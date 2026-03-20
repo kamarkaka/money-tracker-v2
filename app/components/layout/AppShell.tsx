@@ -9,9 +9,10 @@ import { LocaleProvider } from "@/app/components/LocaleProvider";
 interface AppShellProps {
   children: React.ReactNode;
   userName?: string | null;
+  userImage?: string | null;
 }
 
-export function AppShell({ children, userName }: AppShellProps) {
+export function AppShell({ children, userName, userImage }: AppShellProps) {
   const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export function AppShell({ children, userName }: AppShellProps) {
     <ThemeProvider>
       <LocaleProvider>
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-          <Topbar userName={userName} />
+          <Topbar userName={userName} userImage={userImage} />
           <main className="mx-auto min-w-[960px] max-w-7xl px-6 py-8">{children}</main>
           {showTutorial && <TutorialOverlay onClose={() => setShowTutorial(false)} />}
         </div>
