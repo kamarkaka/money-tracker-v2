@@ -106,7 +106,8 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
                 className={`cursor-pointer flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-zinc-700 ring-2 hover:ring-zinc-400 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:ring-zinc-500 ${menuOpen ? "ring-zinc-400 dark:ring-zinc-500" : "ring-zinc-200 dark:ring-zinc-700"}`}
               >
                 {userImage ? (
-                  <Image
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
                     src={userImage}
                     alt={userName}
                     width={32}
