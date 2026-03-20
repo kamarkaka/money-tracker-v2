@@ -24,6 +24,7 @@ model User {
   categories           Category[]
   categoryRules        CategoryRule[]
   institutions         Institution[]
+  tags                 Tag[]
   transactions         Transaction[]
   setting              UserSetting?
 
@@ -149,9 +150,10 @@ model Transaction {
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   isManual              Boolean   @default(false) @map("is_manual")
-  account               Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  category              Category? @relation(fields: [categoryId], references: [id])
-  user                  User      @relation(fields: [userId], references: [id])
+  account               Account          @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category              Category?        @relation(fields: [categoryId], references: [id])
+  transactionTags       TransactionTag[]
+  user                  User             @relation(fields: [userId], references: [id])
 
   @@unique([userId, sophtronTransactionId])
   @@index([userId, date])
@@ -175,4 +177,34 @@ model CategoryRule {
 
   @@index([userId, sequence])
   @@map("category_rule")
+}
+
+model Tag {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String           @map("user_id") @db.Uuid
+  name            String           @db.VarChar(50)
+  color           String           @db.VarChar(7)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user            User             @relation(fields: [userId], references: [id])
+  transactionTags TransactionTag[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("tag")
+}
+
+model TransactionTag {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transactionId String      @map("transaction_id") @db.Uuid
+  tagId         String      @map("tag_id") @db.Uuid
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  tag           Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([transactionId, tagId])
+  @@index([transactionId])
+  @@index([tagId])
+  @@map("transaction_tag")
 }

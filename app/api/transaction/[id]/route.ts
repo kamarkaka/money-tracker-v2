@@ -13,7 +13,7 @@ export async function PUT(
 
   const { id } = await params;
   const body = await request.json();
-  const { categoryId, isHidden, description, amount, date, accountId } = body;
+  const { categoryId, isHidden, description, amount, date, accountId, tagIds } = body;
 
   const existing = await prisma.transaction.findUnique({
     where: { id, userId: session.user.id },
@@ -51,11 +51,35 @@ export async function PUT(
     }
   }
 
+  // Handle tag updates
+  if (tagIds !== undefined && Array.isArray(tagIds)) {
+    // Verify all tags belong to this user
+    if (tagIds.length > 0) {
+      const ownedTags = await prisma.tag.findMany({
+        where: { id: { in: tagIds }, userId: session.user.id },
+        select: { id: true },
+      });
+      if (ownedTags.length !== tagIds.length) {
+        return NextResponse.json({ error: "Tag not found" }, { status: 404 });
+      }
+    }
+
+    await prisma.$transaction([
+      prisma.transactionTag.deleteMany({ where: { transactionId: id } }),
+      ...(tagIds.length > 0
+        ? [prisma.transactionTag.createMany({
+            data: tagIds.map((tagId: string) => ({ transactionId: id, tagId })),
+          })]
+        : []),
+    ]);
+  }
+
   const transaction = await prisma.transaction.update({
     where: { id },
     data,
     include: {
       category: { select: { id: true, name: true } },
+      transactionTags: { include: { tag: { select: { id: true, name: true, color: true } } } },
     },
   });
 

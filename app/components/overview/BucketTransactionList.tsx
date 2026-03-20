@@ -12,6 +12,7 @@ interface Transaction {
   categoryId: string | null;
   category: { id: string; name: string } | null;
   account: { id: string; name: string };
+  transactionTags?: { tag: { id: string; name: string; color: string } }[];
 }
 
 interface Category {
@@ -45,7 +46,27 @@ export function BucketTransactionList({
       {transactions.map((t) => (
         <div key={t.id} className="flex items-center gap-2 px-4 py-2.5 text-sm">
           <span className="w-20 shrink-0 text-zinc-500 dark:text-zinc-400">{formatDate(t.date)}</span>
-          <span className="min-w-0 flex-1 truncate text-zinc-500 dark:text-zinc-400">{t.description}</span>
+          <span className="min-w-0 flex-1 flex items-center gap-1 truncate text-zinc-500 dark:text-zinc-400">
+            {t.description}
+            {t.transactionTags && t.transactionTags.length > 0 && (
+              <span className="flex items-center gap-0.5 shrink-0">
+                {t.transactionTags.map((tt) => (
+                  <span
+                    key={tt.tag.id}
+                    title={tt.tag.name}
+                    className="inline-block cursor-default"
+                    style={{
+                      backgroundColor: tt.tag.color,
+                      width: "14px",
+                      height: "10px",
+                      clipPath: "polygon(4px 0%, 100% 0%, 100% 100%, 4px 100%, 0% 50%)",
+                      borderRadius: "0 2px 2px 0",
+                    }}
+                  />
+                ))}
+              </span>
+            )}
+          </span>
           <span className="w-28 shrink-0 truncate text-xs text-zinc-400 dark:text-zinc-500">{t.account.name}</span>
           <div className="w-40 shrink-0">
             <TransactionCategoryEditor

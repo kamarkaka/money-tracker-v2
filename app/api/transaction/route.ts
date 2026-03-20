@@ -21,15 +21,32 @@ export async function GET(request: NextRequest) {
 
   const where: Record<string, unknown> = {
     userId: session.user.id,
-    account: { isHidden: false },
   };
 
   if (!includeHidden) {
     where.isHidden = false;
   }
 
-  if (accountId) where.accountId = accountId;
-  if (categoryId) where.categoryId = categoryId === "uncategorized" ? null : categoryId;
+  if (accountId) {
+    const ids = accountId.split(",").filter(Boolean);
+    where.accountId = ids.length === 1 ? ids[0] : { in: ids };
+  }
+  if (categoryId) {
+    const ids = categoryId.split(",").filter(Boolean);
+    if (ids.length === 1) {
+      where.categoryId = ids[0] === "uncategorized" ? null : ids[0];
+    } else {
+      const hasUncategorized = ids.includes("uncategorized");
+      const realIds = ids.filter((id) => id !== "uncategorized");
+      if (hasUncategorized && realIds.length > 0) {
+        where.OR = [{ categoryId: null }, { categoryId: { in: realIds } }];
+      } else if (hasUncategorized) {
+        where.categoryId = null;
+      } else {
+        where.categoryId = { in: realIds };
+      }
+    }
+  }
   if (startDate || endDate) {
     where.date = {};
     if (startDate) (where.date as Record<string, unknown>).gte = new Date(startDate + "T00:00:00.000Z");
@@ -69,6 +86,7 @@ export async function GET(request: NextRequest) {
       include: {
         account: { select: { id: true, name: true } },
         category: { select: { id: true, name: true, parent: { select: { id: true, name: true } } } },
+        transactionTags: { include: { tag: { select: { id: true, name: true, color: true } } } },
       },
       orderBy,
       skip,

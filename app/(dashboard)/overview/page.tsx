@@ -17,6 +17,7 @@ interface Transaction {
   categoryId: string | null;
   category: { id: string; name: string } | null;
   account: { id: string; name: string };
+  transactionTags?: { tag: { id: string; name: string; color: string } }[];
 }
 
 interface Category {
@@ -101,14 +102,17 @@ export default function OverviewPage() {
 
   const bucketGroups = new Map<string, Transaction[]>();
   const uncategorized: Transaction[] = [];
+  const others: Transaction[] = [];
 
   budgets.forEach((b) => {
     bucketGroups.set(b.name, []);
   });
 
   transactions.forEach((tx) => {
-    if (!tx.categoryId || !categoryToBucket.has(tx.categoryId)) {
+    if (!tx.categoryId) {
       uncategorized.push(tx);
+    } else if (!categoryToBucket.has(tx.categoryId)) {
+      others.push(tx);
     } else {
       const bucketName = categoryToBucket.get(tx.categoryId)!;
       const list = bucketGroups.get(bucketName) ?? [];
@@ -129,7 +133,7 @@ export default function OverviewPage() {
     }
   );
 
-  // Calculate totals (exclude uncategorized and transfer transactions)
+  // Calculate totals (exclude transfer transactions only)
   const transferCategory = categories.find(
     (c) => !c.parentId && c.name.toLowerCase() === "transfer"
   );
@@ -139,19 +143,19 @@ export default function OverviewPage() {
     transferCategory.children?.forEach((ch) => transferCategoryIds.add(ch.id));
   }
 
-  const categorizedTransactions = transactions.filter(
-    (t) =>
-      t.categoryId &&
-      !transferCategoryIds.has(t.categoryId)
+  const nonTransferTransactions = transactions.filter(
+    (t) => !t.categoryId || !transferCategoryIds.has(t.categoryId)
   );
 
-  const totalIncome = categorizedTransactions
+  const totalIncome = nonTransferTransactions
     .filter((t) => parseFloat(String(t.amount)) > 0)
     .reduce((sum, t) => sum + parseFloat(String(t.amount)), 0);
 
-  const totalExpenses = categorizedTransactions
+  const totalExpenses = nonTransferTransactions
     .filter((t) => parseFloat(String(t.amount)) < 0)
     .reduce((sum, t) => sum + parseFloat(String(t.amount)), 0);
+
+  const othersTotal = others.reduce((sum, t) => sum + parseFloat(String(t.amount)), 0);
 
   if (loading) {
     return (
@@ -190,6 +194,16 @@ export default function OverviewPage() {
               onUpdateCategory={handleUpdateCategory}
             />
           ))}
+          {others.length > 0 && (
+            <BucketCard
+              name={i18n("others")}
+              total={othersTotal}
+              budgetAmount={0}
+              transactions={others}
+              categories={categories}
+              onUpdateCategory={handleUpdateCategory}
+            />
+          )}
           <UncategorizedSection
             transactions={uncategorized}
             categories={categories}

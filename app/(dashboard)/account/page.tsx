@@ -17,6 +17,7 @@ interface Account {
   balance: string | number;
   currency: string;
   isManual: boolean;
+  isHidden: boolean;
 }
 
 interface Institution {
@@ -47,6 +48,7 @@ export default function AccountPage() {
     const LIABILITY_TYPES = ["credit_card", "loan"];
     return institutions.reduce((total, inst) => {
       return inst.accounts.reduce((sum, acct) => {
+        if (acct.isHidden) return sum;
         const bal = typeof acct.balance === "string" ? parseFloat(acct.balance) : acct.balance;
         const isLiability = LIABILITY_TYPES.includes(acct.type.toLowerCase());
         return sum + (isLiability ? -Math.abs(bal) : bal);

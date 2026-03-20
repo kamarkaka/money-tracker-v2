@@ -59,6 +59,7 @@
     "account": "Account",
     "transaction": "Transaction",
     "rule": "Rule",
+    "tag": "Tag",
     "profile": "Profile",
     "setting": "Setting",
     "welcome": "Welcome, {name}"
@@ -71,6 +72,7 @@
     "noTransactions": "No transactions this month",
     "noTransactionsDesc": "Transactions will appear here once your accounts are synced.",
     "uncategorized": "Uncategorized",
+    "others": "Others",
     "transactions": "{count} {count, plural, one {transaction} other {transactions}}",
     "spent": "{amount} spent",
     "earned": "{amount} earned",
@@ -217,6 +219,21 @@
     "systemDesc": "Follow your browser setting",
     "language": "Language",
     "languageDesc": "Choose your preferred display language."
+  },
+  "tag": {
+    "title": "Tags",
+    "addTag": "Add Tag",
+    "editTag": "Edit Tag",
+    "deleteTag": "Delete Tag",
+    "tagName": "Tag Name",
+    "tags": "Tags",
+    "deleteWarning": "Are you sure you want to delete this tag? It will be removed from all transactions.",
+    "noTags": "No tags yet",
+    "noTagsDesc": "Create tags to label and organize your transactions.",
+    "namePlaceholder": "e.g. vacation, reimbursable",
+    "transactions": "{count} transactions",
+    "addToTransaction": "Add tags...",
+    "createNew": "Create \"{name}\""
   },
   "rule": {
     "title": "Rules",

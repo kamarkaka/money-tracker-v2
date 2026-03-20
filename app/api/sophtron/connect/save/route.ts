@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
 
         const localAccount = await prisma.account.findUnique({
           where: { userId_sophtronAccountId: { userId, sophtronAccountId } },
-          select: { id: true },
+          select: { id: true, isHidden: true },
         });
         if (!localAccount) continue;
 
@@ -172,6 +172,7 @@ export async function POST(request: NextRequest) {
                   amount,
                   date: new Date(txn.TransactionDate),
                   categoryId: ruleCategory,
+                  isHidden: localAccount.isHidden,
                 },
               });
             }

@@ -11,6 +11,7 @@ interface Transaction {
   categoryId: string | null;
   category: { id: string; name: string } | null;
   account: { id: string; name: string };
+  transactionTags?: { tag: { id: string; name: string; color: string } }[];
 }
 
 interface Category {

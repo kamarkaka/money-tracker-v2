@@ -11,7 +11,7 @@ export async function GET() {
   const institutions = await prisma.institution.findMany({
     where: { userId: session.user.id },
     include: {
-      accounts: { where: { isHidden: false }, orderBy: { name: "asc" } },
+      accounts: { orderBy: { name: "asc" } },
     },
     orderBy: { name: "asc" },
   });

@@ -9,7 +9,7 @@ export async function GET() {
   }
 
   const accounts = await prisma.account.findMany({
-    where: { userId: session.user.id, isHidden: false },
+    where: { userId: session.user.id },
     include: { institution: { select: { id: true, name: true } } },
     orderBy: { name: "asc" },
   });

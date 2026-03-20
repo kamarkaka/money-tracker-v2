@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Modal } from "@/app/components/ui/Modal";
+import { TagSelector } from "@/app/components/tag/TagSelector";
 
 interface Account {
   id: string;
@@ -26,6 +27,13 @@ interface Transaction {
   isManual: boolean;
   account: { id: string; name: string };
   category: { id: string; name: string; parent?: { id: string; name: string } | null } | null;
+  transactionTags?: { tag: { id: string; name: string; color: string } }[];
+}
+
+interface TagItem {
+  id: string;
+  name: string;
+  color: string;
 }
 
 interface EditTransactionModalProps {
@@ -39,6 +47,8 @@ interface EditTransactionModalProps {
   transaction: Transaction | null;
   accounts: Account[];
   categories: Category[];
+  allTags?: TagItem[];
+  onTagsChanged?: () => void;
 }
 
 export function EditTransactionModal({
@@ -52,6 +62,8 @@ export function EditTransactionModal({
   transaction,
   accounts,
   categories,
+  allTags = [],
+  onTagsChanged,
 }: EditTransactionModalProps) {
   const [accountId, setAccountId] = useState("");
   const [description, setDescription] = useState("");
@@ -61,6 +73,8 @@ export function EditTransactionModal({
   const [categoryId, setCategoryId] = useState("");
   const [isHidden, setIsHidden] = useState(false);
   const [createRule, setCreateRule] = useState(true);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [savedSnapshot, setSavedSnapshot] = useState<Transaction | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -75,12 +89,15 @@ export function EditTransactionModal({
       setCategoryId(transaction.categoryId || "");
       setIsHidden(transaction.isHidden);
       setCreateRule(true);
+      setSelectedTagIds(transaction.transactionTags?.map((tt) => tt.tag.id) || []);
+      setSavedSnapshot(null);
       setError("");
     }
   }, [transaction, open]);
 
   const i18n = useTranslations("transaction");
   const i18nc = useTranslations("common");
+  const i18nTag = useTranslations("tag");
 
   if (!transaction) return null;
 
@@ -98,14 +115,18 @@ export function EditTransactionModal({
 
   const hasChanges = () => {
     if (!transaction) return false;
-    const origAmount = Number(transaction.amount);
+    const ref = savedSnapshot || transaction;
+    const origAmount = Number(ref.amount);
     const newCategoryId = categoryId || null;
-    if (newCategoryId !== (transaction.categoryId || null)) return true;
-    if (isHidden !== transaction.isHidden) return true;
+    if (newCategoryId !== (ref.categoryId || null)) return true;
+    if (isHidden !== ref.isHidden) return true;
+    const origTagIds = (ref.transactionTags || []).map((tt) => tt.tag.id).sort().join(",");
+    const newTagIds = [...selectedTagIds].sort().join(",");
+    if (origTagIds !== newTagIds) return true;
     if (isManual) {
-      if (accountId !== transaction.account.id) return true;
-      if (description.trim() !== transaction.description) return true;
-      if (date !== transaction.date.split("T")[0]) return true;
+      if (accountId !== ref.account.id) return true;
+      if (description.trim() !== ref.description) return true;
+      if (date !== ref.date.split("T")[0]) return true;
       const parsedAmount = parseFloat(amount);
       const newAmount = isExpense ? -Math.abs(parsedAmount) : Math.abs(parsedAmount);
       if (newAmount !== origAmount) return true;
@@ -129,6 +150,7 @@ export function EditTransactionModal({
       const body: Record<string, unknown> = {
         categoryId: categoryId || null,
         isHidden,
+        tagIds: selectedTagIds,
       };
 
       if (isManual) {
@@ -170,6 +192,24 @@ export function EditTransactionModal({
           body: JSON.stringify({ match: desc, categoryId }),
         });
       }
+
+      // Update snapshot so hasChanges() reflects saved state
+      setSavedSnapshot({
+        ...transaction,
+        categoryId: categoryId || null,
+        isHidden,
+        description: isManual ? description.trim() : transaction.description,
+        amount: isManual ? String(isExpense ? -Math.abs(parseFloat(amount)) : Math.abs(parseFloat(amount))) : transaction.amount,
+        date: isManual ? date + "T00:00:00.000Z" : transaction.date,
+        account: isManual && accountId !== transaction.account.id
+          ? { id: accountId, name: accounts.find((a) => a.id === accountId)?.name || "" }
+          : transaction.account,
+        transactionTags: selectedTagIds.map((id) => {
+          const tag = allTags.find((t) => t.id === id);
+          return { tag: { id, name: tag?.name || "", color: tag?.color || "" } };
+        }),
+      });
+      setCreateRule(false);
 
       if (changed) onComplete();
       if (mode === "next" && onNext) {
@@ -324,6 +364,30 @@ export function EditTransactionModal({
             ))}
           </select>
         </div>
+
+        {allTags.length > 0 && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              {i18nTag("tags")}
+            </label>
+            <TagSelector
+              allTags={allTags}
+              selectedTagIds={selectedTagIds}
+              onChange={setSelectedTagIds}
+              onCreateTag={async (name) => {
+                const res = await fetch("/api/tags", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ name }),
+                });
+                if (!res.ok) return null;
+                const tag = await res.json();
+                onTagsChanged?.();
+                return tag;
+              }}
+            />
+          </div>
+        )}
 
         <div className="flex flex-col gap-2">
           {categoryId && (

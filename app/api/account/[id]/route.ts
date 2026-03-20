@@ -32,6 +32,11 @@ export async function PUT(
   }
   if (isHidden !== undefined) {
     data.isHidden = isHidden;
+    // Mark all transactions for this account as hidden/unhidden
+    await prisma.transaction.updateMany({
+      where: { accountId: id },
+      data: { isHidden },
+    });
   }
   if (balance !== undefined && existing.isManual) {
     data.balance = balance;

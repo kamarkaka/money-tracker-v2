@@ -11,6 +11,7 @@ interface Account {
   type: string;
   balance: string | number;
   currency: string;
+  isHidden?: boolean;
 }
 
 interface InstitutionCardProps {

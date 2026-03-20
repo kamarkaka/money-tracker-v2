@@ -8,7 +8,7 @@ import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/app/lib/utils";
 import { useTheme } from "@/app/components/ThemeProvider";
-import { SunIcon, MoonIcon, UserCircleIcon, Cog6ToothIcon, ArrowRightStartOnRectangleIcon, LanguageIcon } from "@heroicons/react/24/outline";
+import { SunIcon, MoonIcon, UserCircleIcon, Cog6ToothIcon, ArrowRightStartOnRectangleIcon, LanguageIcon, TagIcon, CurrencyDollarIcon, FunnelIcon, BookmarkIcon } from "@heroicons/react/24/outline";
 import { useLocale } from "@/app/components/LocaleProvider";
 import type { Locale } from "@/app/i18n/config";
 
@@ -31,11 +31,8 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
 
   const NAV_ITEMS = [
     { href: "/overview", label: i18n("overview") },
-    { href: "/category", label: i18n("category") },
-    { href: "/budget", label: i18n("budget") },
     { href: "/account", label: i18n("account") },
     { href: "/transaction", label: i18n("transaction") },
-    { href: "/rule", label: i18n("rule") },
   ];
 
   const isDark = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -105,7 +102,7 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
             <div ref={menuRef} className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="cursor-pointer flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-zinc-700 ring-2 ring-zinc-200 hover:ring-zinc-400 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700 dark:hover:ring-zinc-500"
+                className={`cursor-pointer flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-zinc-700 ring-2 hover:ring-zinc-400 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:ring-zinc-500 ${menuOpen ? "ring-zinc-400 dark:ring-zinc-500" : "ring-zinc-200 dark:ring-zinc-700"}`}
               >
                 {userImage ? (
                   <Image
@@ -120,7 +117,40 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
                 )}
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-40 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="absolute -right-11 top-full z-50 mt-2 w-40 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+                  <Link
+                    href="/category"
+                    onClick={() => setMenuOpen(false)}
+                    className="cursor-pointer flex items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  >
+                    <BookmarkIcon className="h-4 w-4" />
+                    {i18n("category")}
+                  </Link>
+                  <Link
+                    href="/budget"
+                    onClick={() => setMenuOpen(false)}
+                    className="cursor-pointer flex items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  >
+                    <CurrencyDollarIcon className="h-4 w-4" />
+                    {i18n("budget")}
+                  </Link>
+                  <Link
+                    href="/rule"
+                    onClick={() => setMenuOpen(false)}
+                    className="cursor-pointer flex items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  >
+                    <FunnelIcon className="h-4 w-4" />
+                    {i18n("rule")}
+                  </Link>
+                  <Link
+                    href="/tag"
+                    onClick={() => setMenuOpen(false)}
+                    className="cursor-pointer flex items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  >
+                    <TagIcon className="h-4 w-4" />
+                    {i18n("tag")}
+                  </Link>
+                  <div className="border-t border-zinc-200 dark:border-zinc-700" />
                   <Link
                     href="/profile"
                     onClick={() => setMenuOpen(false)}
@@ -153,7 +183,7 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
           <div ref={langRef} className="relative">
             <button
               onClick={() => { setLangOpen(!langOpen); setMenuOpen(false); }}
-              className="cursor-pointer flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-sm font-medium text-zinc-700 ring-2 ring-zinc-200 hover:ring-zinc-400 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700 dark:hover:ring-zinc-500"
+              className={`cursor-pointer flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-sm font-medium text-zinc-700 ring-2 hover:ring-zinc-400 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:ring-zinc-500 ${langOpen ? "ring-zinc-400 dark:ring-zinc-500" : "ring-zinc-200 dark:ring-zinc-700"}`}
               title={i18nSetting("language")}
             >
               {LANGS.find((l) => l.code === locale)?.label || <LanguageIcon className="h-5 w-5" />}

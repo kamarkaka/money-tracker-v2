@@ -12,6 +12,7 @@ import { CurrencyDisplay } from "@/app/components/ui/CurrencyDisplay";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { formatDate } from "@/app/lib/utils";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import { TagBadge } from "@/app/components/tag/TagBadge";
 import { useTranslations } from "next-intl";
 
 interface Transaction {
@@ -24,6 +25,13 @@ interface Transaction {
   isManual: boolean;
   account: { id: string; name: string };
   category: { id: string; name: string; parent?: { id: string; name: string } | null } | null;
+  transactionTags?: { tag: { id: string; name: string; color: string } }[];
+}
+
+interface Tag {
+  id: string;
+  name: string;
+  color: string;
 }
 
 interface Category {
@@ -36,6 +44,7 @@ interface Category {
 interface Account {
   id: string;
   name: string;
+  isHidden?: boolean;
 }
 
 export default function TransactionPage() {
@@ -45,6 +54,7 @@ export default function TransactionPage() {
   const [total, setTotal] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterValues>({
     search: "",
@@ -90,13 +100,15 @@ export default function TransactionPage() {
   }, []);
 
   const fetchMeta = useCallback(async () => {
-    const [catRes, accRes] = await Promise.all([
+    const [catRes, accRes, tagRes] = await Promise.all([
       fetch("/api/category"),
       fetch("/api/account"),
+      fetch("/api/tags"),
     ]);
-    const [catData, accData] = await Promise.all([catRes.json(), accRes.json()]);
+    const [catData, accData, tagData] = await Promise.all([catRes.json(), accRes.json(), tagRes.json()]);
     setCategories(catData);
-    setAccounts(accData.map((a: { id: string; name: string }) => ({ id: a.id, name: a.name })));
+    setAccounts(accData.map((a: { id: string; name: string; isHidden?: boolean }) => ({ id: a.id, name: a.name, isHidden: a.isHidden })));
+    setTags(Array.isArray(tagData) ? tagData.map((t: Tag & { transactionCount?: number; totalAmount?: number }) => ({ id: t.id, name: t.name, color: t.color })) : []);
   }, []);
 
   useEffect(() => {
@@ -113,12 +125,28 @@ export default function TransactionPage() {
   };
 
   const handleSort = (key: string) => {
-    const newOrder = sortKey === key && sortOrder === "desc" ? "asc" : "desc";
-    setSortKey(key);
+    let newKey: string;
+    let newOrder: "asc" | "desc";
+
+    if (sortKey !== key) {
+      // First click on a new column: asc
+      newKey = key;
+      newOrder = "asc";
+    } else if (sortOrder === "asc") {
+      // Second click: desc
+      newKey = key;
+      newOrder = "desc";
+    } else {
+      // Third click: restore default (date desc)
+      newKey = "date";
+      newOrder = "desc";
+    }
+
+    setSortKey(newKey);
     setSortOrder(newOrder);
     setPage(1);
     setSelectedIds(new Set());
-    fetchTransactions(filters, 1, key, newOrder);
+    fetchTransactions(filters, 1, newKey, newOrder);
   };
 
   const handleUpdateCategory = async (transactionId: string, categoryId: string | null) => {
@@ -294,6 +322,13 @@ export default function TransactionPage() {
           <span className={t.isHidden ? "line-through text-zinc-400 dark:text-zinc-500" : ""}>
             {t.description}
           </span>
+          {t.transactionTags && t.transactionTags.length > 0 && (
+            <span className="flex items-center gap-1">
+              {t.transactionTags.map((tt) => (
+                <TagBadge key={tt.tag.id} name={tt.tag.name} color={tt.tag.color} />
+              ))}
+            </span>
+          )}
           <button
             onClick={(e) => { e.stopPropagation(); handleToggleHidden(t.id, !t.isHidden); }}
             className="cursor-pointer rounded px-2 py-1 text-xs text-zinc-400 opacity-0 transition-opacity group-hover/desc:opacity-100 hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
@@ -485,6 +520,8 @@ export default function TransactionPage() {
         transaction={editTransaction}
         accounts={accounts}
         categories={categories}
+        allTags={tags}
+        onTagsChanged={fetchMeta}
       />
 
       <AddTransactionModal
