@@ -81,13 +81,15 @@ export function AccountRow({ account, onHidden }: AccountRowProps) {
           onSave={handleRename}
           className={`text-sm ${hidden ? "line-through text-zinc-400 dark:text-zinc-500" : "text-zinc-900 dark:text-zinc-100"}`}
         />
-        <Badge variant={TYPE_VARIANTS[account.type] ?? "default"}>
-          {account.type.replace("_", " ")}
-        </Badge>
+        <span className="hidden md:inline">
+          <Badge variant={TYPE_VARIANTS[account.type] ?? "default"}>
+            {account.type.replace("_", " ")}
+          </Badge>
+        </span>
         <button
           onClick={handleHideClick}
           disabled={toggling}
-          className="cursor-pointer rounded px-2 py-1 text-xs text-zinc-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-50 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+          className="cursor-pointer rounded px-2 py-1 text-xs text-zinc-400 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-50 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
         >
           {hidden ? i18n("unhide") : i18n("hide")}
         </button>

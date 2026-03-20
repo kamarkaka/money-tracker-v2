@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     prisma.transaction.findMany({
       where,
       include: {
-        account: { select: { id: true, name: true } },
+        account: { select: { id: true, name: true, institution: { select: { name: true } } } },
         category: { select: { id: true, name: true, parent: { select: { id: true, name: true } } } },
         transactionTags: { include: { tag: { select: { id: true, name: true, color: true } } } },
       },

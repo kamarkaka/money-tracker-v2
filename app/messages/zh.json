@@ -81,10 +81,11 @@
   },
   "category": {
     "title": "分类",
-    "addCategory": "添加分类",
+    "addCategory": "创建新分类",
     "editCategory": "编辑分类",
     "categoryName": "分类名称",
     "parentOptional": "父级分类（可选）",
+    "namePlaceholder": "例如：食品杂货、房租、娱乐",
     "noneTopLevel": "无（顶级分类）",
     "deleteCategory": "删除分类",
     "deleteWarning": "确定要删除此分类吗？已分配的交易将变为未分类。",
@@ -94,6 +95,7 @@
     "title": "预算",
     "createBudget": "创建新预算",
     "budgetName": "预算名称",
+    "namePlaceholder": "例如：生活必需、娱乐、储蓄",
     "monthlyAmount": "每月金额",
     "categories": "分类",
     "noCategoriesAssigned": "未分配分类",
@@ -166,7 +168,8 @@
     "fromDate": "开始日期",
     "toDate": "结束日期",
     "minAmount": "最小金额",
-    "maxAmount": "最大金额"
+    "maxAmount": "最大金额",
+    "clearFilters": "清除筛选"
   },
   "csv": {
     "title": "导入 CSV",
@@ -222,7 +225,7 @@
   },
   "tag": {
     "title": "标签",
-    "addTag": "添加标签",
+    "addTag": "创建新标签",
     "editTag": "编辑标签",
     "deleteTag": "删除标签",
     "tagName": "标签名称",
@@ -237,7 +240,7 @@
   },
   "rule": {
     "title": "规则",
-    "addRule": "添加规则",
+    "addRule": "创建新规则",
     "editRule": "编辑规则",
     "deleteRule": "删除规则",
     "matchString": "匹配字符串",

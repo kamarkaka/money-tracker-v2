@@ -39,16 +39,16 @@ export default function LoginPage() {
 
   return (
     <>
-      <div className="mb-8 flex flex-col items-center">
+      <div className="mb-4 flex flex-col items-center">
         <Image
           src="/logo.png"
           alt="App Logo"
           width={256}
           height={256}
           priority
-          className="mb-4 rounded-lg shadow-lg"
+          className="mb-2 rounded-lg shadow-lg"
         />
-        <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
           Money Tracker 2
           <span className="relative -top-3 -right-1 rounded-full border border-red-500 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-red-500">
             alpha
@@ -63,7 +63,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+            className="h-12 rounded-md border border-zinc-300 px-3 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
           />
         </FormField>
         <FormField label={i18nc("password")} error="">
@@ -72,7 +72,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+            className="h-12 rounded-md border border-zinc-300 px-3 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
           />
         </FormField>
         {error && <p className="text-sm text-red-500">{error}</p>}
@@ -87,7 +87,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="h-12 cursor-pointer rounded-md bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
           {loading ? i18nc("loading") : i18n("login")}
         </button>
@@ -102,7 +102,7 @@ export default function LoginPage() {
       <button
         type="button"
         onClick={() => signIn("google", { callbackUrl: "/overview" })}
-        className="flex w-full items-center justify-center gap-2 rounded-md border-zinc-300 px-4 py-2 text-sm font-medium bg-zinc-100 text-zinc-700 hover:bg-zinc-300 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-md border-zinc-300 px-4 text-sm font-medium bg-zinc-100 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 cursor-pointer"
       >
         <svg className="h-6 w-6" viewBox="0 0 48 48">
           <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>

@@ -119,10 +119,10 @@ export function AddTransactionModal({
   };
 
   const inputClass =
-    "w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50";
+    "w-full h-10 rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50";
 
   return (
-    <Modal open={open} onClose={handleClose} title={i18n("addTransaction")} className="w-full max-w-md">
+    <Modal open={open} onClose={handleClose} title={i18n("addTransaction")} className="w-full max-w-lg">
       <div className="flex flex-col gap-4">
         {error && (
           <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
@@ -130,14 +130,25 @@ export function AddTransactionModal({
           </div>
         )}
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{i18n("account")}</label>
-          <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputClass}>
-            <option value="">{i18n("selectAccount")}</option>
-            {accounts.map((a) => (
-              <option key={a.id} value={a.id}>{a.name}</option>
-            ))}
-          </select>
+        <div className="flex gap-3">
+          <div className="w-2/5">
+            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{i18n("date")}</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className={`${inputClass} appearance-none`}
+            />
+          </div>
+          <div className="w-3/5">
+            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{i18n("account")}</label>
+            <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputClass}>
+              <option value="">{i18n("selectAccount")}</option>
+              {accounts.map((a) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div>
@@ -153,12 +164,12 @@ export function AddTransactionModal({
 
         <div>
           <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{i18n("amount")}</label>
-          <div className="flex gap-2">
-            <div className="flex rounded-md border border-zinc-300 dark:border-zinc-600">
+          <div className="flex gap-3">
+            <div className="flex w-2/5 shrink-0 overflow-hidden rounded-md border border-zinc-300 dark:border-zinc-600">
               <button
                 type="button"
                 onClick={() => setIsExpense(true)}
-                className={`cursor-pointer rounded-l-md px-3 py-2 text-sm font-medium ${
+                className={`flex-1 cursor-pointer px-2 py-2 text-sm font-medium ${
                   isExpense
                     ? "bg-red-500 text-white"
                     : "bg-white text-zinc-700 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300"
@@ -169,7 +180,7 @@ export function AddTransactionModal({
               <button
                 type="button"
                 onClick={() => setIsExpense(false)}
-                className={`cursor-pointer rounded-r-md px-3 py-2 text-sm font-medium ${
+                className={`flex-1 cursor-pointer px-2 py-2 text-sm font-medium ${
                   !isExpense
                     ? "bg-green-500 text-white"
                     : "bg-white text-zinc-700 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300"
@@ -191,16 +202,6 @@ export function AddTransactionModal({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{i18n("date")}</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className={inputClass}
-          />
-        </div>
-
-        <div>
           <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             {i18n("categoryOptional")}
           </label>
@@ -212,19 +213,12 @@ export function AddTransactionModal({
           </select>
         </div>
 
-        <div className="flex justify-end gap-3 pt-2">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            {i18nc("cancel")}
-          </button>
+        <div className="grid grid-cols-2 gap-2 pt-2">
           <button
             type="button"
             onClick={() => handleSubmit("close")}
             disabled={saving}
-            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-3 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
             {saving ? i18nc("adding") : i18n("addAndClose")}
           </button>
@@ -232,7 +226,7 @@ export function AddTransactionModal({
             type="button"
             onClick={() => handleSubmit("next")}
             disabled={saving}
-            className="cursor-pointer rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-600"
+            className="cursor-pointer rounded-md bg-green-600 px-4 py-3 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-600"
           >
             {saving ? i18nc("adding") : i18n("addAndNext")}
           </button>

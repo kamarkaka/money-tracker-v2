@@ -81,10 +81,11 @@
   },
   "category": {
     "title": "Categories",
-    "addCategory": "Add Category",
+    "addCategory": "Create A New Category",
     "editCategory": "Edit Category",
     "categoryName": "Category Name",
     "parentOptional": "Parent (optional)",
+    "namePlaceholder": "e.g. Groceries, Rent, Entertainment",
     "noneTopLevel": "None (top level)",
     "deleteCategory": "Delete Category",
     "deleteWarning": "Are you sure you want to delete this category? Transactions assigned to it will become uncategorized.",
@@ -92,8 +93,9 @@
   },
   "budget": {
     "title": "Budgets",
-    "createBudget": "Create New Budget",
+    "createBudget": "Create A New Budget",
     "budgetName": "Budget Name",
+    "namePlaceholder": "e.g. Essentials, Entertainment, Savings",
     "monthlyAmount": "Monthly Amount",
     "categories": "Categories",
     "noCategoriesAssigned": "No categories assigned",
@@ -166,7 +168,8 @@
     "fromDate": "From Date",
     "toDate": "To Date",
     "minAmount": "Min Amount",
-    "maxAmount": "Max Amount"
+    "maxAmount": "Max Amount",
+    "clearFilters": "Clear Filters"
   },
   "csv": {
     "title": "Import CSV",
@@ -222,7 +225,7 @@
   },
   "tag": {
     "title": "Tags",
-    "addTag": "Add Tag",
+    "addTag": "Create A New Tag",
     "editTag": "Edit Tag",
     "deleteTag": "Delete Tag",
     "tagName": "Tag Name",
@@ -237,7 +240,7 @@
   },
   "rule": {
     "title": "Rules",
-    "addRule": "Add Rule",
+    "addRule": "Create A New Rule",
     "editRule": "Edit Rule",
     "deleteRule": "Delete Rule",
     "matchString": "Match String",

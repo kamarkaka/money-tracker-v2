@@ -38,7 +38,6 @@ export default function AccountPage() {
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
   const [showManual, setShowManual] = useState(false);
-  const [backfilling, setBackfilling] = useState(false);
   const [refreshData, setRefreshData] = useState<{
     institutionId: string;
     institutionName: string;
@@ -86,21 +85,6 @@ export default function AccountPage() {
     setShowAdd(true);
   };
 
-  const handleBackfill = async () => {
-    setBackfilling(true);
-    try {
-      const res = await fetch("/api/backfill", { method: "POST" });
-      if (!res.ok) {
-        const data = await res.json();
-        alert(`Backfill failed: ${data.error}`);
-      }
-      await fetchInstitutions();
-    } catch (err) {
-      alert(`Backfill failed: ${err instanceof Error ? err.message : String(err)}`);
-    } finally {
-      setBackfilling(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -112,30 +96,23 @@ export default function AccountPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-baseline gap-4">
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
           <div className="text-sm text-zinc-500 dark:text-zinc-400">
             {i18n("netWorth")}: <CurrencyDisplay amount={netWorth} />
           </div>
         </div>
-        <div className="flex gap-3">
-          <button
-            onClick={handleBackfill}
-            disabled={backfilling}
-            className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            {backfilling ? i18nc("loading") : i18n("backfill")}
-          </button>
+        <div className="grid w-full grid-cols-2 gap-2 md:flex md:w-auto md:gap-3">
           <button
             onClick={() => setShowManual(true)}
-            className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="cursor-pointer rounded-md border border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800 md:py-2"
           >
             {i18n("addManual")}
           </button>
           <button
             onClick={() => { setRefreshData(null); setShowAdd(true); }}
-            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-3 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 md:py-2"
           >
             {i18n("linkBank")}
           </button>

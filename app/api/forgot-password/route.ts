@@ -38,7 +38,8 @@ export async function POST(request: NextRequest) {
       });
 
       // Send email with raw token
-      const resetUrl = `${process.env.APP_URL}/reset-password?token=${rawToken}`;
+      const origin = request.headers.get("origin") || process.env.APP_URL || "http://localhost:3000";
+      const resetUrl = `${origin}/reset-password?token=${rawToken}`;
       await sendPasswordResetEmail(email, resetUrl);
     } catch {
       // Swallow errors to prevent email enumeration

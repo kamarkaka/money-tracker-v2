@@ -31,6 +31,26 @@ button {
   user-select: none;
 }
 
+@media (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 0;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 .theme-transitioning,
 .theme-transitioning *,
 .theme-transitioning *::before,

@@ -34,21 +34,17 @@ export async function PUT(
   const data: Record<string, unknown> = {};
   if (categoryId !== undefined) data.categoryId = categoryId || null;
   if (isHidden !== undefined) data.isHidden = isHidden;
-
-  // Only allow full editing for manual transactions
-  if (existing.isManual) {
-    if (description !== undefined) data.description = description;
-    if (amount !== undefined) data.amount = amount;
-    if (date !== undefined) data.date = new Date(date);
-    if (accountId !== undefined) {
-      const account = await prisma.account.findUnique({
-        where: { id: accountId, userId: session.user.id },
-      });
-      if (!account) {
-        return NextResponse.json({ error: "Account not found" }, { status: 404 });
-      }
-      data.accountId = accountId;
+  if (description !== undefined) data.description = description;
+  if (amount !== undefined) data.amount = amount;
+  if (date !== undefined) data.date = new Date(date);
+  if (accountId !== undefined) {
+    const account = await prisma.account.findUnique({
+      where: { id: accountId, userId: session.user.id },
+    });
+    if (!account) {
+      return NextResponse.json({ error: "Account not found" }, { status: 404 });
     }
+    data.accountId = accountId;
   }
 
   // Handle tag updates

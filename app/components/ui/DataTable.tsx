@@ -42,7 +42,7 @@ export function DataTable<T>({
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
-        <thead>
+        <thead className="hidden md:table-header-group">
           <tr className="border-b border-zinc-200 dark:border-zinc-700">
             {columns.map((col) => {
               const isSorted = sortKey === col.key;

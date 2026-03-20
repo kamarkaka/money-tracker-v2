@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocale } from "@/app/components/LocaleProvider";
 
 interface MonthPickerProps {
@@ -37,6 +37,24 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
   const now = new Date();
   const [anchorEnd, setAnchorEnd] = useState({ y: now.getFullYear(), m: now.getMonth() });
 
+  // Touch swipe tracking
+  const touchStartX = useRef<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        setAnchorEnd((prev) => addMonths(prev.y, prev.m, -1));
+      } else {
+        setAnchorEnd((prev) => addMonths(prev.y, prev.m, 1));
+      }
+    }
+    touchStartX.current = null;
+  };
+
   // Build 12 months ending at anchorEnd, latest first
   const months: { y: number; m: number }[] = [];
   for (let i = 0; i < 12; i++) {
@@ -44,16 +62,13 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
   }
 
   const goLeft = () => {
-    // Shift window 1 month into the past
     setAnchorEnd((prev) => addMonths(prev.y, prev.m, -1));
   };
 
   const goRight = () => {
-    // Shift window 1 month into the future
     setAnchorEnd((prev) => addMonths(prev.y, prev.m, 1));
   };
 
-  // Track which years we've labeled (iterate latest-first, so label the first occurrence)
   const labeledYears = new Set<number>();
 
   const arrowClass =
@@ -61,12 +76,17 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <button onClick={goLeft} className={arrowClass}>
+      {/* Arrow buttons — desktop only */}
+      <button onClick={goLeft} className={`${arrowClass} hidden md:block`}>
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
       </button>
-      <div className="flex items-center gap-1">
+      <div
+        className="flex items-center gap-1 overflow-x-auto scrollbar-none"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {months.map(({ y, m }) => {
           const isSelected = y === year && m === month;
           const showYear = !labeledYears.has(y);
@@ -76,7 +96,7 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
             <button
               key={`${y}-${m}`}
               onClick={() => onChange(y, m)}
-              className={`cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={`cursor-pointer shrink-0 rounded-md px-3 py-3 text-sm font-medium transition-colors md:px-3 md:py-1.5 ${
                 isSelected
                   ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
                   : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
@@ -88,7 +108,7 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
           );
         })}
       </div>
-      <button onClick={goRight} className={arrowClass}>
+      <button onClick={goRight} className={`${arrowClass} hidden md:block`}>
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>

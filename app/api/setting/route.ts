@@ -16,7 +16,7 @@ export async function GET() {
 }
 
 const VALID_THEMES = ["light", "dark", "system"];
-const VALID_LANGUAGES = ["en", "zh", "es", "fr"];
+const VALID_LANGUAGES = ["en", "zh"];
 
 export async function PUT(request: NextRequest) {
   const session = await auth();

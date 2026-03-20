@@ -40,7 +40,7 @@ export function AppShell({ children, userName, userImage }: AppShellProps) {
       <LocaleProvider>
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
           <Topbar userName={userName} userImage={userImage} />
-          <main className="mx-auto min-w-[960px] max-w-7xl px-6 py-8">{children}</main>
+          <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">{children}</main>
           {showTutorial && <TutorialOverlay onClose={() => setShowTutorial(false)} />}
         </div>
       </LocaleProvider>

@@ -11,7 +11,7 @@ import { DataTable } from "@/app/components/ui/DataTable";
 import { CurrencyDisplay } from "@/app/components/ui/CurrencyDisplay";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { formatDate } from "@/app/lib/utils";
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import { PencilSquareIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { TagBadge } from "@/app/components/tag/TagBadge";
 import { useTranslations } from "next-intl";
 
@@ -23,7 +23,7 @@ interface Transaction {
   categoryId: string | null;
   isHidden: boolean;
   isManual: boolean;
-  account: { id: string; name: string };
+  account: { id: string; name: string; institution?: { name: string } };
   category: { id: string; name: string; parent?: { id: string; name: string } | null } | null;
   transactionTags?: { tag: { id: string; name: string; color: string } }[];
 }
@@ -74,9 +74,6 @@ export default function TransactionPage() {
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkCategoryId, setBulkCategoryId] = useState("");
-  const [bulkApplying, setBulkApplying] = useState(false);
 
   const fetchTransactions = useCallback(async (f: FilterValues, p: number, sk?: string, so?: "asc" | "desc") => {
     const params = new URLSearchParams();
@@ -107,7 +104,11 @@ export default function TransactionPage() {
     ]);
     const [catData, accData, tagData] = await Promise.all([catRes.json(), accRes.json(), tagRes.json()]);
     setCategories(catData);
-    setAccounts(accData.map((a: { id: string; name: string; isHidden?: boolean }) => ({ id: a.id, name: a.name, isHidden: a.isHidden })));
+    setAccounts(accData.map((a: { id: string; name: string; isHidden?: boolean; institution?: { name: string } }) => ({
+      id: a.id,
+      name: a.institution ? `${a.institution.name} - ${a.name}` : a.name,
+      isHidden: a.isHidden,
+    })));
     setTags(Array.isArray(tagData) ? tagData.map((t: Tag & { transactionCount?: number; totalAmount?: number }) => ({ id: t.id, name: t.name, color: t.color })) : []);
   }, []);
 
@@ -120,7 +121,6 @@ export default function TransactionPage() {
   const handleFilter = (newFilters: FilterValues) => {
     setFilters(newFilters);
     setPage(1);
-    setSelectedIds(new Set());
     fetchTransactions(newFilters, 1, sortKey, sortOrder);
   };
 
@@ -145,7 +145,6 @@ export default function TransactionPage() {
     setSortKey(newKey);
     setSortOrder(newOrder);
     setPage(1);
-    setSelectedIds(new Set());
     fetchTransactions(filters, 1, newKey, newOrder);
   };
 
@@ -180,40 +179,6 @@ export default function TransactionPage() {
     fetchTransactions(filters, page, sortKey, sortOrder);
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.size === transactions.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(transactions.map((t) => t.id)));
-    }
-  };
-
-  const handleBulkCategorize = async () => {
-    if (!bulkCategoryId && bulkCategoryId !== "uncategorize") return;
-    setBulkApplying(true);
-    const catId = bulkCategoryId === "uncategorize" ? null : bulkCategoryId;
-    await Promise.all(
-      [...selectedIds].map((id) =>
-        fetch(`/api/transaction/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ categoryId: catId }),
-        })
-      )
-    );
-    setSelectedIds(new Set());
-    setBulkCategoryId("");
-    setBulkApplying(false);
-    await fetchTransactions(filters, page, sortKey, sortOrder);
-  };
 
   const handleDownloadCsv = async () => {
     const params = new URLSearchParams();
@@ -249,7 +214,7 @@ export default function TransactionPage() {
       [
         t.date.split("T")[0],
         csvEscape(t.description),
-        csvEscape(t.account.name),
+        csvEscape(t.account.institution ? `${t.account.institution.name} ${t.account.name}` : t.account.name),
         csvEscape(categoryLabel(t)),
         Number(t.amount).toFixed(2),
       ].join(",")
@@ -272,40 +237,7 @@ export default function TransactionPage() {
     );
   }
 
-  // Build flat category options for bulk categorize
-  const bulkCategoryOptions: { id: string; label: string }[] = [];
-  for (const parent of categories.filter((c) => !c.parentId)) {
-    bulkCategoryOptions.push({ id: parent.id, label: parent.name });
-    if (parent.children) {
-      for (const child of parent.children) {
-        bulkCategoryOptions.push({ id: child.id, label: `${parent.name} > ${child.name}` });
-      }
-    }
-  }
-
   const columns = [
-    {
-      key: "select",
-      header: (
-        <input
-          type="checkbox"
-          checked={transactions.length > 0 && selectedIds.size === transactions.length}
-          onChange={toggleSelectAll}
-          className="accent-zinc-900 dark:accent-zinc-50"
-        />
-      ),
-      render: (t: Transaction) => (
-        <div onClick={(e) => e.stopPropagation()}>
-          <input
-            type="checkbox"
-            checked={selectedIds.has(t.id)}
-            onChange={() => toggleSelect(t.id)}
-            className="accent-zinc-900 dark:accent-zinc-50"
-          />
-        </div>
-      ),
-      className: "w-10",
-    },
     {
       key: "date",
       header: i18n("date"),
@@ -318,7 +250,7 @@ export default function TransactionPage() {
       header: i18n("description"),
       sortable: true,
       render: (t: Transaction) => (
-        <div className="group/desc flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <span className={t.isHidden ? "line-through text-zinc-400 dark:text-zinc-500" : ""}>
             {t.description}
           </span>
@@ -329,20 +261,6 @@ export default function TransactionPage() {
               ))}
             </span>
           )}
-          <button
-            onClick={(e) => { e.stopPropagation(); handleToggleHidden(t.id, !t.isHidden); }}
-            className="cursor-pointer rounded px-2 py-1 text-xs text-zinc-400 opacity-0 transition-opacity group-hover/desc:opacity-100 hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
-          >
-            {t.isHidden ? i18n("unhide") : i18n("hide")}
-          </button>
-          {t.isManual && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setDeleteId(t.id); }}
-              className="cursor-pointer rounded px-2 py-1 text-xs text-red-400 opacity-0 transition-opacity group-hover/desc:opacity-100 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
-            >
-              Delete
-            </button>
-          )}
         </div>
       ),
     },
@@ -350,7 +268,7 @@ export default function TransactionPage() {
       key: "account",
       header: i18n("account"),
       sortable: true,
-      render: (t: Transaction) => t.account.name,
+      render: (t: Transaction) => t.account.institution ? `${t.account.institution.name} ${t.account.name}` : t.account.name,
       className: "w-36",
     },
     {
@@ -379,15 +297,24 @@ export default function TransactionPage() {
       key: "actions",
       header: "",
       render: (t: Transaction) => (
-        <button
-          onClick={(e) => { e.stopPropagation(); setEditTransaction(t); }}
-          className="cursor-pointer rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
-          title="Edit transaction"
-        >
-          <PencilSquareIcon className="h-4 w-4" />
-        </button>
+        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => handleToggleHidden(t.id, !t.isHidden)}
+            className="cursor-pointer rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+            title={t.isHidden ? i18n("unhide") : i18n("hide")}
+          >
+            {t.isHidden ? <EyeIcon className="h-4 w-4" /> : <EyeSlashIcon className="h-4 w-4" />}
+          </button>
+          <button
+            onClick={() => setEditTransaction(t)}
+            className="cursor-pointer rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+            title={i18n("editTransaction")}
+          >
+            <PencilSquareIcon className="h-4 w-4" />
+          </button>
+        </div>
       ),
-      className: "w-16 text-right",
+      className: "w-20 text-right",
     },
   ];
 
@@ -395,9 +322,9 @@ export default function TransactionPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
-        <div className="flex gap-3">
+        <div className="grid w-full grid-cols-3 gap-2 md:flex md:w-auto md:gap-3">
           <button
             onClick={handleDownloadCsv}
             disabled={transactions.length === 0}
@@ -409,7 +336,7 @@ export default function TransactionPage() {
             onClick={() => setShowImport(true)}
             className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
-            {i18n("importCsv")}
+{i18n("importCsv")}
           </button>
           <button
             onClick={() => setShowAdd(true)}
@@ -428,54 +355,87 @@ export default function TransactionPage() {
         />
       </div>
 
-      {selectedIds.size > 0 && (
-        <div className="sticky top-16 z-10 mb-4 flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            {i18nc("selected", { count: selectedIds.size })}
-          </span>
-          <select
-            value={bulkCategoryId}
-            onChange={(e) => setBulkCategoryId(e.target.value)}
-            className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-50"
-          >
-            <option value="">{i18n("assignCategory")}</option>
-            <option value="uncategorize">{i18n("removeCategory")}</option>
-            {bulkCategoryOptions.map((c) => (
-              <option key={c.id} value={c.id}>{c.label}</option>
-            ))}
-          </select>
-          <button
-            onClick={handleBulkCategorize}
-            disabled={bulkApplying || !bulkCategoryId}
-            className="cursor-pointer rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-          >
-            {bulkApplying ? i18nc("applying") : i18nc("apply")}
-          </button>
-          <button
-            onClick={() => setSelectedIds(new Set())}
-            className="cursor-pointer text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-          >
-            {i18nc("clear")}
-          </button>
-        </div>
-      )}
 
-      <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      {/* Desktop table */}
+      <div className="hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 md:block">
         <DataTable
           columns={columns}
           data={transactions}
           keyExtractor={(t) => t.id}
           emptyMessage={i18n("noTransactions")}
-          onRowClick={(t) => toggleSelect(t.id)}
-          selectedKeys={selectedIds}
+          onRowClick={(t) => setEditTransaction(t)}
           sortKey={sortKey}
           sortOrder={sortOrder}
           onSort={handleSort}
         />
       </div>
 
+      {/* Mobile card list */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {transactions.length === 0 ? (
+          <div className="py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
+            {i18n("noTransactions")}
+          </div>
+        ) : (
+          transactions.map((t) => (
+            <div
+              key={t.id}
+              onClick={() => setEditTransaction(t)}
+              className="cursor-pointer rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+            >
+              {/* Row 1: date, account, hide/edit buttons */}
+              <div className="flex items-center gap-2">
+                <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">{formatDate(t.date)}</span>
+                <span className="min-w-0 flex-1 truncate text-xs text-zinc-500 dark:text-zinc-400">
+                  {t.account.institution ? `${t.account.institution.name} ${t.account.name}` : t.account.name}
+                </span>
+                <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => handleToggleHidden(t.id, !t.isHidden)}
+                    className="cursor-pointer rounded-md p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                  >
+                    {t.isHidden ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
+                  </button>
+                  <button
+                    onClick={() => setEditTransaction(t)}
+                    className="cursor-pointer rounded-md p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                  >
+                    <PencilSquareIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+              {/* Row 2: description, tags, amount */}
+              <div className="mt-3 flex items-center gap-2">
+                <span className={`min-w-0 flex-1 truncate text-sm font-medium ${t.isHidden ? "line-through text-zinc-400 dark:text-zinc-500" : "text-zinc-900 dark:text-zinc-100"}`}>
+                  {t.description}
+                </span>
+                {t.transactionTags && t.transactionTags.length > 0 && (
+                  <span className="flex items-center gap-0.5 shrink-0">
+                    {t.transactionTags.map((tt) => (
+                      <TagBadge key={tt.tag.id} name={tt.tag.name} color={tt.tag.color} />
+                    ))}
+                  </span>
+                )}
+                <span className="shrink-0">
+                  <CurrencyDisplay amount={t.amount} />
+                </span>
+              </div>
+              {/* Row 3: category */}
+              <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                <TransactionCategoryEditor
+                  transactionId={t.id}
+                  currentCategoryId={t.categoryId}
+                  categories={categories}
+                  onUpdate={handleUpdateCategory}
+                />
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
       {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <span className="text-sm text-zinc-500 dark:text-zinc-400">
             {i18nc("showingRange", { start: (page - 1) * pageSize + 1, end: Math.min(page * pageSize, total), total })}
           </span>

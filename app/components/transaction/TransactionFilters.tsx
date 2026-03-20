@@ -158,6 +158,25 @@ export function TransactionFilters({
     update("categoryId", value);
   };
 
+  const handleClear = () => {
+    const defaultAccounts = new Set(accounts.filter((a) => !a.isHidden).map((a) => a.id));
+    setSelectedAccounts(defaultAccounts);
+    setSelectedCategories(new Set());
+    const newFilters: FilterValues = {
+      search: "",
+      accountId: [...defaultAccounts].join(","),
+      categoryId: "",
+      startDate: "",
+      endDate: "",
+      minAmount: "",
+      maxAmount: "",
+    };
+    setFilters(newFilters);
+    onFilter(newFilters);
+  };
+
+  const hasActiveFilters = filters.search || filters.categoryId || filters.startDate || filters.endDate || filters.minAmount || filters.maxAmount;
+
   const flatCategories = categories
     .filter((c) => !c.parentId)
     .flatMap((c) => [
@@ -171,8 +190,8 @@ export function TransactionFilters({
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 md:grid-cols-4">
-      <FormField label={i18n("search")} className="col-span-2">
+    <div className="grid grid-cols-1 gap-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:grid-cols-2 sm:gap-4 md:grid-cols-4">
+      <FormField label={i18n("search")} className="sm:col-span-2">
         <input
           type="text"
           value={filters.search}
@@ -233,6 +252,14 @@ export function TransactionFilters({
           className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
         />
       </FormField>
+      <div className="flex items-end sm:col-span-2 md:col-span-1">
+        <button
+          onClick={handleClear}
+          className="w-full cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800 md:w-auto"
+        >
+          {i18n("clearFilters")}
+        </button>
+      </div>
     </div>
   );
 }

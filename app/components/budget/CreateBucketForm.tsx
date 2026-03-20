@@ -47,7 +47,7 @@ export function CategoryPicker({
             key={cat.id}
             type="button"
             onClick={() => toggleCategory(cat.id)}
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors md:px-3 md:py-1 md:text-xs ${
               selectedIds.includes(cat.id)
                 ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                 : "border-zinc-300 text-zinc-600 hover:border-zinc-400 dark:border-zinc-600 dark:text-zinc-400"
@@ -104,7 +104,7 @@ export function CreateBucketForm({
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder=""
+          placeholder={i18n("namePlaceholder")}
           required
           className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
         />
@@ -132,7 +132,7 @@ export function CreateBucketForm({
       <button
         type="submit"
         disabled={loading}
-        className="self-start rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        className="w-full cursor-pointer rounded-md bg-zinc-900 px-4 py-3 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 md:w-auto md:py-2"
       >
         {loading ? i18nc("adding") : i18n("createBudget")}
       </button>

@@ -98,7 +98,7 @@ export function TransactionCategoryEditor({
         type="button"
         onClick={handleToggle}
         disabled={loading}
-        className="flex w-full cursor-pointer items-center justify-between gap-1 rounded-md border border-zinc-300 px-2 py-1 text-left text-xs text-zinc-900 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-700"
+        className="flex w-full cursor-pointer items-center justify-between gap-1 rounded-md border border-zinc-300 px-3 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-700 md:px-2 md:py-1 md:text-xs"
       >
         <span className="truncate">{loading ? "Saving..." : currentName}</span>
         <svg
@@ -124,7 +124,7 @@ export function TransactionCategoryEditor({
                       <button
                         type="button"
                         onClick={() => handleSelect(c.id || null)}
-                        className={`flex w-full cursor-pointer items-center px-3 py-1.5 text-left text-xs hover:bg-zinc-100 dark:hover:bg-zinc-700 ${
+                        className={`flex w-full cursor-pointer items-center px-3 py-2.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 md:py-1.5 md:text-xs ${
                           (c.id || null) === currentCategoryId
                             ? "font-medium text-zinc-900 dark:text-zinc-50"
                             : "text-zinc-700 dark:text-zinc-300"
@@ -143,7 +143,7 @@ export function TransactionCategoryEditor({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search categories..."
-                  className="w-full bg-transparent px-2 py-1 text-xs text-zinc-900 placeholder-zinc-400 outline-none dark:text-zinc-50 dark:placeholder-zinc-500"
+                  className="w-full bg-transparent px-2 py-2 text-sm text-zinc-900 placeholder-zinc-400 outline-none dark:text-zinc-50 dark:placeholder-zinc-500 md:py-1 md:text-xs"
                 />
               </div>
             </>
@@ -156,7 +156,7 @@ export function TransactionCategoryEditor({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search categories..."
-                  className="w-full bg-transparent px-2 py-1 text-xs text-zinc-900 placeholder-zinc-400 outline-none dark:text-zinc-50 dark:placeholder-zinc-500"
+                  className="w-full bg-transparent px-2 py-2 text-sm text-zinc-900 placeholder-zinc-400 outline-none dark:text-zinc-50 dark:placeholder-zinc-500 md:py-1 md:text-xs"
                 />
               </div>
               <ul className="max-h-48 overflow-y-auto py-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-600">
@@ -168,7 +168,7 @@ export function TransactionCategoryEditor({
                       <button
                         type="button"
                         onClick={() => handleSelect(c.id || null)}
-                        className={`flex w-full cursor-pointer items-center px-3 py-1.5 text-left text-xs hover:bg-zinc-100 dark:hover:bg-zinc-700 ${
+                        className={`flex w-full cursor-pointer items-center px-3 py-2.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 md:py-1.5 md:text-xs ${
                           (c.id || null) === currentCategoryId
                             ? "font-medium text-zinc-900 dark:text-zinc-50"
                             : "text-zinc-700 dark:text-zinc-300"

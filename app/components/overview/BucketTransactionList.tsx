@@ -45,7 +45,7 @@ export function BucketTransactionList({
     <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
       {transactions.map((t) => (
         <div key={t.id} className="flex items-center gap-2 px-4 py-2.5 text-sm">
-          <span className="w-20 shrink-0 text-zinc-500 dark:text-zinc-400">{formatDate(t.date)}</span>
+          <span className="w-16 shrink-0 md:w-20 text-zinc-500 dark:text-zinc-400">{formatDate(t.date)}</span>
           <span className="min-w-0 flex-1 flex items-center gap-1 truncate text-zinc-500 dark:text-zinc-400">
             {t.description}
             {t.transactionTags && t.transactionTags.length > 0 && (
@@ -67,8 +67,8 @@ export function BucketTransactionList({
               </span>
             )}
           </span>
-          <span className="w-28 shrink-0 truncate text-xs text-zinc-400 dark:text-zinc-500">{t.account.name}</span>
-          <div className="w-40 shrink-0">
+          <span className="hidden md:inline w-28 shrink-0 truncate text-xs text-zinc-400 dark:text-zinc-500">{t.account.name}</span>
+          <div className="hidden md:block w-40 shrink-0">
             <TransactionCategoryEditor
               transactionId={t.id}
               currentCategoryId={t.categoryId}
@@ -76,7 +76,7 @@ export function BucketTransactionList({
               onUpdate={onUpdateCategory}
             />
           </div>
-          <span className="w-24 shrink-0 text-right">
+          <span className="w-20 shrink-0 md:w-24 text-right">
             <CurrencyDisplay amount={t.amount} />
           </span>
         </div>
