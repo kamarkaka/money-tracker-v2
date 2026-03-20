@@ -82,10 +82,10 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "cursor-pointer rounded-md px-3 py-2 text-sm transition-colors",
                   pathname === item.href
-                    ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
-                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/50 dark:hover:text-zinc-50"
+                    ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 font-semibold"
+                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/50 dark:hover:text-zinc-50 font-medium"
                 )}
               >
                 {item.label}
