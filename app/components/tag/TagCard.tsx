@@ -72,11 +72,17 @@ export function TagCard({ tag, onEdit, onDelete }: TagCardProps) {
   };
 
   return (
-    <div className="card-hover rounded-lg border border-card-border bg-card-bg">
-      <div className="flex items-center justify-between px-5 py-4">
+    <div
+      className="card-hover rounded-lg border border-card-border shadow-sm"
+      style={{ background: `linear-gradient(to right, ${tag.color}15, var(--card-bg))` }}
+    >
+      <div
+        className={`flex cursor-pointer items-center justify-between px-5 py-4 ${!editing ? "" : ""}`}
+        onClick={() => { if (!editing) toggleExpand(); }}
+      >
         <div className="flex items-center gap-3">
           {editing ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
               <input
                 autoFocus
                 type="text"
@@ -101,33 +107,27 @@ export function TagCard({ tag, onEdit, onDelete }: TagCardProps) {
             </div>
           ) : (
             <>
-              <TagBadge name={tag.name} color={tag.color} />
+              <TagBadge name={tag.name} color={tag.color} className="text-sm font-semibold" />
               {tag.transactionCount > 0 && (
-                <button
-                  onClick={toggleExpand}
-                  className="cursor-pointer text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-                >
-                  {i18n("transactions", { count: tag.transactionCount })}
-                  <span className="ml-1">
-                    (<CurrencyDisplay amount={tag.totalAmount} />)
-                  </span>
-                </button>
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <CurrencyDisplay amount={tag.totalAmount} />
+                </span>
               )}
             </>
           )}
         </div>
         {!editing && (
-          <div className="flex gap-1">
+          <div className={`flex gap-2 ${expanded ? "" : "hidden md:flex"}`} onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => { setEditName(tag.name); setEditing(true); }}
-              className="cursor-pointer rounded p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+              className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-accent-subtle text-accent hover:bg-accent hover:text-accent-text"
               title={i18nc("edit")}
             >
               <PencilSquareIcon className="h-4 w-4" />
             </button>
             <button
               onClick={() => onDelete(tag.id)}
-              className="cursor-pointer rounded p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
+              className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50"
               title={i18nc("delete")}
             >
               <TrashIcon className="h-4 w-4" />

@@ -217,16 +217,16 @@ export function RuleList({ rules, categories, onUpdate, onDelete, onReorder }: R
                 <span className="flex-1 text-sm font-medium text-zinc-900 dark:text-zinc-100 md:font-normal">
                   {rule.match}
                 </span>
-                <div className="flex gap-1 md:hidden">
+                <div className="flex gap-2 md:hidden">
                   <button
                     onClick={() => startEdit(rule)}
-                    className="cursor-pointer rounded p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-accent-subtle text-accent hover:bg-accent hover:text-accent-text"
                   >
                     <PencilSquareIcon className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => onDelete(rule.id)}
-                    className="cursor-pointer rounded p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
+                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
@@ -235,17 +235,17 @@ export function RuleList({ rules, categories, onUpdate, onDelete, onReorder }: R
               <span className="pl-10 text-xs text-zinc-500 dark:text-zinc-400 md:w-48 md:pl-0 md:text-sm">
                 {categoryLabel(rule)}
               </span>
-              <div className="hidden w-20 justify-end gap-1 md:flex">
+              <div className="hidden w-20 justify-end gap-2 md:flex">
                 <button
                   onClick={() => startEdit(rule)}
-                  className="cursor-pointer rounded p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                  className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-accent-subtle text-accent hover:bg-accent hover:text-accent-text"
                   title={i18nc("edit")}
                 >
                   <PencilSquareIcon className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => onDelete(rule.id)}
-                  className="cursor-pointer rounded p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
+                  className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50"
                   title={i18nc("delete")}
                 >
                   <TrashIcon className="h-4 w-4" />

@@ -187,14 +187,14 @@ export function BucketEditor({
             <div className="hidden gap-2 md:flex">
               <button
                 onClick={(e) => { e.stopPropagation(); setEditing(true); }}
-                className="cursor-pointer rounded p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-accent-subtle text-accent hover:bg-accent hover:text-accent-text"
                 title={i18nc("edit")}
               >
                 <PencilSquareIcon className="h-4 w-4" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(bucket.id); }}
-                className="cursor-pointer rounded p-1 text-red-500 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50"
                 title={i18nc("delete")}
               >
                 <TrashIcon className="h-4 w-4" />
