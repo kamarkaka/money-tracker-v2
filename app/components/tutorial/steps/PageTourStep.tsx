@@ -7,6 +7,8 @@ import {
   BuildingLibraryIcon,
   ListBulletIcon,
   ChartBarIcon,
+  FunnelIcon,
+  BookmarkIcon,
 } from "@heroicons/react/24/outline";
 
 const PAGES = [
@@ -33,14 +35,36 @@ const PAGES = [
     ],
   },
   {
+    name: "Rules",
+    icon: FunnelIcon,
+    color: "text-orange-500",
+    bgColor: "bg-orange-100 dark:bg-orange-900/30",
+    points: [
+      "Create rules to automatically categorize transactions based on their description.",
+      "Rules are matched in order — drag to reorder priority.",
+      "When editing a transaction, check 'Create Rule' to add a rule for that description.",
+    ],
+  },
+  {
+    name: "Tags",
+    icon: BookmarkIcon,
+    color: "text-teal-500",
+    bgColor: "bg-teal-100 dark:bg-teal-900/30",
+    points: [
+      "Tag transactions with custom labels like 'Vacation', 'Tax Deductible', or 'Shared'.",
+      "A transaction can have multiple tags — tags work alongside categories.",
+      "View all transactions for a tag from the Tags page.",
+    ],
+  },
+  {
     name: "Account",
     icon: BuildingLibraryIcon,
     color: "text-blue-500",
     bgColor: "bg-blue-100 dark:bg-blue-900/30",
     points: [
       "Link your bank accounts to automatically import transactions.",
-      "View all your accounts and balances in one place.",
-      "Track your net worth across all linked institutions.",
+      "Not comfortable sharing bank credentials? You can manually add accounts and transactions instead — no bank login required.",
+      "View all your accounts and balances in one place, and track your net worth across all institutions.",
     ],
   },
   {
@@ -51,6 +75,7 @@ const PAGES = [
     points: [
       "See all your transactions in one searchable list.",
       "Filter by date, account, category, or amount.",
+      "Import transactions from CSV files, or download your filtered transactions as CSV for backup or analysis.",
       "Assign categories to transactions to keep things organized.",
     ],
   },
@@ -69,10 +94,9 @@ const PAGES = [
 
 interface PageTourStepProps {
   onNext: () => void;
-  onSkip: () => void;
 }
 
-export function PageTourStep({ onNext, onSkip }: PageTourStepProps) {
+export function PageTourStep({ onNext }: PageTourStepProps) {
   const [pageIndex, setPageIndex] = useState(0);
   const page = PAGES[pageIndex];
   const Icon = page.icon;
@@ -84,7 +108,7 @@ export function PageTourStep({ onNext, onSkip }: PageTourStepProps) {
       </h2>
 
       <div key={pageIndex} className="animate-fade-in w-full max-w-lg">
-        <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="rounded-lg border border-card-border bg-card-bg p-6">
           <div className="mb-4 flex items-center gap-3">
             <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${page.bgColor}`}>
               <Icon className={`h-5 w-5 ${page.color}`} />
@@ -124,35 +148,28 @@ export function PageTourStep({ onNext, onSkip }: PageTourStepProps) {
       </div>
 
       <div className="mt-6 flex items-center gap-3">
-        {pageIndex > 0 && (
-          <button
-            onClick={() => setPageIndex(pageIndex - 1)}
-            className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            Back
-          </button>
-        )}
+        <button
+          onClick={() => setPageIndex(pageIndex - 1)}
+          disabled={pageIndex === 0}
+          className="cursor-pointer rounded-md border border-card-border px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-accent-subtle hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed dark:text-zinc-300"
+        >
+          Back
+        </button>
         {pageIndex < PAGES.length - 1 ? (
           <button
             onClick={() => setPageIndex(pageIndex + 1)}
-            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="cursor-pointer rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover"
           >
             Next
           </button>
         ) : (
           <button
             onClick={onNext}
-            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="cursor-pointer rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover"
           >
             Continue
           </button>
         )}
-        <button
-          onClick={onSkip}
-          className="cursor-pointer text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-        >
-          Skip
-        </button>
       </div>
     </div>
   );

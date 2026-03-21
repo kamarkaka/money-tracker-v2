@@ -27,7 +27,7 @@ export function ConfirmDialog({
       <div className="flex justify-end gap-3">
         <button
           onClick={onClose}
-          className="cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="cursor-pointer rounded-md border border-card-border px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
         >
           Cancel
         </button>

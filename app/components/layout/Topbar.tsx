@@ -71,12 +71,12 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
   const linkClass = (href: string) => cn(
     "cursor-pointer rounded-md px-3 py-2.5 text-base transition-colors md:py-2 md:text-sm",
     pathname === href
-      ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50 font-semibold"
+      ? "bg-accent-subtle text-accent font-semibold"
       : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/50 dark:hover:text-zinc-50 font-medium"
   );
 
   return (
-    <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 md:sticky md:top-0 md:z-50">
+    <header className="border-b border-card-border bg-card-bg md:sticky md:top-0 md:z-50">
       <div className="relative mx-auto flex h-14 max-w-7xl items-center justify-between md:h-16 md:px-6">
         {/* Mobile: centered title */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none md:hidden">
@@ -125,7 +125,7 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
           {/* Hamburger — mobile only */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="mr-2 cursor-pointer rounded-md p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 md:mr-0 md:hidden"
+            className="mr-2 cursor-pointer rounded-md p-2 text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400 md:mr-0 md:hidden"
           >
             {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </button>
@@ -156,23 +156,34 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
                 )}
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-40 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800 md:-right-11">
-                  {MENU_ITEMS.map((item) => (
+                <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-lg md:-right-11">
+                  {MENU_ITEMS.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
                     <Link
                       key={item.href}
                       href={item.href}
                       onClick={() => setMenuOpen(false)}
-                      className="cursor-pointer flex items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                      className={`cursor-pointer flex items-center gap-2.5 px-4 py-2.5 text-sm ${
+                        isActive
+                          ? "bg-accent-subtle text-accent font-medium"
+                          : "text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
+                      }`}
                     >
                       <item.icon className="h-4 w-4" />
                       {item.label}
                     </Link>
-                  ))}
-                  <div className="border-t border-zinc-200 dark:border-zinc-700" />
+                    );
+                  })}
+                  <div className="border-t border-card-border" />
                   <Link
                     href="/profile"
                     onClick={() => setMenuOpen(false)}
-                    className="cursor-pointer flex items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    className={`cursor-pointer flex items-center gap-2.5 px-4 py-2.5 text-sm ${
+                      pathname === "/profile"
+                        ? "bg-accent-subtle text-accent font-medium"
+                        : "text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
+                    }`}
                   >
                     <UserCircleIcon className="h-4 w-4" />
                     {i18n("profile")}
@@ -180,15 +191,19 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
                   <Link
                     href="/setting"
                     onClick={() => setMenuOpen(false)}
-                    className="cursor-pointer flex items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    className={`cursor-pointer flex items-center gap-2.5 px-4 py-2.5 text-sm ${
+                      pathname === "/setting"
+                        ? "bg-accent-subtle text-accent font-medium"
+                        : "text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
+                    }`}
                   >
                     <Cog6ToothIcon className="h-4 w-4" />
                     {i18n("setting")}
                   </Link>
-                  <div className="border-t border-zinc-200 dark:border-zinc-700">
+                  <div className="border-t border-card-border">
                     <button
                       onClick={() => signOut().then(() => window.location.href = "/login")}
-                      className="cursor-pointer flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                      className="cursor-pointer flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                     >
                       <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
                       {i18nAuth("logout")}
@@ -207,12 +222,12 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
               {LANGS.find((l) => l.code === locale)?.label || <LanguageIcon className="h-5 w-5" />}
             </button>
             {langOpen && (
-              <div className="absolute right-0 top-full z-50 mt-2 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+              <div className="absolute right-0 top-full z-50 mt-2 overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-lg">
                 {LANGS.filter((l) => l.code !== locale).map((l) => (
                   <button
                     key={l.code}
                     onClick={() => { setLocale(l.code); setLangOpen(false); }}
-                    className="cursor-pointer flex w-full items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    className="cursor-pointer flex w-full items-center gap-2 px-4 py-2.5 text-sm text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
                   >
                     <span>{l.label}</span>
                   </button>
@@ -225,7 +240,7 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="flex flex-col gap-2 border-t border-zinc-200 bg-white px-3 py-3 dark:border-zinc-800 dark:bg-zinc-950 md:hidden">
+        <div className="flex flex-col gap-2 border-t border-card-border bg-card-bg px-3 py-3 md:hidden">
           {/* 1. Overview, Account, Transaction — 3 columns */}
           <div className="grid grid-cols-3 gap-2">
             {NAV_ITEMS.map((item) => (
@@ -236,8 +251,8 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
                 className={cn(
                   "flex flex-col items-center justify-center gap-1 rounded-lg border px-2 py-4 text-sm font-medium transition-colors",
                   pathname === item.href
-                    ? "border-zinc-900 bg-zinc-100 text-zinc-900 dark:border-zinc-50 dark:bg-zinc-800 dark:text-zinc-50"
-                    : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    ? "border-accent bg-accent-subtle text-accent"
+                    : "border-card-border text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400"
                 )}
               >
                 <item.icon className="h-8 w-8" />
@@ -246,54 +261,50 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
             ))}
           </div>
 
-          <div className="my-3 border-t border-zinc-100 dark:border-zinc-800" />
+          <div className="my-1 border-t border-card-border" />
 
-          {/* 2. Category, Budget, Rule, Tag — 2x2 grid */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* 2. Category, Budget, Rule, Tag, Profile, Setting — 3x2 grid */}
+          <div className="grid grid-cols-3 gap-2">
             {MENU_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
-                  "flex items-center justify-center gap-2 rounded-lg border px-2 py-3 text-sm font-medium transition-colors",
+                  "flex flex-col items-center justify-center gap-1 rounded-lg border px-2 py-4 text-sm font-medium transition-colors",
                   pathname === item.href
-                    ? "border-zinc-900 bg-zinc-100 text-zinc-900 dark:border-zinc-50 dark:bg-zinc-800 dark:text-zinc-50"
-                    : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    ? "border-accent bg-accent-subtle text-accent"
+                    : "border-card-border text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400"
                 )}
               >
-                <item.icon className="h-6 w-6" />
+                <item.icon className="h-8 w-8" />
                 {item.label}
               </Link>
             ))}
-          </div>
-
-          {/* 3. Profile, Setting — 2 columns */}
-          <div className="grid grid-cols-2 gap-2">
             <Link
               href="/profile"
               onClick={() => setMobileMenuOpen(false)}
               className={cn(
-                "flex items-center justify-center gap-2 rounded-lg border px-2 py-3 text-sm font-medium transition-colors",
+                "flex flex-col items-center justify-center gap-1 rounded-lg border px-2 py-4 text-sm font-medium transition-colors",
                 pathname === "/profile"
-                  ? "border-zinc-900 bg-zinc-100 text-zinc-900 dark:border-zinc-50 dark:bg-zinc-800 dark:text-zinc-50"
-                  : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  ? "border-accent bg-accent-subtle text-accent"
+                  : "border-card-border text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400"
               )}
             >
-              <UserCircleIcon className="h-6 w-6" />
+              <UserCircleIcon className="h-8 w-8" />
               {i18n("profile")}
             </Link>
             <Link
               href="/setting"
               onClick={() => setMobileMenuOpen(false)}
               className={cn(
-                "flex items-center justify-center gap-2 rounded-lg border px-2 py-3 text-sm font-medium transition-colors",
+                "flex flex-col items-center justify-center gap-1 rounded-lg border px-2 py-4 text-sm font-medium transition-colors",
                 pathname === "/setting"
-                  ? "border-zinc-900 bg-zinc-100 text-zinc-900 dark:border-zinc-50 dark:bg-zinc-800 dark:text-zinc-50"
-                  : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  ? "border-accent bg-accent-subtle text-accent"
+                  : "border-card-border text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400"
               )}
             >
-              <Cog6ToothIcon className="h-6 w-6" />
+              <Cog6ToothIcon className="h-8 w-8" />
               {i18n("setting")}
             </Link>
           </div>
@@ -302,12 +313,12 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={toggleTheme}
-              className="flex items-center justify-center gap-2 rounded-lg border border-zinc-200 px-2 py-3 text-sm font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              className="cursor-pointer flex items-center justify-center gap-2 rounded-lg border border-card-border px-2 py-3 text-sm font-medium text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400"
             >
               {isDark ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
               {isDark ? i18nSetting("light") : i18nSetting("dark")}
             </button>
-            <div className="flex items-center justify-center gap-1 rounded-lg border border-zinc-200 px-2 py-3 dark:border-zinc-700">
+            <div className="flex items-center justify-center gap-1 rounded-lg border border-card-border px-2 py-3">
               {LANGS.map((l) => (
                 <button
                   key={l.code}
@@ -315,8 +326,8 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
                   className={cn(
                     "cursor-pointer rounded-md px-4 py-1 text-sm font-medium transition-colors",
                     locale === l.code
-                      ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-50"
-                      : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                      ? "bg-accent text-accent-text"
+                      : "text-zinc-500 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400"
                   )}
                 >
                   {l.label}
@@ -328,7 +339,7 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
           {/* 5. Logout — full width */}
           <button
             onClick={() => signOut().then(() => window.location.href = "/login")}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 px-2 py-3 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+            className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-2 py-3 text-sm font-medium text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
           >
             <ArrowRightStartOnRectangleIcon className="h-6 w-6" />
             {i18nAuth("logout")}

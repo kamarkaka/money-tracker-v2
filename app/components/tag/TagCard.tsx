@@ -72,7 +72,7 @@ export function TagCard({ tag, onEdit, onDelete }: TagCardProps) {
   };
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="rounded-lg border border-card-border bg-card-bg">
       <div className="flex items-center justify-between px-5 py-4">
         <div className="flex items-center gap-3">
           {editing ? (
@@ -83,12 +83,12 @@ export function TagCard({ tag, onEdit, onDelete }: TagCardProps) {
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") setEditing(false); }}
-                className="rounded-md border border-zinc-300 px-2 py-1 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+                className="rounded-md border border-zinc-300 px-2 py-1 text-sm text-zinc-900 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
               />
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="cursor-pointer rounded-md bg-zinc-900 px-2 py-1 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="cursor-pointer rounded-md bg-accent px-2 py-1 text-xs font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50"
               >
                 {saving ? i18nc("saving") : i18nc("save")}
               </button>

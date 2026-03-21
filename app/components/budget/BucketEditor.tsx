@@ -74,7 +74,7 @@ export function BucketEditor({
   };
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="rounded-lg border border-card-border bg-card-bg p-5">
       {editing ? (
         <div className="flex flex-col gap-4">
           <FormField label={i18n("budgetName")}>
@@ -82,7 +82,7 @@ export function BucketEditor({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+              className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
             />
           </FormField>
           <FormField label={i18n("monthlyAmount")}>
@@ -93,7 +93,7 @@ export function BucketEditor({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+              className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
             />
           </FormField>
           <FormField label={i18n("categories")}>
@@ -108,7 +108,7 @@ export function BucketEditor({
             <button
               onClick={handleSave}
               disabled={loading}
-              className="cursor-pointer rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="cursor-pointer rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50"
             >
               {loading ? i18nc("saving") : i18nc("save")}
             </button>
@@ -140,7 +140,7 @@ export function BucketEditor({
                 bucket.categories.map((bc) => (
                   <span
                     key={bc.category.id}
-                    className="inline-flex rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                    className="inline-flex rounded-full bg-accent-subtle px-2.5 py-0.5 text-xs font-medium text-accent"
                   >
                     {bc.category.name}
                   </span>

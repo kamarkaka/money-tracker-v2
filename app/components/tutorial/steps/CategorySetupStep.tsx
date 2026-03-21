@@ -255,7 +255,7 @@ export function CategorySetupStep({ onNext, onSkip }: CategorySetupStepProps) {
         {categories.map((group, gi) => (
           <div
             key={gi}
-            className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800"
+            className="rounded-lg border border-card-border bg-card-bg"
           >
             {/* Parent row */}
             <div className="flex items-center gap-2 px-3 py-2">
@@ -356,7 +356,7 @@ export function CategorySetupStep({ onNext, onSkip }: CategorySetupStepProps) {
           onChange={(e) => setNewParentName(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") addParent(); }}
           placeholder="Add a new category..."
-          className="flex-1 rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+          className="flex-1 rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-900 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
         />
         <button
           onClick={addParent}
@@ -381,7 +381,7 @@ export function CategorySetupStep({ onNext, onSkip }: CategorySetupStepProps) {
           <button
             onClick={handleAccept}
             disabled={saving}
-            className="cursor-pointer rounded-md bg-zinc-900 px-5 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="cursor-pointer rounded-md bg-accent px-5 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50"
           >
             {saving ? "Creating..." : "Accept & Create"}
           </button>

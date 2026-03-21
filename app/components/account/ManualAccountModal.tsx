@@ -76,7 +76,7 @@ export function ManualAccountModal({ open, onClose, onComplete }: ManualAccountM
   };
 
   const inputClass =
-    "w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50";
+    "w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50";
 
   return (
     <Modal open={open} onClose={handleClose} title="Add Manual Account" className="w-full max-w-md">
@@ -155,7 +155,7 @@ export function ManualAccountModal({ open, onClose, onComplete }: ManualAccountM
             type="button"
             onClick={handleSubmit}
             disabled={saving}
-            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="cursor-pointer rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50"
           >
             {saving ? "Creating..." : "Create Account"}
           </button>

@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { accountId, description, amount, date, categoryId } = body;
+  const { accountId, description, amount, date, categoryId, tagIds } = body;
 
   if (!accountId || !description || amount === undefined || !date) {
     return NextResponse.json(
@@ -146,10 +146,14 @@ export async function POST(request: NextRequest) {
       date: new Date(date),
       categoryId: resolvedCategoryId,
       isManual: true,
+      ...(Array.isArray(tagIds) && tagIds.length > 0
+        ? { transactionTags: { create: tagIds.map((tagId: string) => ({ tagId })) } }
+        : {}),
     },
     include: {
       account: { select: { id: true, name: true } },
       category: { select: { id: true, name: true } },
+      transactionTags: { include: { tag: { select: { id: true, name: true, color: true } } } },
     },
   });
 

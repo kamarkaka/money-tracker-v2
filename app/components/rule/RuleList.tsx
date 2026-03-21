@@ -137,8 +137,8 @@ export function RuleList({ rules, categories, onUpdate, onDelete, onReorder }: R
   };
 
   return (
-    <div ref={listRef} className="select-none rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="hidden border-b border-zinc-200 px-5 py-3 dark:border-zinc-700 md:block">
+    <div ref={listRef} className="select-none rounded-lg border border-card-border bg-card-bg">
+      <div className="hidden border-b border-card-border px-5 py-3 md:block">
         <div className="flex items-center text-xs font-medium text-zinc-500 dark:text-zinc-400">
           <span className="w-12 text-center">#</span>
           <span className="w-8"></span>
@@ -175,14 +175,14 @@ export function RuleList({ rules, categories, onUpdate, onDelete, onReorder }: R
                   type="text"
                   value={editMatch}
                   onChange={(e) => setEditMatch(e.target.value)}
-                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
                 />
               </FormField>
               <FormField label={i18n("targetCategory")} className="w-full md:w-48">
                 <select
                   value={editCategoryId}
                   onChange={(e) => setEditCategoryId(e.target.value)}
-                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
                 >
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -193,7 +193,7 @@ export function RuleList({ rules, categories, onUpdate, onDelete, onReorder }: R
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="cursor-pointer rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                  className="cursor-pointer rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50"
                 >
                   {saving ? i18nc("saving") : i18nc("save")}
                 </button>

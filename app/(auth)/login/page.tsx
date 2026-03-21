@@ -16,10 +16,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [shake, setShake] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setShake(false);
     setLoading(true);
 
     const result = await signIn("credentials", {
@@ -32,6 +34,8 @@ export default function LoginPage() {
 
     if (result?.error) {
       setError(i18n("invalidCredentials"));
+      setShake(true);
+      setTimeout(() => setShake(false), 400);
     } else {
       router.push("/overview");
     }
@@ -63,7 +67,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="h-12 rounded-md border border-zinc-300 px-3 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+            className={`h-12 rounded-md border border-zinc-300 px-3 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50 ${shake ? "animate-shake border-red-500 dark:border-red-500" : ""}`}
           />
         </FormField>
         <FormField label={i18nc("password")} error="">
@@ -72,7 +76,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="h-12 rounded-md border border-zinc-300 px-3 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+            className={`h-12 rounded-md border border-zinc-300 px-3 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50 ${shake ? "animate-shake border-red-500 dark:border-red-500" : ""}`}
           />
         </FormField>
         {error && <p className="text-sm text-red-500">{error}</p>}
@@ -87,7 +91,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="h-12 cursor-pointer rounded-md bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="h-12 cursor-pointer rounded-md bg-accent px-4 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50"
         >
           {loading ? i18nc("loading") : i18n("login")}
         </button>

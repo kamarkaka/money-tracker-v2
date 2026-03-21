@@ -76,7 +76,7 @@ function MultiSelect({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full cursor-pointer items-center justify-between rounded-md border border-zinc-300 px-3 py-2 text-left text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+        className="flex w-full cursor-pointer items-center justify-between rounded-md border border-zinc-300 px-3 py-2 text-left text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
       >
         <span className={selected.size === 0 ? "text-zinc-500 dark:text-zinc-400" : ""}>
           {summary}
@@ -84,7 +84,7 @@ function MultiSelect({
         <ChevronDownIcon className={`h-3.5 w-3.5 text-zinc-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-md border border-card-border bg-card-bg shadow-lg">
           {options.map((option) => (
             <label
               key={option.id}
@@ -190,14 +190,14 @@ export function TransactionFilters({
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:grid-cols-2 sm:gap-4 md:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 rounded-lg border border-card-border bg-card-bg p-4 sm:grid-cols-2 sm:gap-4 md:grid-cols-4">
       <FormField label={i18n("search")} className="sm:col-span-2">
         <input
           type="text"
           value={filters.search}
           onChange={(e) => update("search", e.target.value)}
           placeholder={i18n("searchPlaceholder")}
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
         />
       </FormField>
       <FormField label={i18n("account")}>
@@ -221,7 +221,7 @@ export function TransactionFilters({
           type="date"
           value={filters.startDate}
           onChange={(e) => update("startDate", e.target.value)}
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
         />
       </FormField>
       <FormField label={i18n("toDate")}>
@@ -229,7 +229,7 @@ export function TransactionFilters({
           type="date"
           value={filters.endDate}
           onChange={(e) => update("endDate", e.target.value)}
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
         />
       </FormField>
       <FormField label={i18n("minAmount")}>
@@ -239,7 +239,7 @@ export function TransactionFilters({
           value={filters.minAmount}
           onChange={(e) => update("minAmount", e.target.value)}
           placeholder="0.00"
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
         />
       </FormField>
       <FormField label={i18n("maxAmount")}>
@@ -249,7 +249,7 @@ export function TransactionFilters({
           value={filters.maxAmount}
           onChange={(e) => update("maxAmount", e.target.value)}
           placeholder="0.00"
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
         />
       </FormField>
       <div className="flex items-end sm:col-span-2 md:col-span-1">

@@ -59,7 +59,7 @@ export function TagSelector({ allTags, selectedTagIds, onChange, onCreateTag }: 
 
   return (
     <div ref={ref} className="relative">
-      <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-zinc-300 px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-800">
+      <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-card-border bg-input-bg px-2 py-1.5">
         {selectedTags.map((tag) => (
           <TagBadge
             key={tag.id}
@@ -78,7 +78,7 @@ export function TagSelector({ allTags, selectedTagIds, onChange, onCreateTag }: 
         />
       </div>
       {open && (availableTags.length > 0 || showCreate) && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-40 overflow-y-auto rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-40 overflow-y-auto rounded-md border border-card-border bg-card-bg shadow-lg">
           {availableTags.map((tag) => (
             <button
               key={tag.id}

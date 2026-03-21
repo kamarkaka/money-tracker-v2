@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Modal } from "@/app/components/ui/Modal";
+import { TagSelector } from "@/app/components/tag/TagSelector";
 
 interface Account {
   id: string;
@@ -16,12 +17,20 @@ interface Category {
   children?: Category[];
 }
 
+interface TagItem {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface AddTransactionModalProps {
   open: boolean;
   onClose: () => void;
   onComplete: () => void;
   accounts: Account[];
   categories: Category[];
+  allTags?: TagItem[];
+  onTagsChanged?: () => void;
 }
 
 export function AddTransactionModal({
@@ -30,6 +39,8 @@ export function AddTransactionModal({
   onComplete,
   accounts,
   categories,
+  allTags = [],
+  onTagsChanged,
 }: AddTransactionModalProps) {
   const [accountId, setAccountId] = useState("");
   const [description, setDescription] = useState("");
@@ -37,6 +48,7 @@ export function AddTransactionModal({
   const [isExpense, setIsExpense] = useState(true);
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [categoryId, setCategoryId] = useState("");
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -48,12 +60,14 @@ export function AddTransactionModal({
       setIsExpense(true);
       setDate(new Date().toISOString().split("T")[0]);
       setCategoryId("");
+      setSelectedTagIds([]);
       setError("");
     }
   }, [open]);
 
   const i18n = useTranslations("transaction");
   const i18nc = useTranslations("common");
+  const i18nTag = useTranslations("tag");
 
   // Build flat category options with "Parent > Child" format
   const categoryOptions: { id: string; label: string }[] = [];
@@ -90,6 +104,7 @@ export function AddTransactionModal({
           amount: isExpense ? -Math.abs(parsedAmount) : Math.abs(parsedAmount),
           date,
           categoryId: categoryId || null,
+          tagIds: selectedTagIds,
         }),
       });
 
@@ -119,7 +134,7 @@ export function AddTransactionModal({
   };
 
   const inputClass =
-    "w-full h-10 rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50";
+    "w-full h-10 rounded-md border border-card-border px-3 py-2 text-sm text-zinc-900 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent bg-input-bg dark:text-zinc-50";
 
   return (
     <Modal open={open} onClose={handleClose} title={i18n("addTransaction")} className="w-full max-w-lg">
@@ -165,14 +180,14 @@ export function AddTransactionModal({
         <div>
           <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{i18n("amount")}</label>
           <div className="flex gap-3">
-            <div className="flex w-2/5 shrink-0 overflow-hidden rounded-md border border-zinc-300 dark:border-zinc-600">
+            <div className="flex w-2/5 shrink-0 overflow-hidden rounded-md border border-card-border">
               <button
                 type="button"
                 onClick={() => setIsExpense(true)}
                 className={`flex-1 cursor-pointer px-2 py-2 text-sm font-medium ${
                   isExpense
                     ? "bg-red-500 text-white"
-                    : "bg-white text-zinc-700 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300"
+                    : "bg-input-bg text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300"
                 }`}
               >
                 {i18n("expense")}
@@ -183,7 +198,7 @@ export function AddTransactionModal({
                 className={`flex-1 cursor-pointer px-2 py-2 text-sm font-medium ${
                   !isExpense
                     ? "bg-green-500 text-white"
-                    : "bg-white text-zinc-700 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300"
+                    : "bg-input-bg text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300"
                 }`}
               >
                 {i18n("income")}
@@ -213,12 +228,36 @@ export function AddTransactionModal({
           </select>
         </div>
 
+        {allTags.length > 0 && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              {i18nTag("tags")}
+            </label>
+            <TagSelector
+              allTags={allTags}
+              selectedTagIds={selectedTagIds}
+              onChange={setSelectedTagIds}
+              onCreateTag={async (name) => {
+                const res = await fetch("/api/tags", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ name }),
+                });
+                if (!res.ok) return null;
+                const tag = await res.json();
+                onTagsChanged?.();
+                return tag;
+              }}
+            />
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-2 pt-2">
           <button
             type="button"
             onClick={() => handleSubmit("close")}
             disabled={saving}
-            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-3 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="cursor-pointer rounded-md bg-accent px-4 py-3 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50"
           >
             {saving ? i18nc("adding") : i18n("addAndClose")}
           </button>

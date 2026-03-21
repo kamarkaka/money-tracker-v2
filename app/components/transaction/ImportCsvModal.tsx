@@ -521,7 +521,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
   };
 
   const inputClass =
-    "w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50";
+    "w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50";
 
   return (
     <Modal open={open} onClose={handleClose} title={i18n("title")} className="w-full max-w-2xl">
@@ -536,7 +536,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
             type="file"
             accept=".csv"
             onChange={handleFileChange}
-            className="text-sm text-zinc-600 file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-zinc-900 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-zinc-800 dark:text-zinc-400 dark:file:bg-zinc-50 dark:file:text-zinc-900"
+            className="text-sm text-zinc-600 file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-accent file:px-4 file:py-2 file:text-sm file:font-medium file:text-accent-text hover:file:bg-accent-hover dark:text-zinc-400"
           />
           {error && (
             <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -559,16 +559,16 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
             </label>
           </div>
 
-          <div className="overflow-x-auto rounded-md border border-zinc-200 dark:border-zinc-700">
+          <div className="overflow-x-auto rounded-md border border-card-border">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800">
+                <tr className="border-b border-card-border bg-accent-subtle/30">
                   {headers.map((_, i) => (
                     <th key={i} className="px-3 py-2">
                       <select
                         value={columnMapping[String(i)] || ""}
                         onChange={(e) => handleMapColumn(i, e.target.value)}
-                        className="w-full rounded border border-zinc-300 px-1.5 py-1 text-xs dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-50"
+                        className="w-full rounded border border-card-border bg-input-bg px-1.5 py-1 text-xs dark:text-zinc-50"
                       >
                         {COLUMN_ROLES.map((r) => (
                           <option key={r.value} value={r.value}>{r.label}</option>
@@ -578,7 +578,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
                   ))}
                 </tr>
                 {hasHeader && (
-                  <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
+                  <tr className="border-b border-card-border bg-accent-subtle/20">
                     {headers.map((h, i) => (
                       <th key={i} className="px-3 py-1.5 text-left text-xs font-medium text-zinc-500">
                         {h}
@@ -647,7 +647,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
               <button
                 onClick={handleImport}
                 disabled={importing || !hasRequiredMapping()}
-                className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="cursor-pointer rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50"
               >
                 {importing ? i18nc("importing") : i18n("importButton", { count: dataRows.length })}
               </button>
@@ -672,7 +672,7 @@ export function ImportCsvModal({ open, onClose, onComplete, accounts, categories
           </p>
           <button
             onClick={handleClose}
-            className="cursor-pointer rounded-md bg-zinc-900 px-6 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="cursor-pointer rounded-md bg-accent px-6 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover"
           >
             {i18nc("done")}
           </button>

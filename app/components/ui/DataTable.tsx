@@ -78,9 +78,9 @@ export function DataTable<T>({
               key={keyExtractor(item)}
               onClick={() => onRowClick?.(item)}
               className={cn(
-                "border-b border-zinc-100 hover:bg-blue-100 dark:border-zinc-800 dark:hover:bg-blue-900/40",
+                "border-b border-zinc-100 hover:bg-accent-subtle dark:border-zinc-800",
                 isSelected
-                  ? "bg-blue-50 dark:bg-blue-900/30"
+                  ? "bg-accent-subtle"
                   : index % 2 === 1 && "bg-zinc-100 dark:bg-zinc-800/70",
                 onRowClick && "cursor-pointer"
               )}

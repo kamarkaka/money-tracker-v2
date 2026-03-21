@@ -72,7 +72,7 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
   const labeledYears = new Set<number>();
 
   const arrowClass =
-    "cursor-pointer rounded-md border border-zinc-300 p-2 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800";
+    "cursor-pointer rounded-md border border-card-border px-2.5 py-2 text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400";
 
   return (
     <div className="flex items-center gap-2">
@@ -96,10 +96,10 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
             <button
               key={`${y}-${m}`}
               onClick={() => onChange(y, m)}
-              className={`cursor-pointer shrink-0 rounded-md px-3 py-3 text-sm font-medium transition-colors md:px-3 md:py-1.5 ${
+              className={`cursor-pointer shrink-0 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                 isSelected
-                  ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
-                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  ? "bg-accent text-accent-text"
+                  : "text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400"
               }`}
             >
               {shortMonths[m]}

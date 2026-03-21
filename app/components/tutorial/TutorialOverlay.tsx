@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { TutorialProgress } from "./TutorialProgress";
 import { WelcomeStep } from "./steps/WelcomeStep";
 import { PageTourStep } from "./steps/PageTourStep";
@@ -17,7 +16,6 @@ interface TutorialOverlayProps {
 }
 
 export function TutorialOverlay({ onClose } : TutorialOverlayProps) {
-  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [categoriesCreated, setCategoriesCreated] = useState(0);
   const [budgetsCreated, setBudgetsCreated] = useState(0);
@@ -27,9 +25,7 @@ export function TutorialOverlay({ onClose } : TutorialOverlayProps) {
   const completeTutorial = useCallback(async () => {
     await fetch("/api/tutorial/complete", { method: "PUT" });
     onClose();
-    router.push("/overview");
-    router.refresh();
-  }, [router, onClose]);
+  }, [onClose]);
 
   const skipTutorial = useCallback(() => {
     completeTutorial();
@@ -46,13 +42,12 @@ export function TutorialOverlay({ onClose } : TutorialOverlayProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="animate-scale-in w-full max-w-2xl rounded-xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="animate-scale-in w-[90vw] max-w-2xl rounded-xl border border-card-border bg-card-bg shadow-2xl md:w-full">
         {/* Progress bar (hidden on welcome and completion steps) */}
         {currentStep > 0 && currentStep < TOTAL_STEPS - 1 && (
           <TutorialProgress
             currentStep={currentStep}
             totalSteps={TOTAL_STEPS}
-            onSkipTutorial={skipTutorial}
           />
         )}
 
@@ -67,7 +62,6 @@ export function TutorialOverlay({ onClose } : TutorialOverlayProps) {
         {currentStep === 1 && (
           <PageTourStep
             onNext={() => goToStep(2)}
-            onSkip={() => goToStep(2)}
           />
         )}
 
@@ -95,6 +89,7 @@ export function TutorialOverlay({ onClose } : TutorialOverlayProps) {
               goToStep(4);
             }}
             onSkip={() => goToStep(4)}
+            onSkipTutorial={skipTutorial}
           />
         )}
 

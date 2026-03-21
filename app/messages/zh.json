@@ -110,6 +110,8 @@
   "account": {
     "title": "账户",
     "netWorth": "净资产",
+    "totalAssets": "总资产",
+    "totalLiabilities": "总负债",
     "linkBank": "关联银行账户",
     "addManual": "手动添加账户",
     "backfill": "从 Sophtron 回填",
@@ -208,7 +210,10 @@
     "purgeFirstConfirm": "这将永久删除您的所有交易、账户、机构、分类、预算和设置。确定要继续吗？",
     "purgeFinalConfirm": "这是您最后的机会。所有数据将被永久清除，无法恢复。您确定吗？",
     "purgeEverything": "清除所有数据",
-    "purgeSuccess": "所有数据已成功清除。"
+    "purgeSuccess": "所有数据已成功清除。",
+    "tutorialSection": "教程",
+    "tutorialDescription": "浏览应用设置指南，包括分类和预算配置。",
+    "startTutorial": "开始教程"
   },
   "setting": {
     "title": "设置",

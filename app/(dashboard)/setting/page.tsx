@@ -24,7 +24,7 @@ export default function SettingPage() {
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
       </div>
 
-      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 md:p-6">
+      <div className="rounded-lg border border-card-border bg-card-bg p-4 md:p-6">
         <h2 className="mb-1 text-lg font-semibold text-zinc-900 dark:text-zinc-50">{i18n("appearance")}</h2>
         <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
           {i18n("appearanceDesc")}
@@ -40,12 +40,12 @@ export default function SettingPage() {
                 onClick={() => setTheme(option.value)}
                 className={`cursor-pointer flex flex-col items-center gap-2 rounded-lg border-2 px-2 py-3 transition-colors md:px-4 md:py-5 ${
                   selected
-                    ? "border-zinc-900 bg-zinc-50 dark:border-zinc-50 dark:bg-zinc-800"
-                    : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
+                    ? "border-accent bg-accent-subtle"
+                    : "border-card-border hover:border-accent/50 hover:bg-accent-subtle/50"
                 }`}
               >
-                <Icon className={`h-6 w-6 ${selected ? "text-zinc-900 dark:text-zinc-50" : "text-zinc-400 dark:text-zinc-500"}`}/>
-                <span className={`text-sm font-medium ${selected ? "text-zinc-900 dark:text-zinc-50" : "text-zinc-600 dark:text-zinc-400"}`}>
+                <Icon className={`h-6 w-6 ${selected ? "text-accent" : "text-zinc-400 dark:text-zinc-500"}`}/>
+                <span className={`text-sm font-medium ${selected ? "text-accent font-semibold" : "text-zinc-600 dark:text-zinc-400"}`}>
                   {option.label}
                 </span>
                 <span className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -57,7 +57,7 @@ export default function SettingPage() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 md:p-6">
+      <div className="mt-6 rounded-lg border border-card-border bg-card-bg p-4 md:p-6">
         <h2 className="mb-1 text-lg font-semibold text-zinc-900 dark:text-zinc-50">{i18n("language")}</h2>
         <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
           {i18n("languageDesc")}
@@ -72,12 +72,12 @@ export default function SettingPage() {
                 onClick={() => setLocale(loc.code as Locale)}
                 className={`cursor-pointer flex min-w-0 flex-col items-center gap-1 overflow-hidden rounded-lg border-2 px-1 py-3 transition-colors md:px-4 md:py-5 ${
                   selected
-                    ? "border-zinc-900 bg-zinc-50 dark:border-zinc-50 dark:bg-zinc-800"
-                    : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
+                    ? "border-accent bg-accent-subtle"
+                    : "border-card-border hover:border-accent/50 hover:bg-accent-subtle/50"
                 }`}
               >
                 <span className="text-2xl md:text-3xl">{loc.flag}</span>
-                <span className={`w-full truncate text-center text-sm font-medium md:text-base ${selected ? "text-zinc-900 dark:text-zinc-50" : "text-zinc-600 dark:text-zinc-400"}`}>
+                <span className={`w-full truncate text-center text-sm font-medium md:text-base ${selected ? "text-accent font-semibold" : "text-zinc-600 dark:text-zinc-400"}`}>
                   {loc.nativeLabel}
                 </span>
                 <span className="hidden text-xs text-zinc-500 dark:text-zinc-400 md:block">

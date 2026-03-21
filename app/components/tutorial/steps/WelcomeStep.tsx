@@ -31,24 +31,16 @@ export function WelcomeStep({ onNext, onSkip }: WelcomeStepProps) {
         className="animate-fade-in-up mt-4 max-w-md text-center text-zinc-600 dark:text-zinc-400"
         style={{ animationDelay: "0.6s" }}
       >
-        Let&apos;s get you set up in a few quick steps. We&apos;ll help you create categories,
-        set up budgets, and link your bank accounts.
-      </p>
-
-      <p
-        className="animate-fade-in-up mt-2 text-sm text-zinc-500 dark:text-zinc-500"
-        style={{ animationDelay: "0.9s" }}
-      >
-        You can skip any step or quit the tutorial at any time.
+        A quick tour of the app and you&apos;ll be up and running in no time.
       </p>
 
       <div
         className="animate-fade-in-up mt-8 flex items-center gap-4"
-        style={{ animationDelay: "1.2s" }}
+        style={{ animationDelay: "0.9s" }}
       >
         <button
           onClick={onNext}
-          className="cursor-pointer rounded-md bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="cursor-pointer rounded-md bg-accent px-6 py-2.5 text-sm font-medium text-accent-text hover:bg-accent-hover"
         >
           Let&apos;s Go
         </button>

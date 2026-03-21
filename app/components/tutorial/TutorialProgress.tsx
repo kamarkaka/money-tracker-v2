@@ -12,12 +12,11 @@ const STEP_LABELS = [
 interface TutorialProgressProps {
   currentStep: number;
   totalSteps: number;
-  onSkipTutorial: () => void;
 }
 
-export function TutorialProgress({ currentStep, totalSteps, onSkipTutorial }: TutorialProgressProps) {
+export function TutorialProgress({ currentStep, totalSteps }: TutorialProgressProps) {
   return (
-    <div className="flex items-center justify-between px-8 py-4">
+    <div className="px-8 py-4">
       <div className="flex items-center gap-2">
         {Array.from({ length: totalSteps }).map((_, i) => (
           <div key={i} className="flex items-center gap-2">
@@ -45,14 +44,6 @@ export function TutorialProgress({ currentStep, totalSteps, onSkipTutorial }: Tu
           {STEP_LABELS[currentStep]}
         </span>
       </div>
-      {currentStep < totalSteps - 1 && (
-        <button
-          onClick={onSkipTutorial}
-          className="cursor-pointer text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-        >
-          Skip Tutorial
-        </button>
-      )}
     </div>
   );
 }

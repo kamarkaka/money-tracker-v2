@@ -98,7 +98,7 @@ export function TransactionCategoryEditor({
         type="button"
         onClick={handleToggle}
         disabled={loading}
-        className="flex w-full cursor-pointer items-center justify-between gap-1 rounded-md border border-zinc-300 px-3 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-700 md:px-2 md:py-1 md:text-xs"
+        className="flex w-full cursor-pointer items-center justify-between gap-1 rounded-md border border-zinc-300 px-3 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 bg-input-bg dark:text-zinc-50 dark:hover:bg-zinc-700 md:px-2 md:py-1 md:text-xs"
       >
         <span className="truncate">{loading ? "Saving..." : currentName}</span>
         <svg
@@ -112,7 +112,7 @@ export function TransactionCategoryEditor({
       </button>
 
       {open && (
-        <div className={`absolute left-0 z-50 w-full rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800 ${dropUp ? "bottom-full mb-1" : "top-full mt-1"}`}>
+        <div className={`absolute left-0 z-50 w-full rounded-md border border-card-border bg-card-bg shadow-lg ${dropUp ? "bottom-full mb-1" : "top-full mt-1"}`}>
           {dropUp ? (
             <>
               <ul className="max-h-48 overflow-y-auto py-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-600">

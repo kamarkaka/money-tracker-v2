@@ -78,7 +78,7 @@ export function BucketCard({
   const barColor = interpolateColor(ratio, stops);
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="rounded-lg border border-card-border bg-card-bg">
       <button
         onClick={() => setExpanded(!expanded)}
         className="cursor-pointer flex w-full items-center justify-between px-5 py-4 text-left"
@@ -102,7 +102,7 @@ export function BucketCard({
         <div className="px-5 pb-3">
           <div className="relative h-8 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
             <div
-              className="h-full rounded-full transition-all"
+              className="animate-progress h-full rounded-full"
               style={{ width: `${pct}%`, backgroundColor: `${barColor}` }}
             />
             <div className="absolute inset-0 flex items-center justify-between px-3 text-sm font-semibold">

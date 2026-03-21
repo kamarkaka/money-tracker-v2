@@ -20,9 +20,10 @@ interface BudgetRow {
 interface BudgetSetupStepProps {
   onNext: (budgetsCreated: number) => void;
   onSkip: () => void;
+  onSkipTutorial?: () => void;
 }
 
-export function BudgetSetupStep({ onNext, onSkip }: BudgetSetupStepProps) {
+export function BudgetSetupStep({ onNext, onSkip, onSkipTutorial }: BudgetSetupStepProps) {
   const [buckets, setBuckets] = useState<BudgetRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -139,7 +140,7 @@ export function BudgetSetupStep({ onNext, onSkip }: BudgetSetupStepProps) {
         </p>
         <button
           onClick={onSkip}
-          className="cursor-pointer rounded-md bg-zinc-900 px-5 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="cursor-pointer rounded-md bg-accent px-5 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover"
         >
           Continue
         </button>
@@ -168,10 +169,10 @@ export function BudgetSetupStep({ onNext, onSkip }: BudgetSetupStepProps) {
         {buckets.map((bucket, i) => (
           <div
             key={i}
-            className={`rounded-lg border bg-white p-4 transition-opacity dark:bg-zinc-800 ${
+            className={`rounded-lg border bg-card-bg p-4 transition-opacity ${
               bucket.included
-                ? "border-zinc-200 dark:border-zinc-700"
-                : "border-zinc-100 opacity-50 dark:border-zinc-800"
+                ? "border-card-border"
+                : "border-card-border opacity-50"
             }`}
           >
             <div className="flex items-center gap-3">
@@ -224,6 +225,14 @@ export function BudgetSetupStep({ onNext, onSkip }: BudgetSetupStepProps) {
           {includedCount} budget{includedCount !== 1 ? "s" : ""} to create
         </span>
         <div className="flex items-center gap-3">
+          {onSkipTutorial && (
+            <button
+              onClick={onSkipTutorial}
+              className="cursor-pointer text-sm text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+            >
+              Skip Tutorial
+            </button>
+          )}
           <button
             onClick={onSkip}
             className="cursor-pointer text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
@@ -233,7 +242,7 @@ export function BudgetSetupStep({ onNext, onSkip }: BudgetSetupStepProps) {
           <button
             onClick={handleCreate}
             disabled={saving}
-            className="cursor-pointer rounded-md bg-zinc-900 px-5 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="cursor-pointer rounded-md bg-accent px-5 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50"
           >
             {saving ? "Creating..." : "Create Budgets"}
           </button>

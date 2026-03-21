@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { MonthPicker } from "@/app/components/MonthPicker";
 import { MonthlySummaryHeader } from "@/app/components/overview/MonthlySummaryHeader";
 import { BucketCard } from "@/app/components/overview/BucketCard";
 import { UncategorizedSection } from "@/app/components/overview/UncategorizedSection";
+import { Fireworks } from "@/app/components/overview/Fireworks";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { EmptyState } from "@/app/components/ui/EmptyState";
+import { PageTabs } from "@/app/components/ui/PageTabs";
 
 interface Transaction {
   id: string;
@@ -50,6 +52,8 @@ export default function OverviewPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [budgets, setBudgets] = useState<BudgetBucket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showFireworks, setShowFireworks] = useState(false);
+  const initialLoad = useRef(true);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -156,6 +160,18 @@ export default function OverviewPage() {
     .reduce((sum, t) => sum + parseFloat(String(t.amount)), 0);
 
   const othersTotal = others.reduce((sum, t) => sum + parseFloat(String(t.amount)), 0);
+  const netSavings = totalIncome + totalExpenses;
+
+  useEffect(() => {
+    if (!loading && initialLoad.current) {
+      initialLoad.current = false;
+      if (netSavings > 0) {
+        setShowFireworks(true);
+        const timer = setTimeout(() => setShowFireworks(false), 4000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [loading, netSavings]);
 
   if (loading) {
     return (
@@ -167,8 +183,9 @@ export default function OverviewPage() {
 
   return (
     <div>
+      {showFireworks && <Fireworks duration={3500} />}
       <div className="mb-6">
-        <h1 className="mb-4 text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
+        <div className="mb-4"><PageTabs /></div>
         <MonthPicker year={year} month={month} onChange={handleMonthChange} />
       </div>
 

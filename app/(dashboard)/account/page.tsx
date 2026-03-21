@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
 import { CurrencyDisplay } from "@/app/components/ui/CurrencyDisplay";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
+import { PageTabs } from "@/app/components/ui/PageTabs";
 
 interface Account {
   id: string;
@@ -43,16 +44,22 @@ export default function AccountPage() {
     institutionName: string;
   } | null>(null);
 
-  const netWorth = useMemo(() => {
+  const { totalAssets, totalLiabilities, netWorth } = useMemo(() => {
     const LIABILITY_TYPES = ["credit_card", "loan"];
-    return institutions.reduce((total, inst) => {
-      return inst.accounts.reduce((sum, acct) => {
-        if (acct.isHidden) return sum;
+    let assets = 0;
+    let liabilities = 0;
+    for (const inst of institutions) {
+      for (const acct of inst.accounts) {
+        if (acct.isHidden) continue;
         const bal = typeof acct.balance === "string" ? parseFloat(acct.balance) : acct.balance;
-        const isLiability = LIABILITY_TYPES.includes(acct.type.toLowerCase());
-        return sum + (isLiability ? -Math.abs(bal) : bal);
-      }, total);
-    }, 0);
+        if (LIABILITY_TYPES.includes(acct.type.toLowerCase())) {
+          liabilities += Math.abs(bal);
+        } else {
+          assets += bal;
+        }
+      }
+    }
+    return { totalAssets: assets, totalLiabilities: liabilities, netWorth: assets - liabilities };
   }, [institutions]);
 
   const fetchInstitutions = useCallback(async () => {
@@ -97,25 +104,50 @@ export default function AccountPage() {
   return (
     <div>
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-baseline gap-4">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
-          <div className="text-sm text-zinc-500 dark:text-zinc-400">
-            {i18n("netWorth")}: <CurrencyDisplay amount={netWorth} />
-          </div>
-        </div>
+        <PageTabs />
         <div className="grid w-full grid-cols-2 gap-2 md:flex md:w-auto md:gap-3">
           <button
             onClick={() => setShowManual(true)}
-            className="cursor-pointer rounded-md border border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800 md:py-2"
+            className="cursor-pointer rounded-md border border-card-border px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
           >
             {i18n("addManual")}
           </button>
           <button
             onClick={() => { setRefreshData(null); setShowAdd(true); }}
-            className="cursor-pointer rounded-md bg-zinc-900 px-4 py-3 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 md:py-2"
+            className="cursor-pointer rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover"
           >
             {i18n("linkBank")}
           </button>
+        </div>
+      </div>
+
+      <div className="mb-6 grid grid-cols-3 gap-2 md:gap-4">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-4 text-center dark:border-emerald-800 dark:bg-emerald-950/30">
+          <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 md:text-sm">{i18n("totalAssets")}</p>
+          <p className="mt-1 text-lg font-bold md:text-2xl">
+            <CurrencyDisplay amount={totalAssets} className="text-emerald-600 dark:text-emerald-400" />
+          </p>
+        </div>
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-center dark:border-red-800 dark:bg-red-950/30">
+          <p className="text-xs font-medium text-red-700 dark:text-red-400 md:text-sm">{i18n("totalLiabilities")}</p>
+          <p className="mt-1 text-lg font-bold md:text-2xl">
+            <CurrencyDisplay amount={-totalLiabilities} className="text-red-600 dark:text-red-400" />
+          </p>
+        </div>
+        <div className={`rounded-lg border px-4 py-4 text-center ${
+          netWorth >= 0
+            ? "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30"
+            : "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30"
+        }`}>
+          <p className={`text-xs font-medium md:text-sm ${
+            netWorth >= 0 ? "text-blue-700 dark:text-blue-400" : "text-red-700 dark:text-red-400"
+          }`}>{i18n("netWorth")}</p>
+          <p className="mt-1 text-lg font-bold md:text-2xl">
+            <CurrencyDisplay
+              amount={netWorth}
+              className={netWorth >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}
+            />
+          </p>
         </div>
       </div>
 
@@ -126,7 +158,7 @@ export default function AccountPage() {
           action={
             <button
               onClick={() => { setRefreshData(null); setShowAdd(true); }}
-              className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="cursor-pointer rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover"
             >
               {i18n("addInstitution")}
             </button>

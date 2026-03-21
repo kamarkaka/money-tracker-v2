@@ -35,10 +35,17 @@ export function AppShell({ children, userName, userImage }: AppShellProps) {
     checkTutorial();
   }, []);
 
+  // Listen for manual tutorial trigger
+  useEffect(() => {
+    const handler = () => setShowTutorial(true);
+    window.addEventListener("start-tutorial", handler);
+    return () => window.removeEventListener("start-tutorial", handler);
+  }, []);
+
   return (
     <ThemeProvider>
       <LocaleProvider>
-        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+        <div className="min-h-screen bg-page-bg">
           <Topbar userName={userName} userImage={userImage} />
           <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">{children}</main>
           {showTutorial && <TutorialOverlay onClose={() => setShowTutorial(false)} />}

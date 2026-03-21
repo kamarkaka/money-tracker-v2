@@ -22,7 +22,7 @@ function validatePassword(pw: string): string | null {
 }
 
 const INPUT_BASE =
-  "rounded-md border px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 dark:bg-zinc-800 dark:text-zinc-50";
+  "rounded-md border px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 bg-input-bg dark:text-zinc-50";
 const INPUT_NORMAL =
   `${INPUT_BASE} border-zinc-300 focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600`;
 const INPUT_ERROR =
@@ -134,7 +134,7 @@ function ResetPasswordForm() {
         <button
           type="submit"
           disabled={loading}
-          className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="cursor-pointer rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50"
         >
           {loading ? i18nc("loading") : i18n("setNewPassword")}
         </button>

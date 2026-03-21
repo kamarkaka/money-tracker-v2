@@ -49,13 +49,13 @@ export function BankLinkStep({ onNext, onSkip }: BankLinkStepProps) {
         <div className="flex gap-3">
           <button
             onClick={() => setShowConnect(true)}
-            className="cursor-pointer rounded-md bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="cursor-pointer rounded-md bg-accent px-5 py-2.5 text-sm font-medium text-accent-text hover:bg-accent-hover"
           >
             Link Bank Account
           </button>
           <button
             onClick={() => setShowManual(true)}
-            className="cursor-pointer rounded-md border border-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="cursor-pointer rounded-md border border-card-border px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
           >
             Add Manually
           </button>
@@ -68,11 +68,6 @@ export function BankLinkStep({ onNext, onSkip }: BankLinkStepProps) {
           {linkedCount > 0 ? "Continue" : "Skip for Now"}
         </button>
 
-        {linkedCount === 0 && (
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
-            You can always add accounts later from the Accounts page.
-          </p>
-        )}
       </div>
 
       <ConnectInstitutionModal

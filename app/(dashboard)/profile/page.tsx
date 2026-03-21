@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
+import { BookOpenIcon } from "@heroicons/react/24/outline";
 
 interface UserProfile {
   id: string;
@@ -150,7 +151,7 @@ export default function ProfilePage() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50";
+    "w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50";
 
   return (
     <div>
@@ -160,7 +161,7 @@ export default function ProfilePage() {
 
       <div className="flex flex-col gap-6 md:flex-row">
         {/* User Information */}
-        <div className="flex-1 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex-1 rounded-lg border border-card-border bg-card-bg p-6">
           <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">{i18n("userInfo")}</h2>
           {profileMessage && (
             <div className="mb-4 rounded-md bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
@@ -174,7 +175,16 @@ export default function ProfilePage() {
           )}
           <div className="mb-4">
             <label className="mb-1 block text-sm font-medium text-zinc-500 dark:text-zinc-400">{i18n("userId")}</label>
-            <p className="font-mono text-sm text-zinc-700 dark:text-zinc-300">{profile?.id}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-mono text-sm text-zinc-700 dark:text-zinc-300">{profile?.id}</p>
+              <button
+                onClick={() => window.dispatchEvent(new Event("start-tutorial"))}
+                className="cursor-pointer rounded-md p-1.5 text-zinc-400 hover:bg-accent-subtle hover:text-accent"
+                title={i18n("startTutorial")}
+              >
+                <BookOpenIcon className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           <div className="mb-4">
@@ -200,7 +210,7 @@ export default function ProfilePage() {
           <button
             onClick={handleSaveProfile}
             disabled={saving}
-            className="w-full cursor-pointer rounded-md bg-zinc-900 px-4 py-3 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 md:w-auto md:py-2"
+            className="w-full cursor-pointer rounded-md bg-accent px-4 py-3 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50 md:w-auto md:py-2"
           >
             {saving ? i18nc("saving") : i18nc("saveChanges")}
           </button>
@@ -208,7 +218,7 @@ export default function ProfilePage() {
 
         {/* Change Password - only for credentials users */}
         {profile?.hasPassword && (
-          <div className="flex-1 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex-1 rounded-lg border border-card-border bg-card-bg p-6">
             <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">{i18n("changePassword")}</h2>
             {passwordMessage && (
               <div className="mb-4 rounded-md bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
@@ -254,7 +264,7 @@ export default function ProfilePage() {
             <button
               onClick={handleChangePassword}
               disabled={saving || !currentPassword || !newPassword || !confirmPassword}
-              className="w-full cursor-pointer rounded-md bg-zinc-900 px-4 py-3 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 md:w-auto md:py-2"
+              className="w-full cursor-pointer rounded-md bg-accent px-4 py-3 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50 md:w-auto md:py-2"
             >
               {saving ? i18nc("changing") : i18n("changePassword")}
             </button>
@@ -262,7 +272,7 @@ export default function ProfilePage() {
         )}
       </div>
 
-      <div className="mt-6 rounded-lg border border-red-200 bg-white p-6 dark:border-red-900 dark:bg-zinc-900">
+      <div className="mt-6 rounded-lg border border-red-200 bg-card-bg p-6 dark:border-red-900">
         <h2 className="mb-2 text-lg font-semibold text-red-600 dark:text-red-400">{i18n("dangerZone")}</h2>
         {purgeMessage && (
           <div className="mb-4 rounded-md bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">

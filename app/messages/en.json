@@ -110,6 +110,8 @@
   "account": {
     "title": "Accounts",
     "netWorth": "Net Worth",
+    "totalAssets": "Total Assets",
+    "totalLiabilities": "Total Liabilities",
     "linkBank": "Link Bank Account",
     "addManual": "Add Manual Account",
     "backfill": "Backfill from Sophtron",
@@ -208,7 +210,10 @@
     "purgeFirstConfirm": "This will permanently delete all your transactions, accounts, institutions, categories, budgets, and settings. Are you sure you want to continue?",
     "purgeFinalConfirm": "This is your last chance. All your data will be permanently erased and cannot be recovered. Are you absolutely sure?",
     "purgeEverything": "Purge Everything",
-    "purgeSuccess": "All data has been purged successfully."
+    "purgeSuccess": "All data has been purged successfully.",
+    "tutorialSection": "Tutorial",
+    "tutorialDescription": "Walk through the app setup guide, including category and budget configuration.",
+    "startTutorial": "Start Tutorial"
   },
   "setting": {
     "title": "Setting",

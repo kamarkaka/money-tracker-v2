@@ -184,7 +184,7 @@ export default function SophtronTestPage() {
             <button
               onClick={handleSend}
               disabled={loading}
-              className="mt-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="mt-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50"
             >
               {loading ? "Sending..." : "Send Request"}
             </button>

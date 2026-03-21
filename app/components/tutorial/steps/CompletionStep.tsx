@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { Fireworks } from "@/app/components/overview/Fireworks";
 
 interface CompletionStepProps {
   categoriesCreated: number;
@@ -18,7 +19,8 @@ export function CompletionStep({
   const hasSetup = categoriesCreated > 0 || budgetsCreated > 0 || accountsLinked > 0;
 
   return (
-    <div className="flex flex-col items-center px-8 py-12">
+    <div className="relative flex flex-col items-center px-8 py-12">
+      <Fireworks duration={3500} />
       <div className="animate-scale-in">
         <CheckCircleIcon className="h-20 w-20 text-green-500" />
       </div>
@@ -34,9 +36,7 @@ export function CompletionStep({
         className="animate-fade-in-up mt-3 text-center text-zinc-600 dark:text-zinc-400"
         style={{ animationDelay: "0.6s" }}
       >
-        {hasSetup
-          ? "Great job setting up your account. Here's a summary:"
-          : "You can set up categories, budgets, and link accounts anytime from the dashboard."}
+        {hasSetup && "Great job setting up your account. Here's a summary:"}
       </p>
 
       {hasSetup && (
@@ -79,10 +79,10 @@ export function CompletionStep({
 
       <button
         onClick={onFinish}
-        className="animate-fade-in-up mt-8 cursor-pointer rounded-md bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        className="animate-fade-in-up mt-8 cursor-pointer rounded-md bg-accent px-6 py-2.5 text-sm font-medium text-accent-text hover:bg-accent-hover"
         style={{ animationDelay: hasSetup ? "1.2s" : "0.9s" }}
       >
-        Go to Overview
+        Close Tutorial
       </button>
     </div>
   );

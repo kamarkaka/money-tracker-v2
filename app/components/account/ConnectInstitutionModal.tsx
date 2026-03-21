@@ -386,7 +386,7 @@ export function ConnectInstitutionModal({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search for your bank..."
             autoFocus
-            className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500"
+            className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50 dark:placeholder-zinc-500"
           />
           {searching && (
             <div className="flex justify-center py-4">
@@ -394,7 +394,7 @@ export function ConnectInstitutionModal({
             </div>
           )}
           {!searching && searchResults.length > 0 && (
-            <ul className="max-h-72 overflow-y-auto rounded-md border border-zinc-200 dark:border-zinc-700 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-600">
+            <ul className="max-h-72 overflow-y-auto rounded-md border border-card-border [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-600">
               {searchResults.map((inst) => {
                 const id = inst.InstitutionID || inst.InstitutionId;
                 const logoUrl = inst.Logo?.trim();
@@ -463,7 +463,7 @@ export function ConnectInstitutionModal({
                 onChange={(e) =>
                   setCredentials((prev) => ({ ...prev, [field.MappedField]: e.target.value }))
                 }
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
               />
             </div>
           ))}
@@ -480,7 +480,7 @@ export function ConnectInstitutionModal({
               type="button"
               onClick={handleSubmitCredentials}
               disabled={submitting}
-              className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="cursor-pointer rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50"
             >
               {submitting ? "Connecting..." : "Connect"}
             </button>
@@ -526,7 +526,7 @@ export function ConnectInstitutionModal({
                 type="button"
                 onClick={() => handleAnswerChallenge("TokenMethod", { answerText: selectedMethod })}
                 disabled={!selectedMethod || sendingChallenge}
-                className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="cursor-pointer rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50"
               >
                 {sendingChallenge ? "Sending..." : "Continue"}
               </button>
@@ -542,13 +542,13 @@ export function ConnectInstitutionModal({
                 onChange={(e) => setTokenInput(e.target.value)}
                 placeholder="Verification code"
                 autoFocus
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50"
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
               />
               <button
                 type="button"
                 onClick={() => handleAnswerChallenge("TokenInput", { answerText: String(tokenInput) })}
                 disabled={!tokenInput.trim() || sendingChallenge}
-                className="cursor-pointer rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="cursor-pointer rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50"
               >
                 {sendingChallenge ? "Verifying..." : "Submit"}
               </button>
@@ -606,7 +606,7 @@ export function ConnectInstitutionModal({
             <button
               type="button"
               onClick={handleClose}
-              className="cursor-pointer rounded-md bg-zinc-900 px-6 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="cursor-pointer rounded-md bg-accent px-6 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover"
             >
               OK
             </button>

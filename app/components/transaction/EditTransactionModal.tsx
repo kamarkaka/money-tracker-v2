@@ -224,7 +224,7 @@ export function EditTransactionModal({
   };
 
   const inputClass =
-    "w-full h-10 rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50";
+    "w-full h-10 rounded-md border border-card-border px-3 py-2 text-sm text-zinc-900 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent bg-input-bg dark:text-zinc-50";
 
   return (
     <Modal open={open} onClose={handleClose} title={i18n("editTransaction")} className="w-full max-w-lg">
@@ -269,14 +269,14 @@ export function EditTransactionModal({
         <div>
           <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{i18n("amount")}</label>
           <div className="flex gap-3">
-            <div className="flex w-2/5 shrink-0 overflow-hidden rounded-md border border-zinc-300 dark:border-zinc-600">
+            <div className="flex w-2/5 shrink-0 overflow-hidden rounded-md border border-card-border">
               <button
                 type="button"
                 onClick={() => setIsExpense(true)}
                 className={`flex-1 cursor-pointer px-2 py-2 text-sm font-medium ${
                   isExpense
                     ? "bg-red-500 text-white"
-                    : "bg-white text-zinc-700 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300"
+                    : "bg-input-bg text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300"
                 }`}
               >
                 {i18n("expense")}
@@ -287,7 +287,7 @@ export function EditTransactionModal({
                 className={`flex-1 cursor-pointer px-2 py-2 text-sm font-medium ${
                   !isExpense
                     ? "bg-green-500 text-white"
-                    : "bg-white text-zinc-700 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300"
+                    : "bg-input-bg text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300"
                 }`}
               >
                 {i18n("income")}
@@ -377,7 +377,7 @@ export function EditTransactionModal({
                 type="button"
                 onClick={onPrev}
                 disabled={!hasPrev || hasChanges()}
-                className="cursor-pointer rounded-md border border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="cursor-pointer rounded-md border border-card-border px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-accent-subtle hover:text-accent disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-300"
               >
                 &#8592; {i18nc("prev")}
               </button>
@@ -387,7 +387,7 @@ export function EditTransactionModal({
                 type="button"
                 onClick={onNext}
                 disabled={!hasNext || hasChanges()}
-                className="cursor-pointer rounded-md border border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="cursor-pointer rounded-md border border-card-border px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-accent-subtle hover:text-accent disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-300"
               >
                 {i18nc("next")} &#8594;
               </button>
@@ -399,7 +399,7 @@ export function EditTransactionModal({
               type="button"
               onClick={() => handleSubmit("save")}
               disabled={saving}
-              className="flex-1 cursor-pointer rounded-md bg-zinc-900 px-4 py-3 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 md:flex-none"
+              className="flex-1 cursor-pointer rounded-md bg-accent px-4 py-3 text-sm font-medium text-accent-text hover:bg-accent-hover disabled:opacity-50 md:flex-none"
             >
               {saving ? i18nc("saving") : i18nc("save")}
             </button>
