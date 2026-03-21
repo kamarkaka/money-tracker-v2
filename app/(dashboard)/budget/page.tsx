@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import { BucketList } from "@/app/components/budget/BucketList";
 import { CreateBucketForm } from "@/app/components/budget/CreateBucketForm";
 import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
@@ -30,6 +31,7 @@ export default function BudgetPage() {
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     const [budgetRes, catRes] = await Promise.all([
@@ -78,6 +80,7 @@ export default function BudgetPage() {
       throw new Error(data.error);
     }
     await fetchData();
+    setFormOpen(false);
   };
 
   const handleUpdate = async (id: string, name: string, categoryIds: string[], amount: number, icon: string) => {
@@ -116,12 +119,30 @@ export default function BudgetPage() {
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
       </div>
 
-      <div className="mb-8 rounded-lg border border-card-border bg-card-bg p-6">
-        <CreateBucketForm
-          allCategories={allFlatCategories}
-          assignedCategoryIds={assignedCategoryIds}
-          onSubmit={handleCreate}
-        />
+      <div className="sticky top-0 z-30 mb-4 max-h-[70vh] overflow-hidden overflow-y-auto rounded-lg border border-card-border bg-gradient-to-r from-blue-50 to-white shadow-sm dark:from-blue-950 dark:to-zinc-900 md:top-16">
+        <button
+          onClick={() => setFormOpen(!formOpen)}
+          className="flex w-full cursor-pointer items-center gap-3 px-5 py-4 text-left"
+        >
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text"
+            style={{ transition: "transform 0.3s ease", transform: formOpen ? "rotate(45deg)" : "rotate(0deg)" }}
+          >
+            <PlusIcon className="h-5 w-5" />
+          </div>
+          <span className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+            {i18n("createBudget")}
+          </span>
+        </button>
+        {formOpen && (
+          <div className="border-t border-card-border px-5 pb-5 pt-4">
+            <CreateBucketForm
+              allCategories={allFlatCategories}
+              assignedCategoryIds={assignedCategoryIds}
+              onSubmit={handleCreate}
+            />
+          </div>
+        )}
       </div>
 
       {budgets.length === 0 ? (

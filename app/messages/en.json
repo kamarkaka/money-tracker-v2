@@ -96,6 +96,7 @@
   "budget": {
     "title": "Budgets",
     "createBudget": "Create A New Budget",
+    "pickIcon": "Pick an icon for your budget",
     "budgetName": "Budget Name",
     "namePlaceholder": "e.g. Essentials, Entertainment, Savings",
     "monthlyAmount": "Monthly Amount",

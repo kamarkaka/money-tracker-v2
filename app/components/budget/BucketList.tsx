@@ -32,10 +32,11 @@ export function BucketList({
 }: BucketListProps) {
   return (
     <div className="flex flex-col gap-4">
-      {budgets.map((bucket) => (
+      {budgets.map((bucket, index) => (
         <BucketEditor
           key={bucket.id}
           bucket={bucket}
+          colorIndex={index}
           allCategories={allCategories}
           assignedCategoryIds={assignedCategoryIds}
           onUpdate={onUpdate}

@@ -96,6 +96,7 @@
   "budget": {
     "title": "预算",
     "createBudget": "创建新预算",
+    "pickIcon": "为您的预算选择一个图标",
     "budgetName": "预算名称",
     "namePlaceholder": "例如：生活必需、娱乐、储蓄",
     "monthlyAmount": "每月金额",

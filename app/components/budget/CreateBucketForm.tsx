@@ -51,8 +51,8 @@ export function CategoryPicker({
             onClick={() => toggleCategory(cat.id)}
             className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors md:px-3 md:py-1 md:text-xs ${
               selectedIds.includes(cat.id)
-                ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                : "border-zinc-300 text-zinc-600 hover:border-zinc-400 dark:border-zinc-600 dark:text-zinc-400"
+                ? "border-accent bg-accent text-white"
+                : "border-zinc-300 bg-white text-zinc-600 hover:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
             }`}
           >
             {cat.name}
@@ -103,33 +103,38 @@ export function CreateBucketForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <FormField label={i18n("budgetName")}>
-        <div className="flex items-center gap-2">
-          <BudgetIconPicker selected={icon} onChange={setIcon} />
+      <div className="flex flex-col items-center gap-2">
+        <BudgetIconPicker selected={icon} onChange={setIcon} size="lg" />
+        <span className="text-xs text-zinc-400 dark:text-zinc-500">{i18n("pickIcon")}</span>
+      </div>
+      <div className="flex gap-3">
+        <FormField label={i18n("budgetName")} className="w-3/5">
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={i18n("namePlaceholder")}
             required
-            className="flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
+            className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
+          />
+        </FormField>
+        <FormField label={i18n("monthlyAmount")} className="w-2/5">
+          <CurrencyInput
+            value={amount}
+            onChange={setAmount}
+            className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
+          />
+        </FormField>
+      </div>
+      <FormField label={i18n("categories")}>
+        <div className="max-h-32 overflow-y-auto">
+          <CategoryPicker
+            allCategories={allCategories}
+            assignedCategoryIds={assignedCategoryIds}
+            selectedIds={selectedIds}
+            onChange={setSelectedIds}
           />
         </div>
-      </FormField>
-      <FormField label={i18n("monthlyAmount")}>
-        <CurrencyInput
-          value={amount}
-          onChange={setAmount}
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
-        />
-      </FormField>
-      <FormField label={i18n("categories")}>
-        <CategoryPicker
-          allCategories={allCategories}
-          assignedCategoryIds={assignedCategoryIds}
-          selectedIds={selectedIds}
-          onChange={setSelectedIds}
-        />
       </FormField>
       {error && <p className="text-sm text-red-500">{error}</p>}
       <button

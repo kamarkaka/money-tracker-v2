@@ -53,59 +53,64 @@ export function getBudgetIcon(name: string | null | undefined): React.ComponentT
   return ICON_MAP.get(name) ?? null;
 }
 
-const ICON_COLORS: { bg: string; text: string }[] = [
-  { bg: "bg-blue-100 dark:bg-blue-900", text: "text-blue-600 dark:text-blue-400" },
-  { bg: "bg-emerald-100 dark:bg-emerald-900", text: "text-emerald-600 dark:text-emerald-400" },
-  { bg: "bg-violet-100 dark:bg-violet-900", text: "text-violet-600 dark:text-violet-400" },
-  { bg: "bg-amber-100 dark:bg-amber-900", text: "text-amber-600 dark:text-amber-400" },
-  { bg: "bg-rose-100 dark:bg-rose-900", text: "text-rose-600 dark:text-rose-400" },
-  { bg: "bg-teal-100 dark:bg-teal-900", text: "text-teal-600 dark:text-teal-400" },
-  { bg: "bg-orange-100 dark:bg-orange-900", text: "text-orange-600 dark:text-orange-400" },
-  { bg: "bg-indigo-100 dark:bg-indigo-900", text: "text-indigo-600 dark:text-indigo-400" },
-  { bg: "bg-pink-100 dark:bg-pink-900", text: "text-pink-600 dark:text-pink-400" },
-  { bg: "bg-cyan-100 dark:bg-cyan-900", text: "text-cyan-600 dark:text-cyan-400" },
+const ICON_COLORS: { bg: string; text: string; solid: string }[] = [
+  { bg: "bg-blue-100 dark:bg-blue-900", text: "text-blue-600 dark:text-blue-400", solid: "bg-blue-500" },
+  { bg: "bg-emerald-100 dark:bg-emerald-900", text: "text-emerald-600 dark:text-emerald-400", solid: "bg-emerald-500" },
+  { bg: "bg-violet-100 dark:bg-violet-900", text: "text-violet-600 dark:text-violet-400", solid: "bg-violet-500" },
+  { bg: "bg-amber-100 dark:bg-amber-900", text: "text-amber-600 dark:text-amber-400", solid: "bg-amber-500" },
+  { bg: "bg-rose-100 dark:bg-rose-900", text: "text-rose-600 dark:text-rose-400", solid: "bg-rose-500" },
+  { bg: "bg-teal-100 dark:bg-teal-900", text: "text-teal-600 dark:text-teal-400", solid: "bg-teal-500" },
+  { bg: "bg-orange-100 dark:bg-orange-900", text: "text-orange-600 dark:text-orange-400", solid: "bg-orange-500" },
+  { bg: "bg-indigo-100 dark:bg-indigo-900", text: "text-indigo-600 dark:text-indigo-400", solid: "bg-indigo-500" },
+  { bg: "bg-pink-100 dark:bg-pink-900", text: "text-pink-600 dark:text-pink-400", solid: "bg-pink-500" },
+  { bg: "bg-cyan-100 dark:bg-cyan-900", text: "text-cyan-600 dark:text-cyan-400", solid: "bg-cyan-500" },
 ];
 
-export function getBudgetIconColor(index: number): { bg: string; text: string } {
+export function getBudgetIconColor(index: number): { bg: string; text: string; solid: string } {
   return ICON_COLORS[index % ICON_COLORS.length];
 }
 
 interface BudgetIconPickerProps {
   selected: string;
   onChange: (icon: string) => void;
+  size?: "sm" | "lg";
 }
 
-export function BudgetIconPicker({ selected, onChange }: BudgetIconPickerProps) {
+export function BudgetIconPicker({ selected, onChange, size = "sm" }: BudgetIconPickerProps) {
   const [open, setOpen] = useState(false);
   const SelectedIcon = getBudgetIcon(selected);
+
+  const isLg = size === "lg";
 
   return (
     <div className="relative">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`cursor-pointer flex h-10 w-10 items-center justify-center rounded-md border transition-colors ${
+        className={`cursor-pointer flex items-center justify-center border transition-colors ${
+          isLg ? "h-16 w-16 rounded-full" : "h-10 w-10 rounded-md"
+        } ${
           selected
-            ? "border-accent bg-accent-subtle text-accent"
-            : "border-zinc-300 text-zinc-400 hover:border-zinc-400 dark:border-zinc-600 dark:text-zinc-500"
+            ? "border-accent bg-accent text-white"
+            : "border-dashed border-zinc-300 text-zinc-400 hover:border-zinc-400 dark:border-zinc-600 dark:text-zinc-500"
         }`}
       >
-        {SelectedIcon ? <SelectedIcon className="h-5 w-5" /> : <Icons.PlusIcon className="h-5 w-5" />}
+        {SelectedIcon ? <SelectedIcon className={isLg ? "h-8 w-8" : "h-5 w-5"} /> : <Icons.PlusIcon className={isLg ? "h-8 w-8" : "h-5 w-5"} />}
       </button>
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 grid max-h-48 w-64 grid-cols-8 gap-1 overflow-y-auto rounded-lg border border-card-border bg-card-bg p-2 shadow-lg">
+        <div className="fixed left-[5vw] z-50 mt-1 grid w-[90vw] grid-cols-8 gap-2 overflow-y-auto rounded-lg border border-card-border bg-card-bg p-3 shadow-lg md:absolute md:left-0 md:w-64 md:max-h-48 md:gap-1 md:p-2">
           {BUDGET_ICONS.map(({ name, icon: Icon }) => (
             <button
               key={name}
               type="button"
               onClick={() => { onChange(name); setOpen(false); }}
-              className={`cursor-pointer flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+              className={`cursor-pointer flex h-12 w-12 items-center justify-center rounded-lg transition-colors md:h-8 md:w-8 ${
                 selected === name
                   ? "bg-accent text-accent-text"
                   : "text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400"
               }`}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-6 w-6 md:h-4 md:w-4" />
             </button>
           ))}
         </div>

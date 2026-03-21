@@ -6,7 +6,7 @@ import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { CategoryPicker } from "./CreateBucketForm";
 import { FormField } from "@/app/components/ui/FormField";
 import { CurrencyInput } from "@/app/components/ui/CurrencyInput";
-import { BudgetIconPicker, getBudgetIcon } from "./BudgetIconPicker";
+import { BudgetIconPicker, getBudgetIcon, getBudgetIconColor } from "./BudgetIconPicker";
 import { formatCurrency } from "@/app/lib/utils";
 
 interface Category {
@@ -22,8 +22,20 @@ interface BudgetBucket {
   categories: { category: Category }[];
 }
 
+const CARD_GRADIENTS = [
+  "from-blue-50 to-white dark:from-blue-950 dark:to-zinc-900",
+  "from-emerald-50 to-white dark:from-emerald-950 dark:to-zinc-900",
+  "from-violet-50 to-white dark:from-violet-950 dark:to-zinc-900",
+  "from-amber-50 to-white dark:from-amber-950 dark:to-zinc-900",
+  "from-rose-50 to-white dark:from-rose-950 dark:to-zinc-900",
+  "from-teal-50 to-white dark:from-teal-950 dark:to-zinc-900",
+  "from-orange-50 to-white dark:from-orange-950 dark:to-zinc-900",
+  "from-indigo-50 to-white dark:from-indigo-950 dark:to-zinc-900",
+];
+
 interface BucketEditorProps {
   bucket: BudgetBucket;
+  colorIndex?: number;
   allCategories: Category[];
   assignedCategoryIds: Set<string>;
   onUpdate: (id: string, name: string, categoryIds: string[], amount: number, icon: string) => Promise<void>;
@@ -32,6 +44,7 @@ interface BucketEditorProps {
 
 export function BucketEditor({
   bucket,
+  colorIndex = 0,
   allCategories,
   assignedCategoryIds,
   onUpdate,
@@ -40,6 +53,7 @@ export function BucketEditor({
   const i18n = useTranslations("budget");
   const i18nc = useTranslations("common");
   const [editing, setEditing] = useState(false);
+  const [showActions, setShowActions] = useState(false);
   const [name, setName] = useState(bucket.name);
   const [icon, setIcon] = useState(bucket.icon || "");
   const [amount, setAmount] = useState(String(bucket.amount));
@@ -80,7 +94,7 @@ export function BucketEditor({
   };
 
   return (
-    <div className="card-hover rounded-lg border border-card-border bg-card-bg p-5">
+    <div className={`card-hover rounded-lg border border-card-border bg-gradient-to-r shadow-sm p-5 ${CARD_GRADIENTS[colorIndex % CARD_GRADIENTS.length]}`}>
       {editing ? (
         <div className="flex flex-col gap-4">
           <FormField label={i18n("budgetName")}>
@@ -126,53 +140,84 @@ export function BucketEditor({
           </div>
         </div>
       ) : (
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              {(() => {
-                const Icon = getBudgetIcon(bucket.icon);
-                return Icon ? <Icon className="h-5 w-5 text-accent" /> : null;
-              })()}
-              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                {bucket.name}
-              </h3>
-              <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                {formatCurrency(bucket.amount)}/mo
-              </span>
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {bucket.categories.length === 0 ? (
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {i18n("noCategoriesAssigned")}
+        <div>
+          <div
+            className="flex cursor-pointer items-start justify-between gap-2 md:cursor-default"
+            onClick={() => setShowActions(!showActions)}
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-3">
+                {(() => {
+                  const Icon = getBudgetIcon(bucket.icon);
+                  const color = getBudgetIconColor(colorIndex);
+                  return Icon ? (
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${color.solid}`}>
+                      <Icon className="h-5 w-5 text-white" />
+                    </div>
+                  ) : null;
+                })()}
+                <h3 className="min-w-0 flex-1 truncate text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                  {bucket.name}
+                </h3>
+                <span className="shrink-0 text-sm text-zinc-500 dark:text-zinc-400">
+                  {i18n("perMonth", { amount: formatCurrency(Math.round(Number(bucket.amount)), "USD", true) })}
                 </span>
-              ) : (
-                bucket.categories.map((bc) => (
-                  <span
-                    key={bc.category.id}
-                    className="inline-flex rounded-full bg-accent-subtle px-2.5 py-0.5 text-xs font-medium text-accent"
-                  >
-                    {bc.category.name}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {bucket.categories.length === 0 ? (
+                  <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                    {i18n("noCategoriesAssigned")}
                   </span>
-                ))
-              )}
+                ) : (
+                  bucket.categories.map((bc) => {
+                    const color = getBudgetIconColor(colorIndex);
+                    return (
+                    <span
+                      key={bc.category.id}
+                      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${color.bg} ${color.text}`}
+                    >
+                      {bc.category.name}
+                    </span>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+            {/* Desktop buttons */}
+            <div className="hidden gap-2 md:flex">
+              <button
+                onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+                className="cursor-pointer rounded p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                title={i18nc("edit")}
+              >
+                <PencilSquareIcon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(bucket.id); }}
+                className="cursor-pointer rounded p-1 text-red-500 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
+                title={i18nc("delete")}
+              >
+                <TrashIcon className="h-4 w-4" />
+              </button>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setEditing(true)}
-              className="cursor-pointer rounded p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
-              title={i18nc("edit")}
-            >
-              <PencilSquareIcon className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => onDelete(bucket.id)}
-              className="cursor-pointer rounded p-1 text-red-500 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
-              title={i18nc("delete")}
-            >
-              <TrashIcon className="h-4 w-4" />
-            </button>
-          </div>
+          {/* Mobile action buttons */}
+          {showActions && (
+            <div className="mt-3 flex justify-center gap-4 border-t border-card-border pt-3 md:hidden">
+              <button
+                onClick={() => { setEditing(true); setShowActions(false); }}
+                className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-accent text-accent-text shadow-sm hover:bg-accent-hover"
+              >
+                <PencilSquareIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => { onDelete(bucket.id); setShowActions(false); }}
+                className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-red-500 text-white shadow-sm hover:bg-red-600"
+              >
+                <TrashIcon className="h-5 w-5" />
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
