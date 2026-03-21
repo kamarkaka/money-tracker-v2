@@ -5,7 +5,8 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { FormField } from "@/app/components/ui/FormField";
+import Image from "next/image";
+import { UserIcon, EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_DIGIT_RE = /\d/;
@@ -22,13 +23,6 @@ function validatePassword(pw: string): string | null {
   if (issues.length > 0) return `Password must contain ${issues.join(", ")}`;
   return null;
 }
-
-const INPUT_BASE =
-  "h-12 rounded-md border px-3 text-sm text-zinc-900 focus:outline-none focus:ring-1 bg-input-bg dark:text-zinc-50";
-const INPUT_NORMAL =
-  `${INPUT_BASE} border-zinc-300 focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600`;
-const INPUT_ERROR =
-  `${INPUT_BASE} border-red-500 focus:border-red-500 focus:ring-red-500 dark:border-red-500`;
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -105,48 +99,81 @@ export default function RegisterPage() {
     }
   };
 
+  const inputWrapperClass = (hasError: string) =>
+    `flex h-12 items-center gap-2 rounded-md border bg-input-bg px-3 focus-within:border-accent focus-within:ring-1 focus-within:ring-accent ${
+      hasError ? "border-red-500 dark:border-red-500" : "border-card-border"
+    }`;
+
+  const inputClass =
+    "h-full w-full border-0 bg-transparent text-sm text-zinc-900 placeholder-zinc-400 outline-none dark:text-zinc-50 dark:placeholder-zinc-500";
+
   return (
     <>
-      <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-        {i18n("register")}
-      </h1>
+      <div className="mb-6 flex flex-col items-center">
+        <div className="animate-bounce-in">
+          <Image src="/logo.png" alt="App Logo" width={80} height={80} priority className="rounded-xl shadow-lg" />
+        </div>
+        <h1 className="mt-4 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+          {i18n("register")}
+        </h1>
+      </div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <FormField label={i18nc("name")} error={nameError}>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={() => markTouched("name")}
-            className={nameError ? INPUT_ERROR : INPUT_NORMAL}
-          />
-        </FormField>
-        <FormField label={i18nc("email")} error={emailError}>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onBlur={() => markTouched("email")}
-            className={emailError ? INPUT_ERROR : INPUT_NORMAL}
-          />
-        </FormField>
-        <FormField label={i18nc("password")} error={passwordError}>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onBlur={() => markTouched("password")}
-            className={passwordError ? INPUT_ERROR : INPUT_NORMAL}
-          />
-        </FormField>
-        <FormField label={i18n("confirmPassword")} error={confirmPasswordError}>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            onBlur={() => markTouched("confirmPassword")}
-            className={confirmPasswordError ? INPUT_ERROR : INPUT_NORMAL}
-          />
-        </FormField>
+        <div>
+          <div className={inputWrapperClass(nameError)}>
+            <UserIcon className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" />
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={() => markTouched("name")}
+              placeholder={i18nc("name")}
+              className={inputClass}
+            />
+          </div>
+          {nameError && <p className="mt-1 text-xs text-red-500">{nameError}</p>}
+        </div>
+        <div>
+          <div className={inputWrapperClass(emailError)}>
+            <EnvelopeIcon className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => markTouched("email")}
+              placeholder={i18nc("email")}
+              className={inputClass}
+            />
+          </div>
+          {emailError && <p className="mt-1 text-xs text-red-500">{emailError}</p>}
+        </div>
+        <div>
+          <div className={inputWrapperClass(passwordError)}>
+            <LockClosedIcon className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onBlur={() => markTouched("password")}
+              placeholder={i18nc("password")}
+              className={inputClass}
+            />
+          </div>
+          {passwordError && <p className="mt-1 text-xs text-red-500">{passwordError}</p>}
+        </div>
+        <div>
+          <div className={inputWrapperClass(confirmPasswordError)}>
+            <LockClosedIcon className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" />
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              onBlur={() => markTouched("confirmPassword")}
+              placeholder={i18n("confirmPassword")}
+              className={inputClass}
+            />
+          </div>
+          {confirmPasswordError && <p className="mt-1 text-xs text-red-500">{confirmPasswordError}</p>}
+        </div>
         {error && <p className="text-sm text-red-500">{error}</p>}
         <button
           type="submit"
@@ -156,9 +183,9 @@ export default function RegisterPage() {
           {loading ? i18nc("loading") : i18n("register")}
         </button>
       </form>
-      <p className="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
         {i18n("hasAccount")}{" "}
-        <Link href="/login" className="cursor-pointer font-medium text-zinc-900 hover:underline dark:text-zinc-50">
+        <Link href="/login" className="cursor-pointer font-medium text-accent hover:underline">
           {i18n("login")}
         </Link>
       </p>
