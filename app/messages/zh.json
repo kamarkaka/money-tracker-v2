@@ -115,7 +115,7 @@
     "totalAssets": "总资产",
     "totalLiabilities": "总负债",
     "linkBank": "关联银行账户",
-    "addManual": "手动添加账户",
+    "addManual": "添加您的账户",
     "backfill": "从 Sophtron 回填",
     "backfilling": "回填中...",
     "removeInstitution": "移除机构",

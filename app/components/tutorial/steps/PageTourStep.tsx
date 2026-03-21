@@ -14,7 +14,7 @@ import {
 const PAGES = [
   {
     name: "Category",
-    icon: TagIcon,
+    icon: BookmarkIcon,
     color: "text-purple-500",
     bgColor: "bg-purple-100 dark:bg-purple-900/30",
     points: [
@@ -47,7 +47,7 @@ const PAGES = [
   },
   {
     name: "Tags",
-    icon: BookmarkIcon,
+    icon: TagIcon,
     color: "text-teal-500",
     bgColor: "bg-teal-100 dark:bg-teal-900/30",
     points: [

@@ -12,9 +12,9 @@ export function MonthlySummaryHeader({ totalIncome, totalExpenses }: MonthlySumm
   const netSavings = totalIncome + totalExpenses;
 
   return (
-    <div className="flex flex-col gap-2 md:gap-4">
-      {/* Net Savings — big and prominent */}
-      <div className={`card-hover rounded-lg border px-4 py-5 text-center md:px-5 md:py-6 ${
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+      {/* Net Savings — full width on mobile, first col on desktop */}
+      <div className={`col-span-2 rounded-lg border px-4 py-5 text-center md:col-span-1 md:px-5 md:py-6 ${
         netSavings >= 0
           ? "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900"
           : "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900"
@@ -30,20 +30,20 @@ export function MonthlySummaryHeader({ totalIncome, totalExpenses }: MonthlySumm
         </p>
       </div>
 
-      {/* Income & Expenses */}
-      <div className="grid grid-cols-2 gap-2 md:gap-4">
-        <div className="card-hover rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-4 text-center dark:border-emerald-800 dark:bg-emerald-900 md:px-5 md:py-5">
-          <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 md:text-sm">{i18n("totalIncome")}</p>
-          <p className="mt-1 flex justify-center text-xl font-bold md:text-2xl">
-            <SlotNumber value={formatCurrency(totalIncome, "USD", true)} className="text-emerald-600 dark:text-emerald-400" />
-          </p>
-        </div>
-        <div className="card-hover rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-center dark:border-red-800 dark:bg-red-900 md:px-5 md:py-5">
-          <p className="text-xs font-medium text-red-700 dark:text-red-400 md:text-sm">{i18n("totalExpenses")}</p>
-          <p className="mt-1 flex justify-center text-xl font-bold md:text-2xl">
-            <SlotNumber value={formatCurrency(Math.abs(totalExpenses), "USD", true)} className="text-red-600 dark:text-red-400" />
-          </p>
-        </div>
+      {/* Income */}
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-4 text-center dark:border-emerald-800 dark:bg-emerald-900 md:px-5 md:py-6">
+        <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 md:text-sm">{i18n("totalIncome")}</p>
+        <p className="mt-1 flex justify-center text-xl font-bold md:text-2xl">
+          <SlotNumber value={formatCurrency(totalIncome, "USD", true)} className="text-emerald-600 dark:text-emerald-400" />
+        </p>
+      </div>
+
+      {/* Expenses */}
+      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-center dark:border-red-800 dark:bg-red-900 md:px-5 md:py-6">
+        <p className="text-xs font-medium text-red-700 dark:text-red-400 md:text-sm">{i18n("totalExpenses")}</p>
+        <p className="mt-1 flex justify-center text-xl font-bold md:text-2xl">
+          <SlotNumber value={formatCurrency(Math.abs(totalExpenses), "USD", true)} className="text-red-600 dark:text-red-400" />
+        </p>
       </div>
     </div>
   );

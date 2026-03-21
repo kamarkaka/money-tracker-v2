@@ -11,10 +11,9 @@ import { DataTable } from "@/app/components/ui/DataTable";
 import { CurrencyDisplay } from "@/app/components/ui/CurrencyDisplay";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { formatDate } from "@/app/lib/utils";
-import { PencilSquareIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { PencilSquareIcon, EyeIcon, EyeSlashIcon, PlusIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import { TagBadge } from "@/app/components/tag/TagBadge";
 import { useTranslations } from "next-intl";
-import { PageTabs } from "@/app/components/ui/PageTabs";
 
 interface Transaction {
   id: string;
@@ -75,6 +74,7 @@ export default function TransactionPage() {
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [fabOpen, setFabOpen] = useState(false);
   const loadingMoreRef = useRef(false);
 
   const fetchTransactions = useCallback(async (f: FilterValues, p: number, append: boolean) => {
@@ -344,26 +344,29 @@ export default function TransactionPage() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <PageTabs />
-        <div className="grid w-full grid-cols-3 gap-2 md:flex md:w-auto md:gap-3">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
+        <div className="hidden items-center gap-3 md:flex">
           <button
             onClick={handleDownloadCsv}
             disabled={transactions.length === 0}
-            className="cursor-pointer rounded-md border border-card-border px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-accent-subtle hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed dark:text-zinc-300"
+            className="flex cursor-pointer items-center gap-2 rounded-md border border-card-border px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-accent-subtle hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed dark:text-zinc-300"
           >
+            <ArrowDownTrayIcon className="h-4 w-4" />
             {i18n("downloadCsv")}
           </button>
           <button
             onClick={() => setShowImport(true)}
-            className="cursor-pointer rounded-md border border-card-border px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
+            className="flex cursor-pointer items-center gap-2 rounded-md border border-card-border px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
           >
+            <ArrowUpTrayIcon className="h-4 w-4" />
             {i18n("importCsv")}
           </button>
           <button
             onClick={() => setShowAdd(true)}
-            className="cursor-pointer rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-text hover:bg-accent-hover"
+            className="flex cursor-pointer items-center gap-2 rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600"
           >
+            <PlusIcon className="h-4 w-4" />
             {i18n("addTransaction")}
           </button>
         </div>
@@ -470,6 +473,44 @@ export default function TransactionPage() {
           <div className="h-px flex-1 bg-card-border" />
         </div>
       )}
+
+      {/* FAB — mobile only */}
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3 md:hidden">
+        {fabOpen && (
+          <>
+            <div className="fixed inset-0 -z-10" onClick={() => setFabOpen(false)} />
+            <button
+              onClick={() => { setShowAdd(true); setFabOpen(false); }}
+              className="flex cursor-pointer items-center gap-2 rounded-full bg-emerald-500 px-4 py-3 text-sm font-medium text-white shadow-lg hover:bg-emerald-600"
+            >
+              <PlusIcon className="h-5 w-5" />
+              {i18n("addTransaction")}
+            </button>
+            <button
+              onClick={() => { setShowImport(true); setFabOpen(false); }}
+              className="flex cursor-pointer items-center gap-2 rounded-full bg-accent px-4 py-3 text-sm font-medium text-accent-text shadow-lg hover:bg-accent-hover"
+            >
+              <ArrowUpTrayIcon className="h-5 w-5" />
+              {i18n("importCsv")}
+            </button>
+            <button
+              onClick={() => { handleDownloadCsv(); setFabOpen(false); }}
+              disabled={transactions.length === 0}
+              className="flex cursor-pointer items-center gap-2 rounded-full bg-card-bg border border-card-border px-4 py-3 text-sm font-medium text-zinc-700 shadow-lg hover:bg-accent-subtle hover:text-accent disabled:opacity-50 dark:text-zinc-300"
+            >
+              <ArrowDownTrayIcon className="h-5 w-5" />
+              {i18n("downloadCsv")}
+            </button>
+          </>
+        )}
+        <button
+          onClick={() => setFabOpen(!fabOpen)}
+          className="cursor-pointer flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-text shadow-lg hover:bg-accent-hover"
+          style={{ transition: "transform 0.3s ease", transform: fabOpen ? "rotate(135deg)" : "rotate(0deg)" }}
+        >
+          <PlusIcon className="h-7 w-7" />
+        </button>
+      </div>
 
       <EditTransactionModal
         open={!!editTransaction}

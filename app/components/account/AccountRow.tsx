@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { Badge } from "@/app/components/ui/Badge";
 import { CurrencyDisplay } from "@/app/components/ui/CurrencyDisplay";
 import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
@@ -76,6 +77,14 @@ export function AccountRow({ account, onHidden }: AccountRowProps) {
   return (
     <div className="group flex items-center justify-between px-4 py-3">
       <div className="flex items-center gap-3">
+        <button
+          onClick={handleHideClick}
+          disabled={toggling}
+          className="cursor-pointer rounded p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-50 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+          title={hidden ? i18n("unhide") : i18n("hide")}
+        >
+          {hidden ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+        </button>
         <EditableName
           value={name}
           onSave={handleRename}
@@ -86,13 +95,6 @@ export function AccountRow({ account, onHidden }: AccountRowProps) {
             {account.type.replace("_", " ")}
           </Badge>
         </span>
-        <button
-          onClick={handleHideClick}
-          disabled={toggling}
-          className="cursor-pointer rounded px-2 py-1 text-xs text-zinc-400 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-50 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
-        >
-          {hidden ? i18n("unhide") : i18n("hide")}
-        </button>
       </div>
       <CurrencyDisplay amount={displayBalance} currency={account.currency} />
       <ConfirmDialog

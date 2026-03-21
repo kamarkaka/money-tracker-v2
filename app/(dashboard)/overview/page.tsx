@@ -9,7 +9,6 @@ import { UncategorizedSection } from "@/app/components/overview/UncategorizedSec
 import { Fireworks } from "@/app/components/overview/Fireworks";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { EmptyState } from "@/app/components/ui/EmptyState";
-import { PageTabs } from "@/app/components/ui/PageTabs";
 
 interface Transaction {
   id: string;
@@ -188,11 +187,11 @@ export default function OverviewPage() {
     <div>
       {showFireworks && <Fireworks duration={3500} />}
       <div className="mb-6">
-        <div className="mb-4"><PageTabs /></div>
+        <h1 className="mb-4 text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
         <MonthPicker year={year} month={month} onChange={handleMonthChange} />
       </div>
 
-      <div className="mb-6">
+      <div className="mb-4">
         <MonthlySummaryHeader totalIncome={totalIncome} totalExpenses={totalExpenses} />
       </div>
 

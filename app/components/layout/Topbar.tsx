@@ -31,16 +31,16 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
   ];
 
   const NAV_ITEMS = [
-    { href: "/overview", label: i18n("overview"), icon: ChartBarIcon },
-    { href: "/account", label: i18n("account"), icon: BuildingLibraryIcon },
-    { href: "/transaction", label: i18n("transaction"), icon: ListBulletIcon },
+    { href: "/overview", label: i18n("overview"), icon: ChartBarIcon, color: "text-rose-500", bg: "bg-rose-100 dark:bg-rose-900" },
+    { href: "/account", label: i18n("account"), icon: BuildingLibraryIcon, color: "text-blue-500", bg: "bg-blue-100 dark:bg-blue-900" },
+    { href: "/transaction", label: i18n("transaction"), icon: ListBulletIcon, color: "text-amber-500", bg: "bg-amber-100 dark:bg-amber-900" },
   ];
 
   const MENU_ITEMS = [
-    { href: "/category", label: i18n("category"), icon: BookmarkIcon },
-    { href: "/budget", label: i18n("budget"), icon: CurrencyDollarIcon },
-    { href: "/rule", label: i18n("rule"), icon: FunnelIcon },
-    { href: "/tag", label: i18n("tag"), icon: TagIcon },
+    { href: "/category", label: i18n("category"), icon: BookmarkIcon, color: "text-purple-500", bg: "bg-purple-100 dark:bg-purple-900" },
+    { href: "/budget", label: i18n("budget"), icon: CurrencyDollarIcon, color: "text-green-500", bg: "bg-green-100 dark:bg-green-900" },
+    { href: "/rule", label: i18n("rule"), icon: FunnelIcon, color: "text-orange-500", bg: "bg-orange-100 dark:bg-orange-900" },
+    { href: "/tag", label: i18n("tag"), icon: TagIcon, color: "text-teal-500", bg: "bg-teal-100 dark:bg-teal-900" },
   ];
 
   const isDark = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -240,108 +240,69 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="flex flex-col gap-2 border-t border-card-border bg-card-bg px-3 py-3 md:hidden">
-          {/* 1. Overview, Account, Transaction — 3 columns */}
-          <div className="grid grid-cols-3 gap-2">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1 rounded-lg border px-2 py-4 text-sm font-medium transition-colors",
-                  pathname === item.href
-                    ? "border-accent bg-accent text-accent-text"
-                    : "border-transparent bg-blue-50 text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:bg-blue-950/30 dark:text-zinc-50"
-                )}
-              >
-                <item.icon className="h-8 w-8" />
-                {item.label}
-              </Link>
-            ))}
-          </div>
-
-          {/* 2. Category, Budget, Rule, Tag, Profile, Setting — 3x2 grid */}
-          <div className="grid grid-cols-3 gap-2">
-            {MENU_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1 rounded-lg border px-2 py-4 text-sm font-medium transition-colors",
-                  pathname === item.href
-                    ? "border-accent bg-accent text-accent-text"
-                    : "border-transparent bg-blue-50 text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:bg-blue-950/30 dark:text-zinc-50"
-                )}
-              >
-                <item.icon className="h-8 w-8" />
-                {item.label}
-              </Link>
-            ))}
-            <Link
-              href="/profile"
-              onClick={() => setMobileMenuOpen(false)}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 rounded-lg border px-2 py-4 text-sm font-medium transition-colors",
-                pathname === "/profile"
-                  ? "border-accent bg-accent text-accent-text"
-                  : "border-transparent bg-blue-50 text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:bg-blue-950/30 dark:text-zinc-50"
-              )}
-            >
-              <UserCircleIcon className="h-8 w-8" />
-              {i18n("profile")}
-            </Link>
-            <Link
-              href="/setting"
-              onClick={() => setMobileMenuOpen(false)}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 rounded-lg border px-2 py-4 text-sm font-medium transition-colors",
-                pathname === "/setting"
-                  ? "border-accent bg-accent text-accent-text"
-                  : "border-transparent bg-blue-50 text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:bg-blue-950/30 dark:text-zinc-50"
-              )}
-            >
-              <Cog6ToothIcon className="h-8 w-8" />
-              {i18n("setting")}
-            </Link>
-          </div>
-
-          {/* 4. Theme toggle + Language — 2 columns */}
-          <div className="grid grid-cols-2 gap-2">
+        <div className="border-t border-card-border bg-gradient-to-b from-blue-50 to-white px-4 py-4 dark:from-zinc-900 dark:to-zinc-950 md:hidden">
+          <div className="grid grid-cols-4 gap-x-2 gap-y-4">
+            {[...NAV_ITEMS, ...MENU_ITEMS,
+              { href: "/profile", label: i18n("profile"), icon: UserCircleIcon, color: "text-indigo-500", bg: "bg-indigo-100 dark:bg-indigo-900" },
+              { href: "/setting", label: i18n("setting"), icon: Cog6ToothIcon, color: "text-zinc-500", bg: "bg-zinc-100 dark:bg-zinc-800" },
+            ].map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex flex-col items-center gap-1.5"
+                >
+                  <div className={cn(
+                    "flex h-14 w-14 items-center justify-center rounded-2xl shadow-sm transition-colors",
+                    isActive ? item.bg : "bg-white dark:bg-zinc-800"
+                  )}>
+                    <item.icon className={cn("h-7 w-7", item.color)} />
+                  </div>
+                  <span className={cn(
+                    "text-xs font-medium",
+                    isActive ? item.color : "text-zinc-600 dark:text-zinc-400"
+                  )}>{item.label}</span>
+                </Link>
+              );
+            })}
+            {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="cursor-pointer flex items-center justify-center gap-2 rounded-lg border border-transparent bg-blue-50 px-2 py-3 text-sm font-medium text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:bg-blue-950/30 dark:text-zinc-50"
+              className="flex cursor-pointer flex-col items-center gap-1.5"
             >
-              {isDark ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
-              {isDark ? i18nSetting("light") : i18nSetting("dark")}
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm transition-colors dark:bg-zinc-800">
+                {isDark ? <SunIcon className="h-7 w-7 text-yellow-500" /> : <MoonIcon className="h-7 w-7 text-violet-500" />}
+              </div>
+              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                {isDark ? i18nSetting("light") : i18nSetting("dark")}
+              </span>
             </button>
-            <div className="flex items-center justify-center gap-1 rounded-lg border border-transparent bg-blue-50 px-2 py-3 dark:bg-blue-950/30">
-              {LANGS.map((l) => (
-                <button
-                  key={l.code}
-                  onClick={() => setLocale(l.code)}
-                  className={cn(
-                    "cursor-pointer rounded-md px-4 py-1 text-sm font-medium transition-colors",
-                    locale === l.code
-                      ? "bg-accent text-accent-text"
-                      : "text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-50"
-                  )}
-                >
-                  {l.label}
-                </button>
-              ))}
-            </div>
+            {/* Language toggle */}
+            {LANGS.filter((l) => l.code !== locale).map((l) => (
+              <button
+                key={l.code}
+                onClick={() => setLocale(l.code)}
+                className="flex cursor-pointer flex-col items-center gap-1.5"
+              >
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm transition-colors dark:bg-zinc-800">
+                  <LanguageIcon className="h-7 w-7 text-cyan-500" />
+                </div>
+                <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">{l.label}</span>
+              </button>
+            ))}
+            {/* Logout */}
+            <button
+              onClick={() => signOut().then(() => window.location.href = "/login")}
+              className="flex cursor-pointer flex-col items-center gap-1.5"
+            >
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm transition-colors dark:bg-zinc-800">
+                <ArrowRightStartOnRectangleIcon className="h-7 w-7 text-red-500" />
+              </div>
+              <span className="text-xs font-medium text-red-500">{i18nAuth("logout")}</span>
+            </button>
           </div>
-
-          {/* 5. Logout — full width */}
-          <button
-            onClick={() => signOut().then(() => window.location.href = "/login")}
-            className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-2 py-3 text-sm font-medium text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
-          >
-            <ArrowRightStartOnRectangleIcon className="h-6 w-6" />
-            {i18nAuth("logout")}
-          </button>
         </div>
       )}
     </header>

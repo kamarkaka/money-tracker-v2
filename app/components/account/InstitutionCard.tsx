@@ -22,11 +22,23 @@ interface InstitutionCardProps {
     updatedAt: string;
     accounts: Account[];
   };
+  colorIndex?: number;
   onRemove: (id: string) => void;
   onRefresh: (institutionId: string) => void;
   onAccountHidden?: () => void;
   refreshing?: boolean;
 }
+
+const CARD_GRADIENTS = [
+  "from-blue-50 to-white dark:from-blue-950 dark:to-zinc-900",
+  "from-emerald-50 to-white dark:from-emerald-950 dark:to-zinc-900",
+  "from-violet-50 to-white dark:from-violet-950 dark:to-zinc-900",
+  "from-amber-50 to-white dark:from-amber-950 dark:to-zinc-900",
+  "from-rose-50 to-white dark:from-rose-950 dark:to-zinc-900",
+  "from-teal-50 to-white dark:from-teal-950 dark:to-zinc-900",
+  "from-orange-50 to-white dark:from-orange-950 dark:to-zinc-900",
+  "from-indigo-50 to-white dark:from-indigo-950 dark:to-zinc-900",
+];
 
 function formatRelativeTime(dateStr: string): string {
   const now = Date.now();
@@ -42,7 +54,7 @@ function formatRelativeTime(dateStr: string): string {
   return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
 }
 
-export function InstitutionCard({ institution, onRemove, onRefresh, onAccountHidden, refreshing }: InstitutionCardProps) {
+export function InstitutionCard({ institution, colorIndex = 0, onRemove, onRefresh, onAccountHidden, refreshing }: InstitutionCardProps) {
   const [name, setName] = useState(institution.name);
 
   const handleRename = async (newName: string) => {
@@ -57,7 +69,7 @@ export function InstitutionCard({ institution, onRemove, onRefresh, onAccountHid
   };
 
   return (
-    <div className="card-hover rounded-lg border border-card-border bg-card-bg">
+    <div className={`card-hover rounded-lg border border-card-border bg-gradient-to-r shadow-sm ${CARD_GRADIENTS[colorIndex % CARD_GRADIENTS.length]}`}>
       <div className="flex items-center justify-between border-b border-card-border px-5 py-4">
         <EditableName
           value={name}
