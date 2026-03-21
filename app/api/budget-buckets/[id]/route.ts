@@ -13,7 +13,7 @@ export async function PUT(
 
   const { id } = await params;
   const body = await request.json();
-  const { name, categoryIds, amount } = body as { name?: string; categoryIds?: string[]; amount?: number };
+  const { name, categoryIds, amount, icon } = body as { name?: string; categoryIds?: string[]; amount?: number; icon?: string };
 
   const existing = await prisma.budget.findUnique({
     where: { id, userId: session.user.id },
@@ -65,6 +65,7 @@ export async function PUT(
     data: {
       ...(name !== undefined && { name }),
       ...(amount !== undefined && { amount }),
+      ...(icon !== undefined && { icon: icon || null }),
     },
     include: {
       categories: {

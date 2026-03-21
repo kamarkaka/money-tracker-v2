@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { name, categoryIds, amount } = body as { name: string; categoryIds?: string[]; amount?: number };
+  const { name, categoryIds, amount, icon } = body as { name: string; categoryIds?: string[]; amount?: number; icon?: string };
 
   if (!name) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
     data: {
       name,
       amount: amount ?? 0,
+      icon: icon || null,
       userId: session.user.id,
       categories: categoryIds
         ? {

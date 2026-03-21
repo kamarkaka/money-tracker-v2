@@ -18,6 +18,7 @@ interface Category {
 interface BudgetBucket {
   id: string;
   name: string;
+  icon?: string | null;
   amount: string | number;
   categories: { category: { id: string; name: string } }[];
 }
@@ -66,11 +67,11 @@ export default function BudgetPage() {
     budgets.flatMap((b) => b.categories.map((bc) => bc.category.id))
   );
 
-  const handleCreate = async (name: string, categoryIds: string[], amount: number) => {
+  const handleCreate = async (name: string, categoryIds: string[], amount: number, icon: string) => {
     const res = await fetch("/api/budget-buckets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, categoryIds, amount }),
+      body: JSON.stringify({ name, categoryIds, amount, icon }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -79,11 +80,11 @@ export default function BudgetPage() {
     await fetchData();
   };
 
-  const handleUpdate = async (id: string, name: string, categoryIds: string[], amount: number) => {
+  const handleUpdate = async (id: string, name: string, categoryIds: string[], amount: number, icon: string) => {
     const res = await fetch(`/api/budget-buckets/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, categoryIds, amount }),
+      body: JSON.stringify({ name, categoryIds, amount, icon }),
     });
     if (!res.ok) {
       const data = await res.json();

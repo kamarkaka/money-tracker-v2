@@ -147,6 +147,22 @@ export default function AccountPage() {
             </p>
           </div>
         </div>
+
+        {/* Assets & Liabilities */}
+        <div className="grid grid-cols-2 gap-2 md:gap-4">
+          <div className="card-hover rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-4 text-center dark:border-emerald-800 dark:bg-emerald-900 md:px-5 md:py-5">
+            <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 md:text-sm">{i18n("totalAssets")}</p>
+            <p className="mt-1 flex justify-center text-xl font-bold md:text-2xl">
+              <SlotNumber value={formatCurrency(totalAssets, "USD", true)} className="text-emerald-600 dark:text-emerald-400" />
+            </p>
+          </div>
+          <div className="card-hover rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-center dark:border-red-800 dark:bg-red-900 md:px-5 md:py-5">
+            <p className="text-xs font-medium text-red-700 dark:text-red-400 md:text-sm">{i18n("totalLiabilities")}</p>
+            <p className="mt-1 flex justify-center text-xl font-bold md:text-2xl">
+              <SlotNumber value={formatCurrency(totalLiabilities, "USD", true)} className="text-red-600 dark:text-red-400" />
+            </p>
+          </div>
+        </div>
       </div>
 
       {institutions.length === 0 ? (

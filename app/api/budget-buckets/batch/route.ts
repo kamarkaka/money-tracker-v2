@@ -6,6 +6,7 @@ interface BucketInput {
   name: string;
   amount: number;
   categoryIds: string[];
+  icon?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
         data: {
           name: bucket.name.trim(),
           amount: bucket.amount,
+          icon: bucket.icon || null,
           userId: session.user!.id!,
           categories: bucket.categoryIds?.length
             ? { create: bucket.categoryIds.map((categoryId) => ({ categoryId })) }

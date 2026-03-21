@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { BudgetIconPicker } from "@/app/components/budget/BudgetIconPicker";
 
 interface CategoryFromApi {
   id: string;
@@ -11,6 +12,7 @@ interface CategoryFromApi {
 
 interface BudgetRow {
   name: string;
+  icon: string;
   amount: string;
   included: boolean;
   categoryIds: string[];
@@ -42,6 +44,7 @@ export function BudgetSetupStep({ onNext, onSkip, onSkipTutorial }: BudgetSetupS
         // Include parent itself + children
         return {
           name: parent.name,
+          icon: "",
           amount: "",
           included: true,
           categoryIds: [parent.id, ...childIds],
@@ -77,6 +80,14 @@ export function BudgetSetupStep({ onNext, onSkip, onSkipTutorial }: BudgetSetupS
     });
   };
 
+  const updateIcon = (idx: number, icon: string) => {
+    setBuckets((prev) => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], icon };
+      return next;
+    });
+  };
+
   const updateAmount = (idx: number, amount: string) => {
     setBuckets((prev) => {
       const next = [...prev];
@@ -103,6 +114,7 @@ export function BudgetSetupStep({ onNext, onSkip, onSkipTutorial }: BudgetSetupS
         body: JSON.stringify({
           buckets: included.map((b) => ({
             name: b.name,
+            icon: b.icon || undefined,
             amount: parseFloat(b.amount),
             categoryIds: b.categoryIds,
           })),
@@ -182,6 +194,7 @@ export function BudgetSetupStep({ onNext, onSkip, onSkipTutorial }: BudgetSetupS
                 onChange={() => toggleBucket(i)}
                 className="accent-zinc-900 dark:accent-zinc-50"
               />
+              <BudgetIconPicker selected={bucket.icon} onChange={(icon) => updateIcon(i, icon)} />
               <input
                 type="text"
                 value={bucket.name}

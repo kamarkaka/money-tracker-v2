@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { FormField } from "@/app/components/ui/FormField";
 import { CurrencyInput } from "@/app/components/ui/CurrencyInput";
+import { BudgetIconPicker } from "./BudgetIconPicker";
 
 interface Category {
   id: string;
@@ -65,7 +66,7 @@ export function CategoryPicker({
 interface CreateBucketFormProps {
   allCategories: Category[];
   assignedCategoryIds: Set<string>;
-  onSubmit: (name: string, categoryIds: string[], amount: number) => Promise<void>;
+  onSubmit: (name: string, categoryIds: string[], amount: number, icon: string) => Promise<void>;
 }
 
 export function CreateBucketForm({
@@ -76,6 +77,7 @@ export function CreateBucketForm({
   const i18n = useTranslations("budget");
   const i18nc = useTranslations("common");
   const [name, setName] = useState("");
+  const [icon, setIcon] = useState("");
   const [amount, setAmount] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -87,8 +89,9 @@ export function CreateBucketForm({
     setLoading(true);
     setError("");
     try {
-      await onSubmit(name.trim(), selectedIds, parseFloat(amount) || 0);
+      await onSubmit(name.trim(), selectedIds, parseFloat(amount) || 0, icon);
       setName("");
+      setIcon("");
       setAmount("");
       setSelectedIds([]);
     } catch (err) {
@@ -101,14 +104,17 @@ export function CreateBucketForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <FormField label={i18n("budgetName")}>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={i18n("namePlaceholder")}
-          required
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
-        />
+        <div className="flex items-center gap-2">
+          <BudgetIconPicker selected={icon} onChange={setIcon} />
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={i18n("namePlaceholder")}
+            required
+            className="flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
+          />
+        </div>
       </FormField>
       <FormField label={i18n("monthlyAmount")}>
         <CurrencyInput
