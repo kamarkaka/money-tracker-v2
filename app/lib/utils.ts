@@ -1,8 +1,9 @@
-export function formatCurrency(amount: number | string, currency = "USD"): string {
+export function formatCurrency(amount: number | string, currency = "USD", wholeNumber = false): string {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
+    ...(wholeNumber ? { minimumFractionDigits: 0, maximumFractionDigits: 0 } : {}),
   }).format(num);
 }
 
