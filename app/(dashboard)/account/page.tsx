@@ -123,33 +123,29 @@ export default function AccountPage() {
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4">
-        <div className="card-hover rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-4 text-center dark:border-emerald-800 dark:bg-emerald-950/30 md:px-5 md:py-5">
-          <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 md:text-sm">{i18n("totalAssets")}</p>
-          <p className="mt-1 flex justify-center text-xl font-bold md:text-2xl">
-            <SlotNumber value={formatCurrency(totalAssets)} className="text-emerald-600 dark:text-emerald-400" />
+      <div className="card-hover mb-6 rounded-lg bg-accent px-5 py-5 text-accent-text md:px-6 md:py-6">
+        {/* Net Worth — big and prominent */}
+        <div className="text-center">
+          <p className="text-xs font-medium opacity-80 md:text-sm">{i18n("netWorth")}</p>
+          <p className="mt-1 flex justify-center text-3xl font-bold md:text-4xl">
+            <SlotNumber value={formatCurrency(netWorth, "USD", true)} className="text-white" />
           </p>
         </div>
-        <div className="card-hover rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-center dark:border-red-800 dark:bg-red-950/30 md:px-5 md:py-5">
-          <p className="text-xs font-medium text-red-700 dark:text-red-400 md:text-sm">{i18n("totalLiabilities")}</p>
-          <p className="mt-1 flex justify-center text-xl font-bold md:text-2xl">
-            <SlotNumber value={formatCurrency(-totalLiabilities)} className="text-red-600 dark:text-red-400" />
-          </p>
-        </div>
-        <div className={`card-hover col-span-2 rounded-lg border px-4 py-4 text-center md:col-span-1 md:px-5 md:py-5 ${
-          netWorth >= 0
-            ? "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30"
-            : "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30"
-        }`}>
-          <p className={`text-xs font-medium md:text-sm ${
-            netWorth >= 0 ? "text-blue-700 dark:text-blue-400" : "text-red-700 dark:text-red-400"
-          }`}>{i18n("netWorth")}</p>
-          <p className="mt-1 flex justify-center text-xl font-bold md:text-2xl">
-            <SlotNumber
-              value={formatCurrency(netWorth)}
-              className={netWorth >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}
-            />
-          </p>
+
+        {/* Assets & Liabilities — smaller, side by side */}
+        <div className="mt-4 flex">
+          <div className="flex-1 text-center">
+            <p className="text-xs font-medium opacity-80">{i18n("totalAssets")}</p>
+            <p className="mt-1 flex justify-center text-lg font-semibold md:text-xl">
+              <SlotNumber value={formatCurrency(totalAssets, "USD", true)} className="text-white" />
+            </p>
+          </div>
+          <div className="flex-1 text-center">
+            <p className="text-xs font-medium opacity-80">{i18n("totalLiabilities")}</p>
+            <p className="mt-1 flex justify-center text-lg font-semibold md:text-xl">
+              <SlotNumber value={formatCurrency(totalLiabilities, "USD", true)} className="text-white" />
+            </p>
+          </div>
         </div>
       </div>
 
