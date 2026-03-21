@@ -10,6 +10,7 @@ interface Category {
 interface BudgetBucket {
   id: string;
   name: string;
+  icon?: string | null;
   amount: string | number;
   categories: { category: Category }[];
 }
@@ -18,7 +19,7 @@ interface BucketListProps {
   budgets: BudgetBucket[];
   allCategories: Category[];
   assignedCategoryIds: Set<string>;
-  onUpdate: (id: string, name: string, categoryIds: string[], amount: number) => Promise<void>;
+  onUpdate: (id: string, name: string, categoryIds: string[], amount: number, icon: string) => Promise<void>;
   onDelete: (id: string) => void;
 }
 

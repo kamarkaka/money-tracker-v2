@@ -105,6 +105,7 @@ model Budget {
   id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId     String           @map("user_id") @db.Uuid
   name       String           @db.VarChar(100)
+  icon       String?          @db.VarChar(50)
   amount     Decimal          @default(0) @db.Decimal(14, 2)
   createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt  DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)

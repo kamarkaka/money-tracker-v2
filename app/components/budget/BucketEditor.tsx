@@ -6,6 +6,7 @@ import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { CategoryPicker } from "./CreateBucketForm";
 import { FormField } from "@/app/components/ui/FormField";
 import { CurrencyInput } from "@/app/components/ui/CurrencyInput";
+import { BudgetIconPicker, getBudgetIcon } from "./BudgetIconPicker";
 import { formatCurrency } from "@/app/lib/utils";
 
 interface Category {
@@ -16,6 +17,7 @@ interface Category {
 interface BudgetBucket {
   id: string;
   name: string;
+  icon?: string | null;
   amount: string | number;
   categories: { category: Category }[];
 }
@@ -24,7 +26,7 @@ interface BucketEditorProps {
   bucket: BudgetBucket;
   allCategories: Category[];
   assignedCategoryIds: Set<string>;
-  onUpdate: (id: string, name: string, categoryIds: string[], amount: number) => Promise<void>;
+  onUpdate: (id: string, name: string, categoryIds: string[], amount: number, icon: string) => Promise<void>;
   onDelete: (id: string) => void;
 }
 
@@ -39,6 +41,7 @@ export function BucketEditor({
   const i18nc = useTranslations("common");
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(bucket.name);
+  const [icon, setIcon] = useState(bucket.icon || "");
   const [amount, setAmount] = useState(String(bucket.amount));
   const [selectedIds, setSelectedIds] = useState<string[]>(
     bucket.categories.map((bc) => bc.category.id)
@@ -49,16 +52,17 @@ export function BucketEditor({
     const origIds = bucket.categories.map((bc) => bc.category.id).sort().join(",");
     const newIds = [...selectedIds].sort().join(",");
     const nameUnchanged = name === bucket.name;
+    const iconUnchanged = icon === (bucket.icon || "");
     const amountUnchanged = (parseFloat(amount) || 0) === Number(bucket.amount);
     const categoriesUnchanged = origIds === newIds;
-    if (nameUnchanged && amountUnchanged && categoriesUnchanged) {
+    if (nameUnchanged && iconUnchanged && amountUnchanged && categoriesUnchanged) {
       setEditing(false);
       return;
     }
 
     setLoading(true);
     try {
-      await onUpdate(bucket.id, name, selectedIds, parseFloat(amount) || 0);
+      await onUpdate(bucket.id, name, selectedIds, parseFloat(amount) || 0, icon);
       setEditing(false);
     } catch {
       // error handled upstream
@@ -69,6 +73,7 @@ export function BucketEditor({
 
   const handleCancel = () => {
     setName(bucket.name);
+    setIcon(bucket.icon || "");
     setAmount(String(bucket.amount));
     setSelectedIds(bucket.categories.map((bc) => bc.category.id));
     setEditing(false);
@@ -79,12 +84,15 @@ export function BucketEditor({
       {editing ? (
         <div className="flex flex-col gap-4">
           <FormField label={i18n("budgetName")}>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
-            />
+            <div className="flex items-center gap-2">
+              <BudgetIconPicker selected={icon} onChange={setIcon} />
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
+              />
+            </div>
           </FormField>
           <FormField label={i18n("monthlyAmount")}>
             <CurrencyInput
@@ -121,6 +129,10 @@ export function BucketEditor({
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3">
+              {(() => {
+                const Icon = getBudgetIcon(bucket.icon);
+                return Icon ? <Icon className="h-5 w-5 text-accent" /> : null;
+              })()}
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                 {bucket.name}
               </h3>

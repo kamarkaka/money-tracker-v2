@@ -32,12 +32,14 @@ interface Category {
 interface BudgetBucket {
   id: string;
   name: string;
+  icon?: string | null;
   amount: string | number;
   categories: { category: { id: string; name: string } }[];
 }
 
 interface BucketGroup {
   bucketName: string;
+  bucketIcon?: string | null;
   budgetAmount: number;
   transactions: Transaction[];
   total: number;
@@ -130,6 +132,7 @@ export default function OverviewPage() {
       const budget = budgets.find((b) => b.name === bucketName);
       return {
         bucketName,
+        bucketIcon: budget?.icon,
         budgetAmount: parseFloat(String(budget?.amount ?? 0)),
         transactions: txs,
         total: txs.reduce((sum, t) => sum + parseFloat(String(t.amount)), 0),
@@ -200,11 +203,12 @@ export default function OverviewPage() {
         />
       ) : (
         <div className="flex flex-col gap-4">
-          {bucketGroupArray.map((group) => (
+          {bucketGroupArray.map((group, index) => (
             <BucketCard
               key={group.bucketName}
               name={group.bucketName}
-              total={group.total}
+              icon={group.bucketIcon}
+              colorIndex={index}
               budgetAmount={group.budgetAmount}
               transactions={group.transactions}
               categories={categories}
@@ -214,8 +218,6 @@ export default function OverviewPage() {
           {others.length > 0 && (
             <BucketCard
               name={i18n("others")}
-              total={othersTotal}
-              budgetAmount={0}
               transactions={others}
               categories={categories}
               onUpdateCategory={handleUpdateCategory}
