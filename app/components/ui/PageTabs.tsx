@@ -15,17 +15,17 @@ export function PageTabs() {
   ];
 
   return (
-    <div className="flex gap-1">
+    <div className="flex items-baseline gap-3 md:gap-4">
       {tabs.map((tab) => {
         const isActive = pathname === tab.href;
         return (
           <Link
             key={tab.href}
             href={tab.href}
-            className={`rounded-lg px-4 py-2 text-lg font-bold transition-colors md:text-2xl ${
+            className={`transition-colors ${
               isActive
-                ? "bg-accent text-accent-text"
-                : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+                ? "text-2xl font-bold text-zinc-900 underline decoration-accent decoration-2 underline-offset-6 dark:text-zinc-50 md:text-3xl"
+                : "text-lg font-medium text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 md:text-xl"
             }`}
           >
             {tab.label}

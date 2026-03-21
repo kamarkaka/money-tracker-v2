@@ -399,7 +399,7 @@ export default function TransactionPage() {
             <div
               key={t.id}
               onClick={() => setEditTransaction(t)}
-              className="cursor-pointer rounded-lg border border-card-border bg-card-bg p-4"
+              className="card-hover cursor-pointer rounded-lg border border-card-border bg-card-bg p-4"
             >
               {/* Row 1: date, account, hide/edit buttons */}
               <div className="flex items-center gap-2">

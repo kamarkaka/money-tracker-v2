@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { FormField } from "@/app/components/ui/FormField";
+import { CurrencyInput } from "@/app/components/ui/CurrencyInput";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
 interface Account {
@@ -39,11 +40,15 @@ function MultiSelect({
   options,
   selected,
   onChange,
+  allLabel,
+  noneLabel,
 }: {
   label: string;
   options: { id: string; name: string }[];
   selected: Set<string>;
   onChange: (selected: Set<string>) => void;
+  allLabel: string;
+  noneLabel: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -85,6 +90,25 @@ function MultiSelect({
       </button>
       {open && (
         <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-md border border-card-border bg-card-bg shadow-lg">
+          <label
+            className="flex cursor-pointer items-center gap-2 border-b border-card-border px-3 py-1.5 text-sm font-medium text-accent hover:bg-accent-subtle"
+            onClick={(e) => {
+              e.preventDefault();
+              if (selected.size === options.length) {
+                onChange(new Set());
+              } else {
+                onChange(new Set(options.map((o) => o.id)));
+              }
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={selected.size === options.length}
+              readOnly
+              className="accent-accent"
+            />
+            {selected.size === options.length ? noneLabel : allLabel}
+          </label>
           {options.map((option) => (
             <label
               key={option.id}
@@ -206,6 +230,8 @@ export function TransactionFilters({
           options={accounts}
           selected={selectedAccounts}
           onChange={handleAccountChange}
+          allLabel={i18n("all")}
+          noneLabel={i18n("none")}
         />
       </FormField>
       <FormField label={i18n("categoryOptional")}>
@@ -214,44 +240,44 @@ export function TransactionFilters({
           options={categoryOptions}
           selected={selectedCategories}
           onChange={handleCategoryChange}
+          allLabel={i18n("all")}
+          noneLabel={i18n("none")}
         />
       </FormField>
-      <FormField label={i18n("fromDate")}>
-        <input
-          type="date"
-          value={filters.startDate}
-          onChange={(e) => update("startDate", e.target.value)}
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
-        />
-      </FormField>
-      <FormField label={i18n("toDate")}>
-        <input
-          type="date"
-          value={filters.endDate}
-          onChange={(e) => update("endDate", e.target.value)}
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
-        />
-      </FormField>
-      <FormField label={i18n("minAmount")}>
-        <input
-          type="number"
-          step="0.01"
-          value={filters.minAmount}
-          onChange={(e) => update("minAmount", e.target.value)}
-          placeholder="0.00"
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
-        />
-      </FormField>
-      <FormField label={i18n("maxAmount")}>
-        <input
-          type="number"
-          step="0.01"
-          value={filters.maxAmount}
-          onChange={(e) => update("maxAmount", e.target.value)}
-          placeholder="0.00"
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
-        />
-      </FormField>
+      <div className="grid grid-cols-2 gap-3 sm:col-span-2 sm:gap-4">
+        <FormField label={i18n("fromDate")}>
+          <input
+            type="date"
+            value={filters.startDate}
+            onChange={(e) => update("startDate", e.target.value)}
+            className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
+          />
+        </FormField>
+        <FormField label={i18n("toDate")}>
+          <input
+            type="date"
+            value={filters.endDate}
+            onChange={(e) => update("endDate", e.target.value)}
+            className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
+          />
+        </FormField>
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:col-span-2 sm:gap-4">
+        <FormField label={i18n("minAmount")}>
+          <CurrencyInput
+            value={filters.minAmount}
+            onChange={(v) => update("minAmount", v)}
+            className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
+          />
+        </FormField>
+        <FormField label={i18n("maxAmount")}>
+          <CurrencyInput
+            value={filters.maxAmount}
+            onChange={(v) => update("maxAmount", v)}
+            className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
+          />
+        </FormField>
+      </div>
       <div className="flex items-end sm:col-span-2 md:col-span-1">
         <button
           onClick={handleClear}

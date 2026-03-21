@@ -72,7 +72,7 @@ export function TagCard({ tag, onEdit, onDelete }: TagCardProps) {
   };
 
   return (
-    <div className="rounded-lg border border-card-border bg-card-bg">
+    <div className="card-hover rounded-lg border border-card-border bg-card-bg">
       <div className="flex items-center justify-between px-5 py-4">
         <div className="flex items-center gap-3">
           {editing ? (

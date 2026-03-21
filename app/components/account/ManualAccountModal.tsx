@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CurrencyInput } from "@/app/components/ui/CurrencyInput";
 import { Modal } from "@/app/components/ui/Modal";
 
 const ACCOUNT_TYPES = [
@@ -133,12 +134,9 @@ export function ManualAccountModal({ open, onClose, onComplete }: ManualAccountM
           <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Current Balance
           </label>
-          <input
-            type="number"
+          <CurrencyInput
             value={balance}
-            onChange={(e) => setBalance(e.target.value)}
-            placeholder="0.00"
-            step="0.01"
+            onChange={setBalance}
             className={inputClass}
           />
         </div>

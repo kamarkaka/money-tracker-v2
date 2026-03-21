@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { CategoryPicker } from "./CreateBucketForm";
 import { FormField } from "@/app/components/ui/FormField";
+import { CurrencyInput } from "@/app/components/ui/CurrencyInput";
 import { formatCurrency } from "@/app/lib/utils";
 
 interface Category {
@@ -74,7 +75,7 @@ export function BucketEditor({
   };
 
   return (
-    <div className="rounded-lg border border-card-border bg-card-bg p-5">
+    <div className="card-hover rounded-lg border border-card-border bg-card-bg p-5">
       {editing ? (
         <div className="flex flex-col gap-4">
           <FormField label={i18n("budgetName")}>
@@ -86,13 +87,9 @@ export function BucketEditor({
             />
           </FormField>
           <FormField label={i18n("monthlyAmount")}>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
+            <CurrencyInput
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
+              onChange={setAmount}
               className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
             />
           </FormField>

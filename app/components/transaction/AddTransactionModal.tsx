@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Modal } from "@/app/components/ui/Modal";
 import { TagSelector } from "@/app/components/tag/TagSelector";
+import { CurrencyInput } from "@/app/components/ui/CurrencyInput";
 
 interface Account {
   id: string;
@@ -204,13 +205,9 @@ export function AddTransactionModal({
                 {i18n("income")}
               </button>
             </div>
-            <input
-              type="number"
+            <CurrencyInput
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              step="0.01"
-              min="0"
+              onChange={setAmount}
               className={inputClass}
             />
           </div>

@@ -57,7 +57,7 @@ export function InstitutionCard({ institution, onRemove, onRefresh, onAccountHid
   };
 
   return (
-    <div className="rounded-lg border border-card-border bg-card-bg">
+    <div className="card-hover rounded-lg border border-card-border bg-card-bg">
       <div className="flex items-center justify-between border-b border-card-border px-5 py-4">
         <EditableName
           value={name}

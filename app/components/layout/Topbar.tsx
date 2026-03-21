@@ -251,8 +251,8 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
                 className={cn(
                   "flex flex-col items-center justify-center gap-1 rounded-lg border px-2 py-4 text-sm font-medium transition-colors",
                   pathname === item.href
-                    ? "border-accent bg-accent-subtle text-accent"
-                    : "border-card-border text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400"
+                    ? "border-accent bg-accent text-accent-text"
+                    : "border-transparent bg-blue-50 text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:bg-blue-950/30 dark:text-zinc-50"
                 )}
               >
                 <item.icon className="h-8 w-8" />
@@ -260,8 +260,6 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
               </Link>
             ))}
           </div>
-
-          <div className="my-1 border-t border-card-border" />
 
           {/* 2. Category, Budget, Rule, Tag, Profile, Setting — 3x2 grid */}
           <div className="grid grid-cols-3 gap-2">
@@ -273,8 +271,8 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
                 className={cn(
                   "flex flex-col items-center justify-center gap-1 rounded-lg border px-2 py-4 text-sm font-medium transition-colors",
                   pathname === item.href
-                    ? "border-accent bg-accent-subtle text-accent"
-                    : "border-card-border text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400"
+                    ? "border-accent bg-accent text-accent-text"
+                    : "border-transparent bg-blue-50 text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:bg-blue-950/30 dark:text-zinc-50"
                 )}
               >
                 <item.icon className="h-8 w-8" />
@@ -287,8 +285,8 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
               className={cn(
                 "flex flex-col items-center justify-center gap-1 rounded-lg border px-2 py-4 text-sm font-medium transition-colors",
                 pathname === "/profile"
-                  ? "border-accent bg-accent-subtle text-accent"
-                  : "border-card-border text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400"
+                  ? "border-accent bg-accent text-accent-text"
+                  : "border-transparent bg-blue-50 text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:bg-blue-950/30 dark:text-zinc-50"
               )}
             >
               <UserCircleIcon className="h-8 w-8" />
@@ -300,8 +298,8 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
               className={cn(
                 "flex flex-col items-center justify-center gap-1 rounded-lg border px-2 py-4 text-sm font-medium transition-colors",
                 pathname === "/setting"
-                  ? "border-accent bg-accent-subtle text-accent"
-                  : "border-card-border text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400"
+                  ? "border-accent bg-accent text-accent-text"
+                  : "border-transparent bg-blue-50 text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:bg-blue-950/30 dark:text-zinc-50"
               )}
             >
               <Cog6ToothIcon className="h-8 w-8" />
@@ -313,12 +311,12 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={toggleTheme}
-              className="cursor-pointer flex items-center justify-center gap-2 rounded-lg border border-card-border px-2 py-3 text-sm font-medium text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400"
+              className="cursor-pointer flex items-center justify-center gap-2 rounded-lg border border-transparent bg-blue-50 px-2 py-3 text-sm font-medium text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:bg-blue-950/30 dark:text-zinc-50"
             >
               {isDark ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
               {isDark ? i18nSetting("light") : i18nSetting("dark")}
             </button>
-            <div className="flex items-center justify-center gap-1 rounded-lg border border-card-border px-2 py-3">
+            <div className="flex items-center justify-center gap-1 rounded-lg border border-transparent bg-blue-50 px-2 py-3 dark:bg-blue-950/30">
               {LANGS.map((l) => (
                 <button
                   key={l.code}
@@ -327,7 +325,7 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
                     "cursor-pointer rounded-md px-4 py-1 text-sm font-medium transition-colors",
                     locale === l.code
                       ? "bg-accent text-accent-text"
-                      : "text-zinc-500 hover:bg-accent-subtle hover:text-accent dark:text-zinc-400"
+                      : "text-zinc-600 hover:bg-accent-subtle hover:text-accent dark:text-zinc-50"
                   )}
                 >
                   {l.label}

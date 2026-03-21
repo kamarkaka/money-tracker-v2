@@ -78,7 +78,7 @@ export function BucketCard({
   const barColor = interpolateColor(ratio, stops);
 
   return (
-    <div className="rounded-lg border border-card-border bg-card-bg">
+    <div className="card-hover rounded-lg border border-card-border bg-card-bg">
       <button
         onClick={() => setExpanded(!expanded)}
         className="cursor-pointer flex w-full items-center justify-between px-5 py-4 text-left"

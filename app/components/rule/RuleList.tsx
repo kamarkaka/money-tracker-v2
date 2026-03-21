@@ -137,7 +137,7 @@ export function RuleList({ rules, categories, onUpdate, onDelete, onReorder }: R
   };
 
   return (
-    <div ref={listRef} className="select-none rounded-lg border border-card-border bg-card-bg">
+    <div ref={listRef} className="card-hover select-none rounded-lg border border-card-border bg-card-bg">
       <div className="hidden border-b border-card-border px-5 py-3 md:block">
         <div className="flex items-center text-xs font-medium text-zinc-500 dark:text-zinc-400">
           <span className="w-12 text-center">#</span>
