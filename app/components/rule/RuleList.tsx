@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { PencilSquareIcon, TrashIcon, Bars3Icon } from "@heroicons/react/24/outline";
+import { PencilSquareIcon, TrashIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 import { FormField } from "@/app/components/ui/FormField";
 
 interface Category {
@@ -23,36 +23,27 @@ interface RuleListProps {
   categories: Category[];
   onUpdate: (id: string, match: string, categoryId: string) => Promise<void>;
   onDelete: (id: string) => void;
-  onReorder: (ruleIds: string[]) => Promise<void>;
 }
 
-export function RuleList({ rules, categories, onUpdate, onDelete, onReorder }: RuleListProps) {
+const CARD_GRADIENTS = [
+  "from-blue-50 to-white dark:from-blue-950 dark:to-zinc-900",
+  "from-emerald-50 to-white dark:from-emerald-950 dark:to-zinc-900",
+  "from-violet-50 to-white dark:from-violet-950 dark:to-zinc-900",
+  "from-amber-50 to-white dark:from-amber-950 dark:to-zinc-900",
+  "from-rose-50 to-white dark:from-rose-950 dark:to-zinc-900",
+  "from-teal-50 to-white dark:from-teal-950 dark:to-zinc-900",
+  "from-orange-50 to-white dark:from-orange-950 dark:to-zinc-900",
+  "from-indigo-50 to-white dark:from-indigo-950 dark:to-zinc-900",
+];
+
+export function RuleList({ rules, categories, onUpdate, onDelete }: RuleListProps) {
   const i18n = useTranslations("rule");
   const i18nc = useTranslations("common");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editMatch, setEditMatch] = useState("");
   const [editCategoryId, setEditCategoryId] = useState("");
   const [saving, setSaving] = useState(false);
-
-  const dragItem = useRef<number | null>(null);
-  const dragOverItem = useRef<number | null>(null);
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const listRef = useRef<HTMLDivElement>(null);
-
-  // Attach non-passive touchmove to prevent scrolling during drag
-  useEffect(() => {
-    const el = listRef.current;
-    if (!el) return;
-    const handler = (e: TouchEvent) => {
-      if (dragItem.current !== null) {
-        e.preventDefault();
-      }
-    };
-    el.addEventListener("touchmove", handler, { passive: false });
-    return () => el.removeEventListener("touchmove", handler);
-  }, []);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const startEdit = (rule: Rule) => {
     setEditingId(rule.id);
@@ -77,119 +68,40 @@ export function RuleList({ rules, categories, onUpdate, onDelete, onReorder }: R
     }
   };
 
-  const handleDragStart = (index: number) => {
-    dragItem.current = index;
-    setDragIndex(index);
-  };
-
-  const handleDragEnter = (index: number) => {
-    dragOverItem.current = index;
-    setDragOverIndex(index);
-  };
-
-  const handleDragEnd = () => {
-    if (dragItem.current !== null && dragOverItem.current !== null && dragItem.current !== dragOverItem.current) {
-      const ids = rules.map((r) => r.id);
-      const [removed] = ids.splice(dragItem.current, 1);
-      ids.splice(dragOverItem.current, 0, removed);
-      onReorder(ids);
-    }
-    dragItem.current = null;
-    dragOverItem.current = null;
-    setDragIndex(null);
-    setDragOverIndex(null);
-  };
-
-  const handleTouchStart = (index: number) => {
-    dragItem.current = index;
-    setDragIndex(index);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    const target = rowRefs.current.findIndex((ref) => {
-      if (!ref) return false;
-      const rect = ref.getBoundingClientRect();
-      return touch.clientY >= rect.top && touch.clientY <= rect.bottom;
-    });
-    if (target !== -1 && target !== dragOverItem.current) {
-      dragOverItem.current = target;
-      setDragOverIndex(target);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (dragItem.current !== null && dragOverItem.current !== null && dragItem.current !== dragOverItem.current) {
-      const ids = rules.map((r) => r.id);
-      const [removed] = ids.splice(dragItem.current, 1);
-      ids.splice(dragOverItem.current, 0, removed);
-      onReorder(ids);
-    }
-    dragItem.current = null;
-    dragOverItem.current = null;
-    setDragIndex(null);
-    setDragOverIndex(null);
-  };
-
   const categoryLabel = (rule: Rule) => {
     if (rule.category.parent) return `${rule.category.parent.name} > ${rule.category.name}`;
     return rule.category.name;
   };
 
   return (
-    <div ref={listRef} className="card-hover select-none rounded-lg border border-card-border bg-card-bg">
-      <div className="hidden border-b border-card-border px-5 py-3 md:block">
-        <div className="flex items-center text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          <span className="w-12 text-center">#</span>
-          <span className="w-8"></span>
-          <span className="flex-1">{i18n("matchString")}</span>
-          <span className="w-48">{i18n("targetCategory")}</span>
-          <span className="w-20"></span>
-        </div>
-      </div>
+    <div className="flex flex-col gap-4">
       {rules.map((rule, index) => (
         <div
           key={rule.id}
-          ref={(el) => { rowRefs.current[index] = el; }}
-          draggable={editingId !== rule.id}
-          onDragStart={() => handleDragStart(index)}
-          onDragEnter={() => handleDragEnter(index)}
-          onDragEnd={handleDragEnd}
-          onDragOver={(e) => e.preventDefault()}
-          onTouchStart={() => { if (editingId !== rule.id) handleTouchStart(index); }}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          className={`flex items-center border-b border-zinc-100 px-5 py-3 last:border-b-0 dark:border-zinc-800 ${
-            dragIndex === index ? "opacity-40" : ""
-          } ${
-            dragOverIndex === index && dragIndex !== index
-              ? "border-t-2 border-t-blue-400 dark:border-t-blue-500"
-              : ""
-          }`}
+          className={`card-hover rounded-lg border border-card-border bg-gradient-to-r p-5 shadow-sm ${CARD_GRADIENTS[index % CARD_GRADIENTS.length]}`}
         >
           {editingId === rule.id ? (
-            <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-end">
-              <span className="hidden w-12 shrink-0 text-center text-sm text-zinc-400 md:block">{index + 1}</span>
-              <FormField label={i18n("matchString")} className="flex-1">
+            <div className="flex flex-col gap-3">
+              <FormField label={i18n("matchString")}>
                 <input
                   type="text"
                   value={editMatch}
                   onChange={(e) => setEditMatch(e.target.value)}
-                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
+                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-900 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
                 />
               </FormField>
-              <FormField label={i18n("targetCategory")} className="w-full md:w-48">
+              <FormField label={i18n("targetCategory")}>
                 <select
                   value={editCategoryId}
                   onChange={(e) => setEditCategoryId(e.target.value)}
-                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
+                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-900 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
                 >
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
               </FormField>
-              <div className="flex gap-1">
+              <div className="flex gap-2">
                 <button
                   onClick={handleSave}
                   disabled={saving}
@@ -199,58 +111,64 @@ export function RuleList({ rules, categories, onUpdate, onDelete, onReorder }: R
                 </button>
                 <button
                   onClick={cancelEdit}
-                  className="cursor-pointer rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="cursor-pointer rounded-md border border-card-border px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
                 >
                   {i18nc("cancel")}
                 </button>
               </div>
             </div>
           ) : (
-            <div className="flex flex-1 flex-col gap-1 md:flex-row md:items-center md:gap-0">
-              <div className="flex items-center gap-2 md:contents">
-                <span className="w-8 shrink-0 text-center text-sm font-medium text-zinc-400 dark:text-zinc-500 md:w-12">
-                  {index + 1}
-                </span>
-                <span className="w-8 shrink-0 cursor-grab text-zinc-300 active:cursor-grabbing dark:text-zinc-600">
-                  <Bars3Icon className="h-4 w-4" />
-                </span>
-                <span className="flex-1 text-sm font-medium text-zinc-900 dark:text-zinc-100 md:font-normal">
-                  {rule.match}
-                </span>
-                <div className="flex gap-2 md:hidden">
+            <div>
+              <div
+                className="flex cursor-pointer items-center justify-between md:cursor-default"
+                onClick={() => setActiveId(activeId === rule.id ? null : rule.id)}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+                      {rule.match}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                    <ArrowRightIcon className="h-3.5 w-3.5 shrink-0" />
+                    <span>{categoryLabel(rule)}</span>
+                  </div>
+                </div>
+                {/* Desktop buttons */}
+                <div className="hidden gap-2 md:flex">
                   <button
-                    onClick={() => startEdit(rule)}
+                    onClick={(e) => { e.stopPropagation(); startEdit(rule); }}
                     className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-accent-subtle text-accent hover:bg-accent hover:text-accent-text"
+                    title={i18nc("edit")}
                   >
                     <PencilSquareIcon className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => onDelete(rule.id)}
+                    onClick={(e) => { e.stopPropagation(); onDelete(rule.id); }}
                     className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50"
+                    title={i18nc("delete")}
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
                 </div>
               </div>
-              <span className="pl-10 text-xs text-zinc-500 dark:text-zinc-400 md:w-48 md:pl-0 md:text-sm">
-                {categoryLabel(rule)}
-              </span>
-              <div className="hidden w-20 justify-end gap-2 md:flex">
-                <button
-                  onClick={() => startEdit(rule)}
-                  className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-accent-subtle text-accent hover:bg-accent hover:text-accent-text"
-                  title={i18nc("edit")}
-                >
-                  <PencilSquareIcon className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => onDelete(rule.id)}
-                  className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50"
-                  title={i18nc("delete")}
-                >
-                  <TrashIcon className="h-4 w-4" />
-                </button>
-              </div>
+              {/* Mobile action buttons */}
+              {activeId === rule.id && (
+                <div className="mt-3 flex justify-center gap-4 border-t border-card-border pt-3 md:hidden">
+                  <button
+                    onClick={() => { startEdit(rule); setActiveId(null); }}
+                    className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-accent text-accent-text shadow-sm hover:bg-accent-hover"
+                  >
+                    <PencilSquareIcon className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => { onDelete(rule.id); setActiveId(null); }}
+                    className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-red-500 text-white shadow-sm hover:bg-red-600"
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

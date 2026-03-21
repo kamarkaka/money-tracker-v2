@@ -91,15 +91,6 @@ export default function RulePage() {
     await fetchData();
   };
 
-  const handleReorder = async (ruleIds: string[]) => {
-    await fetch("/api/rules/reorder", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ruleIds }),
-    });
-    await fetchData();
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -147,7 +138,6 @@ export default function RulePage() {
           categories={allFlatCategories}
           onUpdate={handleUpdate}
           onDelete={(id) => setDeleteId(id)}
-          onReorder={handleReorder}
         />
       )}
 
