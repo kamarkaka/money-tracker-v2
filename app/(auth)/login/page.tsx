@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { FormField } from "@/app/components/ui/FormField";
+import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,51 +44,58 @@ export default function LoginPage() {
 
   return (
     <>
-      <div className="mb-4 flex flex-col items-center">
-        <Image
-          src="/logo.png"
-          alt="App Logo"
-          width={256}
-          height={256}
-          priority
-          className="mb-2 rounded-lg shadow-lg"
-        />
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+      <div className="mb-6 flex flex-col items-center">
+        <div className="animate-bounce-in">
+          <Image
+            src="/logo.png"
+            alt="App Logo"
+            width={80}
+            height={80}
+            priority
+            className="rounded-xl shadow-lg"
+          />
+        </div>
+        <h1 className="mt-4 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
           Money Tracker 2
           <span className="relative -top-3 -right-1 rounded-full border border-red-500 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-red-500">
             alpha
           </span>
         </h1>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{i18n("tagline")}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <FormField label={i18nc("email")} error="">
+        <div className={`flex h-12 items-center gap-2 rounded-md border bg-input-bg px-3 focus-within:border-accent focus-within:ring-1 focus-within:ring-accent ${shake ? "animate-shake border-red-500 dark:border-red-500" : "border-card-border"}`}>
+          <EnvelopeIcon className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" />
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder={i18nc("email")}
             required
-            className={`h-12 rounded-md border border-zinc-300 px-3 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50 ${shake ? "animate-shake border-red-500 dark:border-red-500" : ""}`}
+            className="h-full w-full border-0 bg-transparent text-sm text-zinc-900 placeholder-zinc-400 outline-none dark:text-zinc-50 dark:placeholder-zinc-500"
           />
-        </FormField>
-        <FormField label={i18nc("password")} error="">
+        </div>
+        <div className={`flex h-12 items-center gap-2 rounded-md border bg-input-bg px-3 focus-within:border-accent focus-within:ring-1 focus-within:ring-accent ${shake ? "animate-shake border-red-500 dark:border-red-500" : "border-card-border"}`}>
+          <LockClosedIcon className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" />
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder={i18nc("password")}
             required
-            className={`h-12 rounded-md border border-zinc-300 px-3 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50 ${shake ? "animate-shake border-red-500 dark:border-red-500" : ""}`}
+            className="h-full w-full border-0 bg-transparent text-sm text-zinc-900 placeholder-zinc-400 outline-none dark:text-zinc-50 dark:placeholder-zinc-500"
           />
-        </FormField>
-        {error && <p className="text-sm text-red-500">{error}</p>}
-        <div className="text-right">
+        </div>
+        <div className="flex justify-end">
           <Link
             href="/forgot-password"
-            className="cursor-pointer text-sm text-zinc-600 hover:underline dark:text-zinc-400"
+            className="cursor-pointer text-xs text-accent hover:underline"
           >
             {i18n("forgotPassword")}
           </Link>
         </div>
+        {error && <p className="text-sm text-red-500">{error}</p>}
         <button
           type="submit"
           disabled={loading}
@@ -99,16 +107,19 @@ export default function LoginPage() {
 
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-zinc-300 dark:border-zinc-600" />
+          <div className="w-full border-t border-card-border" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-page-bg px-3 text-xs text-zinc-400 dark:text-zinc-500 md:bg-card-bg">{i18n("or")}</span>
         </div>
       </div>
 
       <button
         type="button"
         onClick={() => signIn("google", { callbackUrl: "/overview" })}
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-md border-zinc-300 px-4 text-sm font-medium bg-zinc-100 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 cursor-pointer"
+        className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-card-border bg-input-bg px-4 text-sm font-medium text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
       >
-        <svg className="h-6 w-6" viewBox="0 0 48 48">
+        <svg className="h-5 w-5" viewBox="0 0 48 48">
           <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
           <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
           <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
@@ -118,9 +129,9 @@ export default function LoginPage() {
         {i18n("signInWithGoogle")}
       </button>
 
-      <p className="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
         {i18n("noAccount")}{" "}
-        <Link href="/register" className="cursor-pointer font-medium text-zinc-900 hover:underline dark:text-zinc-50">
+        <Link href="/register" className="cursor-pointer font-medium text-accent hover:underline">
           {i18n("register")}
         </Link>
       </p>
