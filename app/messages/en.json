@@ -50,7 +50,9 @@
     "resetSent": "If an account exists with that email, we've sent a password reset link.",
     "passwordResetSuccess": "Your password has been reset. You can now log in.",
     "passwordRequired": "Password is required",
-    "emailRequired": "Email is required"
+    "emailRequired": "Email is required",
+    "tagline": "Take control of your finances",
+    "or": "or"
   },
   "nav": {
     "overview": "Overview",
