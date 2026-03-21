@@ -50,7 +50,9 @@
     "resetSent": "如果该邮箱对应的账户存在，我们已发送密码重置链接。",
     "passwordResetSuccess": "您的密码已重置，现在可以登录了。",
     "passwordRequired": "密码是必填项",
-    "emailRequired": "邮箱是必填项"
+    "emailRequired": "邮箱是必填项",
+    "tagline": "掌控您的财务",
+    "or": "或"
   },
   "nav": {
     "overview": "概览",
