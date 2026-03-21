@@ -12,22 +12,29 @@ export function MonthlySummaryHeader({ totalIncome, totalExpenses }: MonthlySumm
   const netSavings = totalIncome + totalExpenses;
 
   return (
-    <div className="flex flex-col gap-2 md:gap-4">
+    <div className="card-hover rounded-lg bg-accent px-5 py-5 text-accent-text md:px-6 md:py-6">
       {/* Net Savings — big and prominent */}
-      <div className={`card-hover rounded-lg border px-4 py-5 text-center md:px-5 md:py-6 ${
-        netSavings >= 0
-          ? "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900"
-          : "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900"
-      }`}>
-        <p className={`text-xs font-medium md:text-sm ${
-          netSavings >= 0 ? "text-blue-700 dark:text-blue-400" : "text-red-700 dark:text-red-400"
-        }`}>{i18n("netSavings")}</p>
+      <div className="text-center">
+        <p className="text-xs font-medium opacity-80 md:text-sm">{i18n("netSavings")}</p>
         <p className="mt-1 flex items-center justify-center text-3xl font-bold md:text-4xl">
-          <SlotNumber
-            value={formatCurrency(netSavings, "USD", true)}
-            className={netSavings >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}
-          />
+          <SlotNumber value={formatCurrency(netSavings, "USD", true)} className="text-white" />
         </p>
+      </div>
+
+      {/* Income & Expenses — smaller, side by side */}
+      <div className="mt-4 flex">
+        <div className="flex-1 text-center">
+          <p className="text-xs font-medium opacity-80">{i18n("totalIncome")}</p>
+          <p className="mt-1 flex justify-center text-lg font-semibold md:text-xl">
+            <SlotNumber value={formatCurrency(totalIncome, "USD", true)} className="text-white" />
+          </p>
+        </div>
+        <div className="flex-1 text-center">
+          <p className="text-xs font-medium opacity-80">{i18n("totalExpenses")}</p>
+          <p className="mt-1 flex justify-center text-lg font-semibold md:text-xl">
+            <SlotNumber value={formatCurrency(Math.abs(totalExpenses), "USD", true)} className="text-white" />
+          </p>
+        </div>
       </div>
 
       {/* Income & Expenses */}

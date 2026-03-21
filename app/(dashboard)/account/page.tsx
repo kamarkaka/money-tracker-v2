@@ -123,22 +123,29 @@ export default function AccountPage() {
         </div>
       </div>
 
-      <div className="mb-6 flex flex-col gap-2 md:gap-4">
+      <div className="card-hover mb-6 rounded-lg bg-accent px-5 py-5 text-accent-text md:px-6 md:py-6">
         {/* Net Worth — big and prominent */}
-        <div className={`card-hover rounded-lg border px-4 py-5 text-center md:px-5 md:py-6 ${
-          netWorth >= 0
-            ? "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900"
-            : "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900"
-        }`}>
-          <p className={`text-xs font-medium md:text-sm ${
-            netWorth >= 0 ? "text-blue-700 dark:text-blue-400" : "text-red-700 dark:text-red-400"
-          }`}>{i18n("netWorth")}</p>
+        <div className="text-center">
+          <p className="text-xs font-medium opacity-80 md:text-sm">{i18n("netWorth")}</p>
           <p className="mt-1 flex justify-center text-3xl font-bold md:text-4xl">
-            <SlotNumber
-              value={formatCurrency(netWorth, "USD", true)}
-              className={netWorth >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}
-            />
+            <SlotNumber value={formatCurrency(netWorth, "USD", true)} className="text-white" />
           </p>
+        </div>
+
+        {/* Assets & Liabilities — smaller, side by side */}
+        <div className="mt-4 flex">
+          <div className="flex-1 text-center">
+            <p className="text-xs font-medium opacity-80">{i18n("totalAssets")}</p>
+            <p className="mt-1 flex justify-center text-lg font-semibold md:text-xl">
+              <SlotNumber value={formatCurrency(totalAssets, "USD", true)} className="text-white" />
+            </p>
+          </div>
+          <div className="flex-1 text-center">
+            <p className="text-xs font-medium opacity-80">{i18n("totalLiabilities")}</p>
+            <p className="mt-1 flex justify-center text-lg font-semibold md:text-xl">
+              <SlotNumber value={formatCurrency(totalLiabilities, "USD", true)} className="text-white" />
+            </p>
+          </div>
         </div>
 
         {/* Assets & Liabilities */}
