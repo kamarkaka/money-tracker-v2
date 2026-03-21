@@ -76,6 +76,17 @@ button:active {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+@keyframes bounce-in {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); opacity: 1; }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s ease-out;
+}
+
 @keyframes progress-grow {
   from { width: 0; }
 }
