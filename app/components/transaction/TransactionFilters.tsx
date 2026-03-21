@@ -2,9 +2,15 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { FormField } from "@/app/components/ui/FormField";
 import { CurrencyInput } from "@/app/components/ui/CurrencyInput";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import {
+  MagnifyingGlassIcon,
+  BuildingLibraryIcon,
+  BookmarkIcon,
+  CalendarIcon,
+  BanknotesIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 
 interface Account {
   id: string;
@@ -35,96 +41,76 @@ export interface FilterValues {
   maxAmount: string;
 }
 
-function MultiSelect({
+type ChipType = "account" | "category" | "date" | "amount";
+
+function FilterChip({
   label,
-  options,
-  selected,
-  onChange,
-  allLabel,
-  noneLabel,
+  icon: Icon,
+  active,
+  color,
+  onClick,
+  onClear,
 }: {
   label: string;
-  options: { id: string; name: string }[];
-  selected: Set<string>;
-  onChange: (selected: Set<string>) => void;
-  allLabel: string;
-  noneLabel: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  active: boolean;
+  color: { text: string; bg: string; border: string; hover: string };
+  onClick: () => void;
+  onClear?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+        active
+          ? `${color.border} ${color.bg} ${color.text}`
+          : `border-card-border bg-card-bg text-zinc-600 ${color.hover} dark:text-zinc-400`
+      }`}
+    >
+      <Icon className={`h-3.5 w-3.5 ${active ? "" : color.text}`} />
+      {label}
+      {active && onClear && (
+        <span
+          onClick={(e) => { e.stopPropagation(); onClear(); }}
+          className="ml-0.5 rounded-full p-0.5 hover:bg-black/10 dark:hover:bg-white/10"
+        >
+          <XMarkIcon className="h-3 w-3" />
+        </span>
+      )}
+    </button>
+  );
+}
+
+function ChipDropdown({
+  open,
+  onClose,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
+      // Don't close if clicking inside the dropdown or its parent chip wrapper
+      const target = e.target as Node;
+      if (ref.current && !ref.current.contains(target) && !ref.current.parentElement?.contains(target)) {
+        onClose();
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
+  }, [open, onClose]);
 
-  const toggle = (id: string) => {
-    const next = new Set(selected);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    onChange(next);
-  };
-
-  const summary = selected.size === 0 || selected.size === options.length
-    ? label
-    : selected.size === 1
-      ? options.find((o) => o.id === [...selected][0])?.name || label
-      : `${selected.size} selected`;
+  if (!open) return null;
 
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex w-full cursor-pointer items-center justify-between rounded-md border border-zinc-300 px-3 py-2 text-left text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
-      >
-        <span className={selected.size === 0 ? "text-zinc-500 dark:text-zinc-400" : ""}>
-          {summary}
-        </span>
-        <ChevronDownIcon className={`h-3.5 w-3.5 text-zinc-400 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-md border border-card-border bg-card-bg shadow-lg">
-          <label
-            className="flex cursor-pointer items-center gap-2 border-b border-card-border px-3 py-1.5 text-sm font-medium text-accent hover:bg-accent-subtle"
-            onClick={(e) => {
-              e.preventDefault();
-              if (selected.size === options.length) {
-                onChange(new Set());
-              } else {
-                onChange(new Set(options.map((o) => o.id)));
-              }
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={selected.size === options.length}
-              readOnly
-              className="accent-accent"
-            />
-            {selected.size === options.length ? noneLabel : allLabel}
-          </label>
-          {options.map((option) => (
-            <label
-              key={option.id}
-              className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
-            >
-              <input
-                type="checkbox"
-                checked={selected.has(option.id)}
-                onChange={() => toggle(option.id)}
-                className="accent-zinc-900 dark:accent-zinc-50"
-              />
-              {option.name}
-            </label>
-          ))}
-        </div>
-      )}
+    <div ref={ref} className="fixed left-[5vw] z-50 mt-2 w-[90vw] max-h-64 overflow-y-auto rounded-lg border border-card-border bg-card-bg p-3 shadow-lg md:absolute md:left-0 md:w-64">
+      {children}
     </div>
   );
 }
@@ -149,13 +135,13 @@ export function TransactionFilters({
   const [selectedAccounts, setSelectedAccounts] = useState<Set<string>>(new Set());
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [accountsInitialized, setAccountsInitialized] = useState(false);
+  const [openChip, setOpenChip] = useState<ChipType | null>(null);
 
   useEffect(() => {
     if (!accountsInitialized && accounts.length > 0) {
       const nonHidden = accounts.filter((a) => !a.isHidden).map((a) => a.id);
       setSelectedAccounts(new Set(nonHidden));
       setAccountsInitialized(true);
-      // Apply the filter so the initial fetch excludes hidden accounts
       const value = nonHidden.join(",");
       const newFilters = { ...filters, accountId: value };
       setFilters(newFilters);
@@ -170,16 +156,40 @@ export function TransactionFilters({
     onFilter(newFilters);
   };
 
-  const handleAccountChange = (selected: Set<string>) => {
-    setSelectedAccounts(selected);
-    const value = [...selected].join(",");
-    update("accountId", value);
+  const handleAccountChange = (id: string) => {
+    const next = new Set(selectedAccounts);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelectedAccounts(next);
+    update("accountId", [...next].join(","));
   };
 
-  const handleCategoryChange = (selected: Set<string>) => {
-    setSelectedCategories(selected);
-    const value = [...selected].join(",");
-    update("categoryId", value);
+  const handleAccountAll = () => {
+    if (selectedAccounts.size === accounts.length) {
+      setSelectedAccounts(new Set());
+      update("accountId", "");
+    } else {
+      const all = new Set(accounts.map((a) => a.id));
+      setSelectedAccounts(all);
+      update("accountId", [...all].join(","));
+    }
+  };
+
+  const handleCategoryChange = (id: string) => {
+    const next = new Set(selectedCategories);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelectedCategories(next);
+    update("categoryId", [...next].join(","));
+  };
+
+  const handleCategoryAll = () => {
+    if (selectedCategories.size === categoryOptions.length) {
+      setSelectedCategories(new Set());
+      update("categoryId", "");
+    } else {
+      const all = new Set(categoryOptions.map((c) => c.id));
+      setSelectedCategories(all);
+      update("categoryId", [...all].join(","));
+    }
   };
 
   const handleClear = () => {
@@ -197,6 +207,7 @@ export function TransactionFilters({
     };
     setFilters(newFilters);
     onFilter(newFilters);
+    setOpenChip(null);
   };
 
   const hasActiveFilters = filters.search || filters.categoryId || filters.startDate || filters.endDate || filters.minAmount || filters.maxAmount;
@@ -213,78 +224,200 @@ export function TransactionFilters({
     ...flatCategories,
   ];
 
+  // Chip labels
+  const accountLabel = selectedAccounts.size === 0 || selectedAccounts.size === accounts.length
+    ? i18n("account")
+    : selectedAccounts.size === 1
+      ? accounts.find((a) => a.id === [...selectedAccounts][0])?.name || i18n("account")
+      : `${selectedAccounts.size} ${i18n("accounts")}`;
+
+  const categoryLabel = selectedCategories.size === 0
+    ? i18n("categoryOptional")
+    : selectedCategories.size === 1
+      ? categoryOptions.find((c) => c.id === [...selectedCategories][0])?.name || i18n("categoryOptional")
+      : `${selectedCategories.size} ${i18n("categories")}`;
+
+  const dateActive = !!(filters.startDate || filters.endDate);
+  const dateLabel = dateActive
+    ? `${filters.startDate || "..."} – ${filters.endDate || "..."}`
+    : i18n("date");
+
+  const amountActive = !!(filters.minAmount || filters.maxAmount);
+  const amountLabel = amountActive
+    ? `$${filters.minAmount || "0"} – $${filters.maxAmount || "∞"}`
+    : i18n("amount");
+
+  const accountActive = selectedAccounts.size > 0 && selectedAccounts.size < accounts.length;
+  const categoryActive = selectedCategories.size > 0;
+
   return (
-    <div className="grid grid-cols-1 gap-3 rounded-lg border border-card-border bg-card-bg p-4 sm:grid-cols-2 sm:gap-4 md:grid-cols-4">
-      <FormField label={i18n("search")} className="sm:col-span-2">
+    <div className="flex flex-col gap-3">
+      {/* Search bar */}
+      <div className="flex h-10 items-center gap-2 rounded-lg border border-card-border bg-input-bg px-3 focus-within:border-accent focus-within:ring-1 focus-within:ring-accent">
+        <MagnifyingGlassIcon className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" />
         <input
           type="text"
           value={filters.search}
           onChange={(e) => update("search", e.target.value)}
           placeholder={i18n("searchPlaceholder")}
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
+          className="h-full w-full border-0 bg-transparent text-sm text-zinc-900 placeholder-zinc-400 outline-none dark:text-zinc-50 dark:placeholder-zinc-500"
         />
-      </FormField>
-      <FormField label={i18n("account")}>
-        <MultiSelect
-          label={i18n("all")}
-          options={accounts}
-          selected={selectedAccounts}
-          onChange={handleAccountChange}
-          allLabel={i18n("all")}
-          noneLabel={i18n("none")}
-        />
-      </FormField>
-      <FormField label={i18n("categoryOptional")}>
-        <MultiSelect
-          label={i18n("all")}
-          options={categoryOptions}
-          selected={selectedCategories}
-          onChange={handleCategoryChange}
-          allLabel={i18n("all")}
-          noneLabel={i18n("none")}
-        />
-      </FormField>
-      <div className="grid grid-cols-2 gap-3 sm:col-span-2 sm:gap-4">
-        <FormField label={i18n("fromDate")}>
-          <input
-            type="date"
-            value={filters.startDate}
-            onChange={(e) => update("startDate", e.target.value)}
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
-          />
-        </FormField>
-        <FormField label={i18n("toDate")}>
-          <input
-            type="date"
-            value={filters.endDate}
-            onChange={(e) => update("endDate", e.target.value)}
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
-          />
-        </FormField>
+        {filters.search && (
+          <button
+            onClick={() => update("search", "")}
+            className="cursor-pointer rounded-full p-0.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+          >
+            <XMarkIcon className="h-4 w-4" />
+          </button>
+        )}
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:col-span-2 sm:gap-4">
-        <FormField label={i18n("minAmount")}>
-          <CurrencyInput
-            value={filters.minAmount}
-            onChange={(v) => update("minAmount", v)}
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
+
+      {/* Filter chips */}
+      <div className="relative flex flex-wrap items-center gap-2">
+        {/* Account chip */}
+        <div className="relative">
+          <FilterChip
+            label={accountLabel}
+            icon={BuildingLibraryIcon}
+            active={accountActive}
+            color={{ text: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-900", border: "border-blue-300 dark:border-blue-700", hover: "hover:border-blue-300 hover:text-blue-600 dark:hover:text-blue-400" }}
+            onClick={() => setOpenChip(openChip === "account" ? null : "account")}
+            onClear={accountActive ? () => {
+              const all = new Set(accounts.map((a) => a.id));
+              setSelectedAccounts(all);
+              update("accountId", [...all].join(","));
+            } : undefined}
           />
-        </FormField>
-        <FormField label={i18n("maxAmount")}>
-          <CurrencyInput
-            value={filters.maxAmount}
-            onChange={(v) => update("maxAmount", v)}
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 bg-input-bg dark:text-zinc-50"
+          <ChipDropdown open={openChip === "account"} onClose={() => setOpenChip(null)}>
+            <label
+              className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm font-medium text-accent hover:bg-accent-subtle"
+              onClick={(e) => { e.preventDefault(); handleAccountAll(); }}
+            >
+              <input type="checkbox" checked={selectedAccounts.size === accounts.length} readOnly className="accent-accent" />
+              {selectedAccounts.size === accounts.length ? i18n("none") : i18n("all")}
+            </label>
+            <div className="my-1 border-t border-card-border" />
+            {accounts.map((a) => (
+              <label key={a.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700">
+                <input type="checkbox" checked={selectedAccounts.has(a.id)} onChange={() => handleAccountChange(a.id)} className="accent-zinc-900 dark:accent-zinc-50" />
+                {a.name}
+              </label>
+            ))}
+          </ChipDropdown>
+        </div>
+
+        {/* Category chip */}
+        <div className="relative">
+          <FilterChip
+            label={categoryLabel}
+            icon={BookmarkIcon}
+            active={categoryActive}
+            color={{ text: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-900", border: "border-purple-300 dark:border-purple-700", hover: "hover:border-purple-300 hover:text-purple-600 dark:hover:text-purple-400" }}
+            onClick={() => setOpenChip(openChip === "category" ? null : "category")}
+            onClear={categoryActive ? () => {
+              setSelectedCategories(new Set());
+              update("categoryId", "");
+            } : undefined}
           />
-        </FormField>
-      </div>
-      <div className="flex items-end sm:col-span-2 md:col-span-1">
-        <button
-          onClick={handleClear}
-          className="w-full cursor-pointer rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800 md:w-auto"
-        >
-          {i18n("clearFilters")}
-        </button>
+          <ChipDropdown open={openChip === "category"} onClose={() => setOpenChip(null)}>
+            <label
+              className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm font-medium text-accent hover:bg-accent-subtle"
+              onClick={(e) => { e.preventDefault(); handleCategoryAll(); }}
+            >
+              <input type="checkbox" checked={selectedCategories.size === categoryOptions.length} readOnly className="accent-accent" />
+              {selectedCategories.size === categoryOptions.length ? i18n("none") : i18n("all")}
+            </label>
+            <div className="my-1 border-t border-card-border" />
+            {categoryOptions.map((c) => (
+              <label key={c.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700">
+                <input type="checkbox" checked={selectedCategories.has(c.id)} onChange={() => handleCategoryChange(c.id)} className="accent-zinc-900 dark:accent-zinc-50" />
+                {c.name}
+              </label>
+            ))}
+          </ChipDropdown>
+        </div>
+
+        {/* Date chip */}
+        <div className="relative">
+          <FilterChip
+            label={dateLabel}
+            icon={CalendarIcon}
+            active={dateActive}
+            color={{ text: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-900", border: "border-amber-300 dark:border-amber-700", hover: "hover:border-amber-300 hover:text-amber-600 dark:hover:text-amber-400" }}
+            onClick={() => setOpenChip(openChip === "date" ? null : "date")}
+            onClear={dateActive ? () => {
+              update("startDate", "");
+              update("endDate", "");
+            } : undefined}
+          />
+          <ChipDropdown open={openChip === "date"} onClose={() => setOpenChip(null)}>
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">{i18n("fromDate")}</label>
+                <input
+                  type="date"
+                  value={filters.startDate}
+                  onChange={(e) => update("startDate", e.target.value)}
+                  className="w-full rounded-md border border-card-border bg-input-bg px-3 py-2 text-sm text-zinc-900 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent dark:text-zinc-50"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">{i18n("toDate")}</label>
+                <input
+                  type="date"
+                  value={filters.endDate}
+                  onChange={(e) => update("endDate", e.target.value)}
+                  className="w-full rounded-md border border-card-border bg-input-bg px-3 py-2 text-sm text-zinc-900 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent dark:text-zinc-50"
+                />
+              </div>
+            </div>
+          </ChipDropdown>
+        </div>
+
+        {/* Amount chip */}
+        <div className="relative">
+          <FilterChip
+            label={amountLabel}
+            icon={BanknotesIcon}
+            active={amountActive}
+            color={{ text: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900", border: "border-emerald-300 dark:border-emerald-700", hover: "hover:border-emerald-300 hover:text-emerald-600 dark:hover:text-emerald-400" }}
+            onClick={() => setOpenChip(openChip === "amount" ? null : "amount")}
+            onClear={amountActive ? () => {
+              update("minAmount", "");
+              update("maxAmount", "");
+            } : undefined}
+          />
+          <ChipDropdown open={openChip === "amount"} onClose={() => setOpenChip(null)}>
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">{i18n("minAmount")}</label>
+                <CurrencyInput
+                  value={filters.minAmount}
+                  onChange={(v) => update("minAmount", v)}
+                  className="w-full rounded-md border border-card-border bg-input-bg px-3 py-2 text-sm text-zinc-900 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent dark:text-zinc-50"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">{i18n("maxAmount")}</label>
+                <CurrencyInput
+                  value={filters.maxAmount}
+                  onChange={(v) => update("maxAmount", v)}
+                  className="w-full rounded-md border border-card-border bg-input-bg px-3 py-2 text-sm text-zinc-900 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent dark:text-zinc-50"
+                />
+              </div>
+            </div>
+          </ChipDropdown>
+        </div>
+
+        {/* Clear all */}
+        {hasActiveFilters && (
+          <button
+            onClick={handleClear}
+            className="cursor-pointer whitespace-nowrap text-xs font-medium text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+          >
+            {i18n("clearFilters")}
+          </button>
+        )}
       </div>
     </div>
   );

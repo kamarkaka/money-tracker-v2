@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { TransactionFilters, FilterValues } from "@/app/components/transaction/TransactionFilters";
 import { TransactionCategoryEditor } from "@/app/components/transaction/TransactionCategoryEditor";
 import { AddTransactionModal } from "@/app/components/transaction/AddTransactionModal";
@@ -76,6 +76,21 @@ export default function TransactionPage() {
   const [deleting, setDeleting] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
   const loadingMoreRef = useRef(false);
+
+  const ACCOUNT_COLORS = [
+    "#3b82f6", "#10b981", "#8b5cf6", "#f59e0b",
+    "#ef4444", "#14b8a6", "#f97316", "#6366f1",
+    "#ec4899", "#06b6d4",
+  ];
+
+  const accountColorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    accounts.forEach((a, i) => {
+      map.set(a.id, ACCOUNT_COLORS[i % ACCOUNT_COLORS.length]);
+    });
+    return map;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accounts]);
 
   const fetchTransactions = useCallback(async (f: FilterValues, p: number, append: boolean) => {
     const params = new URLSearchParams();
@@ -404,51 +419,34 @@ export default function TransactionPage() {
               onClick={() => setEditTransaction(t)}
               className="card-hover cursor-pointer rounded-lg border border-card-border bg-card-bg p-4"
             >
-              {/* Row 1: date, account, hide/edit buttons */}
+              {/* Row 1: color square + date + description + tags + amount */}
               <div className="flex items-center gap-2">
-                <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">{formatDate(t.date)}</span>
-                <span className="min-w-0 flex-1 truncate text-xs text-zinc-500 dark:text-zinc-400">
-                  {t.account.institution ? `${t.account.institution.name} ${t.account.name}` : t.account.name}
+                <span
+                  className="h-3 w-3 shrink-0 rounded-sm"
+                  style={{ backgroundColor: accountColorMap.get(t.account.id) || "#94a3b8" }}
+                  title={t.account.institution ? `${t.account.institution.name} ${t.account.name}` : t.account.name}
+                />
+                <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+                  {new Date(t.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 </span>
-                <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    onClick={() => handleToggleHidden(t.id, !t.isHidden)}
-                    className="cursor-pointer rounded-md p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
-                  >
-                    {t.isHidden ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
-                  </button>
-                  <button
-                    onClick={() => setEditTransaction(t)}
-                    className="cursor-pointer rounded-md p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
-                  >
-                    <PencilSquareIcon className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-              {/* Row 2: description, tags, amount */}
-              <div className="mt-3 flex items-center gap-2">
                 <span className={`min-w-0 flex-1 truncate text-sm font-medium ${t.isHidden ? "line-through text-zinc-400 dark:text-zinc-500" : "text-zinc-900 dark:text-zinc-100"}`}>
                   {t.description}
                 </span>
                 {t.transactionTags && t.transactionTags.length > 0 && (
-                  <span className="flex items-center gap-0.5 shrink-0">
+                  <span className="flex items-center gap-1 shrink-0">
                     {t.transactionTags.map((tt) => (
-                      <TagBadge key={tt.tag.id} name={tt.tag.name} color={tt.tag.color} />
+                      <span
+                        key={tt.tag.id}
+                        className="h-2.5 w-2.5 rounded-full"
+                        style={{ backgroundColor: tt.tag.color }}
+                        title={tt.tag.name}
+                      />
                     ))}
                   </span>
                 )}
                 <span className="shrink-0">
                   <CurrencyDisplay amount={t.amount} />
                 </span>
-              </div>
-              {/* Row 3: category */}
-              <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                <TransactionCategoryEditor
-                  transactionId={t.id}
-                  currentCategoryId={t.categoryId}
-                  categories={categories}
-                  onUpdate={handleUpdateCategory}
-                />
               </div>
             </div>
           ))
