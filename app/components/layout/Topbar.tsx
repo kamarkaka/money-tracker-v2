@@ -83,7 +83,7 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
           <span className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
             Money Tracker 2
             <span className="relative -top-3 -right-1 rounded-full border border-red-500 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-red-500">
-              alpha
+              beta
             </span>
           </span>
         </div>
@@ -106,7 +106,7 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
           <Link href="/overview" className="hidden cursor-pointer text-lg font-bold text-zinc-900 dark:text-zinc-50 md:mr-8 md:inline">
             Money Tracker 2
             <span className="relative -top-3 -right-1 rounded-full border border-red-500 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-red-500">
-              alpha
+              beta
             </span>
           </Link>
 

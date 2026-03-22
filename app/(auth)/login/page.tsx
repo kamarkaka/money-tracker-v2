@@ -58,7 +58,7 @@ export default function LoginPage() {
         <h1 className="mt-4 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
           Money Tracker 2
           <span className="relative -top-3 -right-1 rounded-full border border-red-500 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-red-500">
-            alpha
+            beta
           </span>
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{i18n("tagline")}</p>
