@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/db";
+import { EMOJI_TO_NAME } from "@/app/lib/emoji-categories";
 
 export async function PUT(
   request: NextRequest,
@@ -13,13 +14,28 @@ export async function PUT(
 
   const { id } = await params;
   const body = await request.json();
-  const { categoryId, isHidden, description, amount, date, accountId, tagIds } = body;
+  const { categoryId, isHidden, description, amount, date, accountId, tagIds, emoji } = body;
 
   const existing = await prisma.transaction.findUnique({
     where: { id, userId: session.user.id },
   });
   if (!existing) {
     return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
+  }
+
+  // Resolve emoji to category
+  let resolvedCategoryId = categoryId;
+  if (emoji && !categoryId) {
+    let emojiCategory = await prisma.category.findFirst({
+      where: { userId: session.user.id, emoji },
+    });
+    if (!emojiCategory) {
+      const name = EMOJI_TO_NAME[emoji] || emoji;
+      emojiCategory = await prisma.category.create({
+        data: { userId: session.user.id, name, emoji },
+      });
+    }
+    resolvedCategoryId = emojiCategory.id;
   }
 
   if (categoryId) {
@@ -32,7 +48,8 @@ export async function PUT(
   }
 
   const data: Record<string, unknown> = {};
-  if (categoryId !== undefined) data.categoryId = categoryId || null;
+  if (resolvedCategoryId !== undefined) data.categoryId = resolvedCategoryId || null;
+  else if (categoryId !== undefined) data.categoryId = categoryId || null;
   if (isHidden !== undefined) data.isHidden = isHidden;
   if (description !== undefined) data.description = description;
   if (amount !== undefined) data.amount = amount;

@@ -151,6 +151,7 @@
     "categories": "Categories",
     "expense": "Expense",
     "income": "Income",
+    "descriptionOptional": "What was this for? (optional)",
     "hide": "Hide",
     "unhide": "Unhide",
     "hiddenFromReports": "Hidden from reports",
@@ -231,7 +232,10 @@
     "darkDesc": "Always use dark mode",
     "systemDesc": "Follow your browser setting",
     "language": "Language",
-    "languageDesc": "Choose your preferred display language."
+    "languageDesc": "Choose your preferred display language.",
+    "switchToPro": "Switch to Pro Mode",
+    "switchToProDesc": "Unlock bank sync, budgets, rules, tags, and full category management.",
+    "switchToProConfirm": "Switch to Pro Mode? This will unlock all features. Your existing data will be preserved. This change cannot be undone."
   },
   "tag": {
     "title": "Tags",
@@ -287,6 +291,18 @@
     "allSet": "You're All Set!",
     "setupSummary": "Great job setting up your account. Here's a summary:",
     "noSetupSummary": "You can set up categories, budgets, and link accounts anytime from the dashboard.",
-    "goToOverview": "Go to Overview"
+    "goToOverview": "Go to Overview",
+    "modeTitle": "How do you want to track?",
+    "modeDescription": "You can always switch to Pro mode later.",
+    "modeCasualTitle": "Quick & Simple",
+    "modeCasualDesc": "Track daily expenses with emojis.",
+    "modeCasualPoint1": "No bank linking needed",
+    "modeCasualPoint2": "Emoji categories",
+    "modeCasualPoint3": "One-tap logging",
+    "modeProTitle": "Full Control",
+    "modeProDesc": "Link banks, set budgets, create rules.",
+    "modeProPoint1": "Bank sync & import",
+    "modeProPoint2": "Budgets & rules",
+    "modeProPoint3": "Tags & categories"
   }
 }

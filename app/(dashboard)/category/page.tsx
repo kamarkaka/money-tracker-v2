@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import { ProOnly } from "@/app/components/ProOnly";
 import { CategoryTree } from "@/app/components/category/CategoryTree";
 import { CreateCategoryForm } from "@/app/components/category/CreateCategoryForm";
 import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
@@ -69,6 +70,7 @@ export default function CategoryPage() {
   }
 
   return (
+    <ProOnly>
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
@@ -119,5 +121,6 @@ export default function CategoryPage() {
         loading={deleting}
       />
     </div>
+    </ProOnly>
   );
 }

@@ -12,7 +12,7 @@ export async function GET() {
     where: { userId: session.user.id },
   });
 
-  return NextResponse.json(setting || { theme: "system", language: "en" });
+  return NextResponse.json(setting || { theme: "system", language: "en", mode: "casual" });
 }
 
 const VALID_THEMES = ["light", "dark", "system"];
@@ -25,9 +25,23 @@ export async function PUT(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { theme, language } = body;
+  const { theme, language, mode } = body;
 
   const data: Record<string, string> = {};
+
+  if (mode !== undefined) {
+    if (!["pro", "casual"].includes(mode)) {
+      return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
+    }
+    // Only allow casual → pro switch, not reverse
+    if (mode === "casual") {
+      const existing = await prisma.userSetting.findUnique({ where: { userId: session.user.id } });
+      if (existing?.mode === "pro") {
+        return NextResponse.json({ error: "Cannot switch from pro to casual" }, { status: 400 });
+      }
+    }
+    data.mode = mode;
+  }
 
   if (theme !== undefined) {
     if (!VALID_THEMES.includes(theme)) {

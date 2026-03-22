@@ -10,6 +10,7 @@ import { cn } from "@/app/lib/utils";
 import { useTheme } from "@/app/components/ThemeProvider";
 import { SunIcon, MoonIcon, UserCircleIcon, Cog6ToothIcon, ArrowRightStartOnRectangleIcon, LanguageIcon, TagIcon, CurrencyDollarIcon, FunnelIcon, BookmarkIcon, Bars3Icon, XMarkIcon, ChartBarIcon, BuildingLibraryIcon, ListBulletIcon } from "@heroicons/react/24/outline";
 import { useLocale } from "@/app/components/LocaleProvider";
+import { useMode } from "@/app/components/ModeProvider";
 import type { Locale } from "@/app/i18n/config";
 
 export function Topbar({ userName, userImage }: { userName?: string | null; userImage?: string | null }) {
@@ -19,6 +20,8 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
   const i18nAuth = useTranslations("auth");
   const i18nSetting = useTranslations("setting");
   const { locale, setLocale } = useLocale();
+  const { mode } = useMode();
+  const isCasual = mode === "casual";
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -28,18 +31,21 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
     { code: "zh", flag: "🇨🇳", label: "中" },
   ];
 
-  const NAV_ITEMS = [
+  const ALL_NAV_ITEMS = [
     { href: "/overview", label: i18n("overview"), icon: ChartBarIcon, color: "text-rose-500", bg: "bg-rose-100 dark:bg-rose-900" },
-    { href: "/account", label: i18n("account"), icon: BuildingLibraryIcon, color: "text-blue-500", bg: "bg-blue-100 dark:bg-blue-900" },
-    { href: "/transaction", label: i18n("transaction"), icon: ListBulletIcon, color: "text-amber-500", bg: "bg-amber-100 dark:bg-amber-900" },
+    { href: "/account", label: i18n("account"), icon: BuildingLibraryIcon, color: "text-blue-500", bg: "bg-blue-100 dark:bg-blue-900", proOnly: true },
+    { href: "/transaction", label: i18n("transaction"), icon: ListBulletIcon, color: "text-amber-500", bg: "bg-amber-100 dark:bg-amber-900", proOnly: true },
   ];
 
-  const MENU_ITEMS = [
-    { href: "/category", label: i18n("category"), icon: BookmarkIcon, color: "text-purple-500", bg: "bg-purple-100 dark:bg-purple-900" },
-    { href: "/budget", label: i18n("budget"), icon: CurrencyDollarIcon, color: "text-green-500", bg: "bg-green-100 dark:bg-green-900" },
-    { href: "/rule", label: i18n("rule"), icon: FunnelIcon, color: "text-orange-500", bg: "bg-orange-100 dark:bg-orange-900" },
-    { href: "/tag", label: i18n("tag"), icon: TagIcon, color: "text-teal-500", bg: "bg-teal-100 dark:bg-teal-900" },
+  const ALL_MENU_ITEMS = [
+    { href: "/category", label: i18n("category"), icon: BookmarkIcon, color: "text-purple-500", bg: "bg-purple-100 dark:bg-purple-900", proOnly: true },
+    { href: "/budget", label: i18n("budget"), icon: CurrencyDollarIcon, color: "text-green-500", bg: "bg-green-100 dark:bg-green-900", proOnly: true },
+    { href: "/rule", label: i18n("rule"), icon: FunnelIcon, color: "text-orange-500", bg: "bg-orange-100 dark:bg-orange-900", proOnly: true },
+    { href: "/tag", label: i18n("tag"), icon: TagIcon, color: "text-teal-500", bg: "bg-teal-100 dark:bg-teal-900", proOnly: true },
   ];
+
+  const NAV_ITEMS = isCasual ? ALL_NAV_ITEMS.filter((i) => !i.proOnly) : ALL_NAV_ITEMS;
+  const MENU_ITEMS = isCasual ? ALL_MENU_ITEMS.filter((i) => !i.proOnly) : ALL_MENU_ITEMS;
 
   const isDark = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
@@ -228,11 +234,30 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
       {mobileMenuOpen && (
         <div className="border-t border-card-border bg-gradient-to-b from-blue-50 to-white px-4 py-4 dark:from-zinc-900 dark:to-zinc-950 md:hidden">
           <div className="grid grid-cols-4 gap-x-2 gap-y-4">
-            {[...NAV_ITEMS, ...MENU_ITEMS,
+            {[...ALL_NAV_ITEMS, ...ALL_MENU_ITEMS,
               { href: "/profile", label: i18n("profile"), icon: UserCircleIcon, color: "text-indigo-500", bg: "bg-indigo-100 dark:bg-indigo-900" },
               { href: "/setting", label: i18n("setting"), icon: Cog6ToothIcon, color: "text-zinc-500", bg: "bg-zinc-100 dark:bg-zinc-800" },
             ].map((item) => {
               const isActive = pathname === item.href;
+              const isLocked = isCasual && "proOnly" in item && item.proOnly;
+
+              if (isLocked) {
+                return (
+                  <div
+                    key={item.href}
+                    className="flex flex-col items-center gap-1.5"
+                  >
+                    <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-zinc-800">
+                      <item.icon className={cn("h-7 w-7 opacity-40", item.color)} />
+                      <span className="absolute -right-2 -top-1 rounded-full bg-blue-600 px-1.5 py-1 text-[8px] font-bold leading-none text-white shadow-sm">
+                        PRO
+                      </span>
+                    </div>
+                    <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">{item.label}</span>
+                  </div>
+                );
+              }
+
               return (
                 <Link
                   key={item.href}

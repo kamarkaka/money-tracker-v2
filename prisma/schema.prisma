@@ -36,6 +36,7 @@ model UserSetting {
   userId   String  @unique @map("user_id") @db.Uuid
   theme    String  @default("system") @db.VarChar(20)
   language String? @default("en") @db.VarChar(10)
+  mode     String  @default("casual") @db.VarChar(10)
   user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_setting")
@@ -86,6 +87,7 @@ model Category {
   id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId         String          @map("user_id") @db.Uuid
   name           String          @db.VarChar(100)
+  emoji          String?         @db.VarChar(10)
   parentId       String?         @map("parent_id") @db.Uuid
   createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)

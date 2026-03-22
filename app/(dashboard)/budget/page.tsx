@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import { ProOnly } from "@/app/components/ProOnly";
 import { BucketList } from "@/app/components/budget/BucketList";
 import { CreateBucketForm } from "@/app/components/budget/CreateBucketForm";
 import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
@@ -114,6 +115,7 @@ export default function BudgetPage() {
   }
 
   return (
+    <ProOnly>
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
@@ -169,5 +171,6 @@ export default function BudgetPage() {
         loading={deleting}
       />
     </div>
+    </ProOnly>
   );
 }

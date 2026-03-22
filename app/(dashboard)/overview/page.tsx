@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
+import { useMode } from "@/app/components/ModeProvider";
+import { CasualOverview } from "@/app/components/casual/CasualOverview";
 import { MonthPicker } from "@/app/components/MonthPicker";
 import { MonthlySummaryHeader } from "@/app/components/overview/MonthlySummaryHeader";
 import { BucketCard } from "@/app/components/overview/BucketCard";
@@ -45,6 +47,15 @@ interface BucketGroup {
 }
 
 export default function OverviewPage() {
+  const { mode, loading: modeLoading } = useMode();
+
+  if (modeLoading) return <div className="flex justify-center py-12"><LoadingSpinner /></div>;
+  if (mode === "casual") return <CasualOverview />;
+
+  return <ProOverview />;
+}
+
+function ProOverview() {
   const i18n = useTranslations("overview");
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());

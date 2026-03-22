@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslations } from "next-intl";
+import { ProOnly } from "@/app/components/ProOnly";
 import { InstitutionCard } from "@/app/components/account/InstitutionCard";
 import { ConnectInstitutionModal } from "@/app/components/account/ConnectInstitutionModal";
 import { ManualAccountModal } from "@/app/components/account/ManualAccountModal";
@@ -105,6 +106,7 @@ export default function AccountPage() {
   }
 
   return (
+    <ProOnly>
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
@@ -246,5 +248,6 @@ export default function AccountPage() {
         loading={removing}
       />
     </div>
+    </ProOnly>
   );
 }

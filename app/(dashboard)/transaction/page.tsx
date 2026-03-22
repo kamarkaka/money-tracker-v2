@@ -14,6 +14,7 @@ import { formatDate } from "@/app/lib/utils";
 import { PencilSquareIcon, EyeIcon, EyeSlashIcon, PlusIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import { TagBadge } from "@/app/components/tag/TagBadge";
 import { useTranslations } from "next-intl";
+import { ProOnly } from "@/app/components/ProOnly";
 
 interface Transaction {
   id: string;
@@ -50,6 +51,10 @@ interface Account {
 const PAGE_SIZE = 10;
 
 export default function TransactionPage() {
+  return <ProOnly><ProTransactionPage /></ProOnly>;
+}
+
+function ProTransactionPage() {
   const i18n = useTranslations("transaction");
   const i18nc = useTranslations("common");
   const [transactions, setTransactions] = useState<Transaction[]>([]);

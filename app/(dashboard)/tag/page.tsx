@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import { ProOnly } from "@/app/components/ProOnly";
 import { CreateTagForm } from "@/app/components/tag/CreateTagForm";
 import { TagCard } from "@/app/components/tag/TagCard";
 import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
@@ -81,6 +82,7 @@ export default function TagPage() {
   }
 
   return (
+    <ProOnly>
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
@@ -136,5 +138,6 @@ export default function TagPage() {
         loading={deleting}
       />
     </div>
+    </ProOnly>
   );
 }

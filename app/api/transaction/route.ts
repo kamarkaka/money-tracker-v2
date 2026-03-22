@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/db";
 import { matchRule } from "@/app/lib/rules";
+import { EMOJI_TO_NAME } from "@/app/lib/emoji-categories";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         account: { select: { id: true, name: true, institution: { select: { name: true } } } },
-        category: { select: { id: true, name: true, parent: { select: { id: true, name: true } } } },
+        category: { select: { id: true, name: true, emoji: true, parent: { select: { id: true, name: true } } } },
         transactionTags: { include: { tag: { select: { id: true, name: true, color: true } } } },
       },
       orderBy,
@@ -105,11 +106,11 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { accountId, description, amount, date, categoryId, tagIds } = body;
+  const { accountId, description, amount, date, categoryId, tagIds, emoji } = body;
 
-  if (!accountId || !description || amount === undefined || !date) {
+  if (!accountId || amount === undefined || !date) {
     return NextResponse.json(
-      { error: "accountId, description, amount, and date are required" },
+      { error: "accountId, amount, and date are required" },
       { status: 400 }
     );
   }
@@ -131,9 +132,25 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Apply category rules if no category specified
+  // Resolve category from emoji (casual mode)
   let resolvedCategoryId = categoryId || null;
-  if (!resolvedCategoryId) {
+  if (!resolvedCategoryId && emoji) {
+    // Find existing category with this emoji for this user
+    let emojiCategory = await prisma.category.findFirst({
+      where: { userId: session.user.id, emoji },
+    });
+    if (!emojiCategory) {
+      // Create a new category for this emoji
+      const name = EMOJI_TO_NAME[emoji] || emoji;
+      emojiCategory = await prisma.category.create({
+        data: { userId: session.user.id, name, emoji },
+      });
+    }
+    resolvedCategoryId = emojiCategory.id;
+  }
+
+  // Apply category rules if no category specified
+  if (!resolvedCategoryId && description) {
     resolvedCategoryId = await matchRule(session.user.id, description);
   }
 
@@ -141,7 +158,7 @@ export async function POST(request: NextRequest) {
     data: {
       userId: session.user.id,
       accountId,
-      description,
+      description: description || "",
       amount,
       date: new Date(date),
       categoryId: resolvedCategoryId,

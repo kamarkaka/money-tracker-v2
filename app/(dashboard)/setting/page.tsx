@@ -1,8 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "@/app/components/ThemeProvider";
 import { useLocale } from "@/app/components/LocaleProvider";
+import { useMode } from "@/app/components/ModeProvider";
+import { ChartBarIcon } from "@heroicons/react/24/outline";
+import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
 import { SUPPORTED_LOCALES } from "@/app/i18n/config";
 import type { Locale } from "@/app/i18n/config";
 import { SunIcon, MoonIcon, ComputerDesktopIcon } from "@heroicons/react/24/outline";
@@ -11,6 +15,8 @@ export default function SettingPage() {
   const i18n = useTranslations("setting");
   const { theme, setTheme } = useTheme();
   const { locale, setLocale } = useLocale();
+  const { mode, setMode } = useMode();
+  const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
 
   const THEME_OPTIONS = [
     { value: "light" as const, icon: SunIcon, label: i18n("light"), description: i18n("lightDesc") },
@@ -88,6 +94,38 @@ export default function SettingPage() {
           })}
         </div>
       </div>
+
+      {mode === "casual" && (
+        <div className="mt-6 rounded-lg border border-card-border bg-gradient-to-r from-blue-50 to-white p-4 dark:from-blue-950 dark:to-zinc-900 md:p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white">
+              <ChartBarIcon className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{i18n("switchToPro")}</h2>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">{i18n("switchToProDesc")}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowSwitchConfirm(true)}
+            className="mt-4 w-full cursor-pointer rounded-md bg-accent px-4 py-3 text-sm font-medium text-accent-text hover:bg-accent-hover md:w-auto md:py-2"
+          >
+            {i18n("switchToPro")}
+          </button>
+          <ConfirmDialog
+            open={showSwitchConfirm}
+            onClose={() => setShowSwitchConfirm(false)}
+            onConfirm={async () => {
+              await setMode("pro");
+              setShowSwitchConfirm(false);
+              window.location.reload();
+            }}
+            title={i18n("switchToPro")}
+            message={i18n("switchToProConfirm")}
+            confirmLabel={i18n("switchToPro")}
+          />
+        </div>
+      )}
     </div>
   );
 }

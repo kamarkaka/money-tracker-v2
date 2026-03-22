@@ -151,6 +151,7 @@
     "categories": "个分类",
     "expense": "支出",
     "income": "收入",
+    "descriptionOptional": "这笔花费是什么？（可选）",
     "hide": "隐藏",
     "unhide": "取消隐藏",
     "hiddenFromReports": "从报告中隐藏",
@@ -231,7 +232,10 @@
     "darkDesc": "始终使用深色模式",
     "systemDesc": "跟随浏览器设置",
     "language": "语言",
-    "languageDesc": "选择您偏好的显示语言。"
+    "languageDesc": "选择您偏好的显示语言。",
+    "switchToPro": "切换到专业模式",
+    "switchToProDesc": "解锁银行同步、预算、规则、标签和完整分类管理。",
+    "switchToProConfirm": "切换到专业模式？这将解锁所有功能。您的现有数据将被保留。此更改无法撤销。"
   },
   "tag": {
     "title": "标签",
@@ -287,6 +291,18 @@
     "allSet": "一切就绪！",
     "setupSummary": "设置账户做得很好。以下是摘要：",
     "noSetupSummary": "您可以随时从仪表板设置分类、预算和关联账户。",
-    "goToOverview": "前往概览"
+    "goToOverview": "前往概览",
+    "modeTitle": "您想如何记账？",
+    "modeDescription": "您可以随时切换到专业模式。",
+    "modeCasualTitle": "简单快捷",
+    "modeCasualDesc": "用表情符号记录日常开销。",
+    "modeCasualPoint1": "无需关联银行",
+    "modeCasualPoint2": "表情分类",
+    "modeCasualPoint3": "一键记账",
+    "modeProTitle": "全面掌控",
+    "modeProDesc": "关联银行、设置预算、创建规则。",
+    "modeProPoint1": "银行同步导入",
+    "modeProPoint2": "预算与规则",
+    "modeProPoint3": "标签与分类"
   }
 }
