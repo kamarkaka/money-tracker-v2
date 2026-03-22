@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Modal } from "@/app/components/ui/Modal";
 import { TagSelector } from "@/app/components/tag/TagSelector";
 import { CurrencyInput } from "@/app/components/ui/CurrencyInput";
+import { TransactionCategoryEditor } from "./TransactionCategoryEditor";
 
 interface Account {
   id: string;
@@ -101,16 +102,6 @@ export function EditTransactionModal({
   const i18nTag = useTranslations("tag");
 
   if (!transaction) return null;
-
-  const categoryOptions: { id: string; label: string }[] = [];
-  for (const parent of categories.filter((c) => !c.parentId)) {
-    categoryOptions.push({ id: parent.id, label: parent.name });
-    if (parent.children) {
-      for (const child of parent.children) {
-        categoryOptions.push({ id: child.id, label: `${parent.name} > ${child.name}` });
-      }
-    }
-  }
 
   const hasChanges = () => {
     if (!transaction) return false;
@@ -258,6 +249,18 @@ export function EditTransactionModal({
         </div>
 
         <div>
+          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            {i18n("categoryOptional")}
+          </label>
+          <TransactionCategoryEditor
+            currentCategoryId={categoryId || null}
+            categories={categories}
+            onChange={setCategoryId}
+            className={`flex w-full cursor-pointer items-center justify-between gap-1 rounded-md border border-card-border ${inputClass}`}
+          />
+        </div>
+
+        <div>
           <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{i18n("description")}</label>
           <input
             type="text"
@@ -300,18 +303,6 @@ export function EditTransactionModal({
               className={inputClass}
             />
           </div>
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            {i18n("categoryOptional")}
-          </label>
-          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={inputClass}>
-            <option value="">{i18n("none")}</option>
-            {categoryOptions.map((c) => (
-              <option key={c.id} value={c.id}>{c.label}</option>
-            ))}
-          </select>
         </div>
 
         {allTags.length > 0 && (

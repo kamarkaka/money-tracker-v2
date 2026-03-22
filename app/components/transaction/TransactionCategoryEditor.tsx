@@ -10,10 +10,12 @@ interface Category {
 }
 
 interface TransactionCategoryEditorProps {
-  transactionId: string;
+  transactionId?: string;
   currentCategoryId: string | null;
   categories: Category[];
-  onUpdate: (transactionId: string, categoryId: string | null) => Promise<void>;
+  onUpdate?: (transactionId: string, categoryId: string | null) => Promise<void>;
+  onChange?: (categoryId: string) => void;
+  className?: string;
 }
 
 export function TransactionCategoryEditor({
@@ -21,6 +23,8 @@ export function TransactionCategoryEditor({
   currentCategoryId,
   categories,
   onUpdate,
+  onChange,
+  className,
 }: TransactionCategoryEditorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -87,9 +91,13 @@ export function TransactionCategoryEditor({
     setOpen(false);
     setSearch("");
     if (categoryId === currentCategoryId) return;
-    setLoading(true);
-    await onUpdate(transactionId, categoryId);
-    setLoading(false);
+    if (onChange) {
+      onChange(categoryId || "");
+    } else if (onUpdate && transactionId) {
+      setLoading(true);
+      await onUpdate(transactionId, categoryId);
+      setLoading(false);
+    }
   };
 
   return (
@@ -98,7 +106,7 @@ export function TransactionCategoryEditor({
         type="button"
         onClick={handleToggle}
         disabled={loading}
-        className="flex w-full cursor-pointer items-center justify-between gap-1 rounded-md border border-zinc-300 px-3 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 bg-input-bg dark:text-zinc-50 dark:hover:bg-zinc-700 md:px-2 md:py-1 md:text-xs"
+        className={className || "flex w-full cursor-pointer items-center justify-between gap-1 rounded-md border border-zinc-300 px-3 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 bg-input-bg dark:text-zinc-50 dark:hover:bg-zinc-700 md:px-2 md:py-1 md:text-xs"}
       >
         <span className="truncate">{loading ? "Saving..." : currentName}</span>
         <svg

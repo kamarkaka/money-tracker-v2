@@ -129,7 +129,7 @@ export default function TransactionPage() {
       id: a.id,
       name: a.institution ? `${a.institution.name} - ${a.name}` : a.name,
       isHidden: a.isHidden,
-    })));
+    })).sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)));
     setTags(Array.isArray(tagData) ? tagData.map((t: Tag & { transactionCount?: number; totalAmount?: number }) => ({ id: t.id, name: t.name, color: t.color })) : []);
   }, []);
 
