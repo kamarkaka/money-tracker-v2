@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
-import { BookOpenIcon } from "@heroicons/react/24/outline";
+import { BookOpenIcon, ChartBarIcon } from "@heroicons/react/24/outline";
+import { useMode } from "@/app/components/ModeProvider";
 
 interface UserProfile {
   id: string;
@@ -39,6 +40,8 @@ export default function ProfilePage() {
 
   const i18n = useTranslations("profile");
   const i18nc = useTranslations("common");
+  const i18nSetting = useTranslations("setting");
+  const { mode } = useMode();
 
   const fetchProfile = useCallback(async () => {
     const res = await fetch("/api/profile");
@@ -271,6 +274,27 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {mode === "casual" && (
+        <div className="mt-6 rounded-lg border border-card-border bg-gradient-to-r from-blue-50 to-white p-6 dark:from-blue-950 dark:to-zinc-900">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white">
+              <ChartBarIcon className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{i18nSetting("switchToPro")}</h2>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">{i18nSetting("switchToProDesc")}</p>
+            </div>
+          </div>
+          <button
+            disabled
+            className="mt-4 w-full cursor-not-allowed rounded-md bg-accent px-4 py-3 text-sm font-medium text-accent-text opacity-50 md:w-auto md:py-2"
+          >
+            {i18nSetting("switchToPro")}
+          </button>
+          <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">Coming soon</p>
+        </div>
+      )}
 
       <div className="mt-6 rounded-lg border border-red-200 bg-card-bg p-6 dark:border-red-900">
         <h2 className="mb-2 text-lg font-semibold text-red-600 dark:text-red-400">{i18n("dangerZone")}</h2>
