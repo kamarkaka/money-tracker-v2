@@ -128,7 +128,7 @@ export default function AccountPage() {
 
       <div className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-3">
         {/* Net Worth — full width on mobile, first col on desktop */}
-        <div className={`col-span-2 rounded-lg border px-4 py-5 text-center md:col-span-1 md:px-5 md:py-6 ${
+        <div className={`col-span-2 rounded-lg border px-4 py-4 text-center md:col-span-1 ${
           netWorth >= 0
             ? "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900"
             : "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900"
@@ -136,7 +136,7 @@ export default function AccountPage() {
           <p className={`text-xs font-medium md:text-sm ${
             netWorth >= 0 ? "text-blue-700 dark:text-blue-400" : "text-red-700 dark:text-red-400"
           }`}>{i18n("netWorth")}</p>
-          <p className="mt-1 flex justify-center text-3xl font-bold md:text-4xl">
+          <p className="mt-1 flex justify-center text-3xl font-bold md:text-2xl">
             <SlotNumber
               value={formatCurrency(netWorth, "USD", true)}
               className={netWorth >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}
@@ -145,7 +145,7 @@ export default function AccountPage() {
         </div>
 
         {/* Assets */}
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-4 text-center dark:border-emerald-800 dark:bg-emerald-900 md:px-5 md:py-6">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-4 text-center dark:border-emerald-800 dark:bg-emerald-900">
           <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 md:text-sm">{i18n("totalAssets")}</p>
           <p className="mt-1 flex justify-center text-xl font-bold md:text-2xl">
             <SlotNumber value={formatCurrency(totalAssets, "USD", true)} className="text-emerald-600 dark:text-emerald-400" />
@@ -153,7 +153,7 @@ export default function AccountPage() {
         </div>
 
         {/* Liabilities */}
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-center dark:border-red-800 dark:bg-red-900 md:px-5 md:py-6">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-center dark:border-red-800 dark:bg-red-900">
           <p className="text-xs font-medium text-red-700 dark:text-red-400 md:text-sm">{i18n("totalLiabilities")}</p>
           <p className="mt-1 flex justify-center text-xl font-bold md:text-2xl">
             <SlotNumber value={formatCurrency(totalLiabilities, "USD", true)} className="text-red-600 dark:text-red-400" />
