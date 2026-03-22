@@ -20,10 +20,8 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
   const i18nSetting = useTranslations("setting");
   const { locale, setLocale } = useLocale();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [langOpen, setLangOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const langRef = useRef<HTMLDivElement>(null);
 
   const LANGS: { code: Locale; flag: string; label: string }[] = [
     { code: "en", flag: "🇺🇸", label: "EN" },
@@ -55,18 +53,15 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
   }, [pathname]);
 
   useEffect(() => {
-    if (!menuOpen && !langOpen) return;
+    if (!menuOpen) return;
     const handler = (e: MouseEvent) => {
-      if (menuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
-      }
-      if (langOpen && langRef.current && !langRef.current.contains(e.target as Node)) {
-        setLangOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [menuOpen, langOpen]);
+  }, [menuOpen]);
 
   const linkClass = (href: string) => cn(
     "cursor-pointer rounded-md px-3 py-2.5 text-base transition-colors md:py-2 md:text-sm",
@@ -129,34 +124,27 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
           >
             {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </button>
-          <button
-            onClick={toggleTheme}
-            className="hidden cursor-pointer md:flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-zinc-100 hover:bg-zinc-700 dark:bg-zinc-200 dark:text-zinc-800 dark:hover:bg-zinc-300"
-            title={isDark ? i18nSetting("light") : i18nSetting("dark")}
-          >
-            {isDark ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
-          </button>
           {userName && (
             <div ref={menuRef} className="relative hidden md:block">
               <button
-                onClick={() => { setMenuOpen(!menuOpen); setLangOpen(false); }}
-                className={`cursor-pointer flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-zinc-700 ring-2 hover:ring-zinc-400 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:ring-zinc-500 ${menuOpen ? "ring-zinc-400 dark:ring-zinc-500" : "ring-zinc-200 dark:ring-zinc-700"}`}
+                onClick={() => setMenuOpen(!menuOpen)}
+                className={`cursor-pointer flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ring-2 transition-all hover:ring-accent ${menuOpen ? "ring-accent" : "ring-card-border"}`}
               >
                 {userImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={userImage}
                     alt={userName}
-                    width={32}
-                    height={32}
-                    className="h-8 w-8 rounded-full object-cover"
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 rounded-full object-cover"
                   />
                 ) : (
-                  <UserCircleIcon className="h-8 w-8 text-zinc-400 dark:text-zinc-500" />
+                  <UserCircleIcon className="h-10 w-10 text-zinc-400 dark:text-zinc-500" />
                 )}
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-lg md:-right-11">
+                <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-lg">
                   {MENU_ITEMS.map((item) => {
                     const isActive = pathname === item.href;
                     return (
@@ -170,7 +158,7 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
                           : "text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
                       }`}
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className={`h-4 w-4 ${item.color}`} />
                       {item.label}
                     </Link>
                     );
@@ -185,7 +173,7 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
                         : "text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
                     }`}
                   >
-                    <UserCircleIcon className="h-4 w-4" />
+                    <UserCircleIcon className="h-4 w-4 text-indigo-500" />
                     {i18n("profile")}
                   </Link>
                   <Link
@@ -197,9 +185,29 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
                         : "text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
                     }`}
                   >
-                    <Cog6ToothIcon className="h-4 w-4" />
+                    <Cog6ToothIcon className="h-4 w-4 text-zinc-500" />
                     {i18n("setting")}
                   </Link>
+                  <div className="border-t border-card-border" />
+                  {/* Theme toggle */}
+                  <button
+                    onClick={toggleTheme}
+                    className="cursor-pointer flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
+                  >
+                    {isDark ? <SunIcon className="h-4 w-4 text-yellow-500" /> : <MoonIcon className="h-4 w-4 text-violet-500" />}
+                    {isDark ? i18nSetting("light") : i18nSetting("dark")}
+                  </button>
+                  {/* Language toggle */}
+                  {LANGS.filter((l) => l.code !== locale).map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => { setLocale(l.code); setMenuOpen(false); }}
+                      className="cursor-pointer flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
+                    >
+                      <LanguageIcon className="h-4 w-4 text-cyan-500" />
+                      {l.label}
+                    </button>
+                  ))}
                   <div className="border-t border-card-border">
                     <button
                       onClick={() => signOut().then(() => window.location.href = "/login")}
@@ -213,28 +221,6 @@ export function Topbar({ userName, userImage }: { userName?: string | null; user
               )}
             </div>
           )}
-          <div ref={langRef} className="relative hidden md:block">
-            <button
-              onClick={() => { setLangOpen(!langOpen); setMenuOpen(false); }}
-              className={`cursor-pointer flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-sm font-medium text-zinc-700 ring-2 hover:ring-zinc-400 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:ring-zinc-500 ${langOpen ? "ring-zinc-400 dark:ring-zinc-500" : "ring-zinc-200 dark:ring-zinc-700"}`}
-              title={i18nSetting("language")}
-            >
-              {LANGS.find((l) => l.code === locale)?.label || <LanguageIcon className="h-5 w-5" />}
-            </button>
-            {langOpen && (
-              <div className="absolute right-0 top-full z-50 mt-2 overflow-hidden rounded-lg border border-card-border bg-card-bg shadow-lg">
-                {LANGS.filter((l) => l.code !== locale).map((l) => (
-                  <button
-                    key={l.code}
-                    onClick={() => { setLocale(l.code); setLangOpen(false); }}
-                    className="cursor-pointer flex w-full items-center gap-2 px-4 py-2.5 text-sm text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
-                  >
-                    <span>{l.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
