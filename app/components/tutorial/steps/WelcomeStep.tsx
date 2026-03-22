@@ -24,14 +24,16 @@ export function WelcomeStep({ onNext, onSkip }: WelcomeStepProps) {
         className="animate-fade-in-up mt-8 text-3xl font-bold text-zinc-900 dark:text-zinc-50"
         style={{ animationDelay: "0.3s" }}
       >
-        Welcome to Money Tracker 2!
+        Money Tracker 2
       </h1>
 
       <p
         className="animate-fade-in-up mt-4 max-w-md text-center text-zinc-600 dark:text-zinc-400"
         style={{ animationDelay: "0.6s" }}
       >
-        A quick tour of the app and you&apos;ll be up and running in no time.
+        Welcome!<br/>
+        Here is a quick tour of the app <br/>
+        You&apos;ll be up and running in no time
       </p>
 
       <div

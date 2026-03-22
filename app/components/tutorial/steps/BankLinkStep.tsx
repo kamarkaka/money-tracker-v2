@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheckIcon } from "@heroicons/react/24/outline";
+import { CheckBadgeIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
 import { ConnectInstitutionModal } from "@/app/components/account/ConnectInstitutionModal";
 import { ManualAccountModal } from "@/app/components/account/ManualAccountModal";
 
@@ -25,19 +25,20 @@ export function BankLinkStep({ onNext, onSkip }: BankLinkStepProps) {
         Add Bank Accounts
       </h2>
 
-      <div className="mb-6 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-900/20">
+      <div className="mb-4 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-900/20">
         <ShieldCheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-500" />
         <p className="text-sm text-blue-700 dark:text-blue-300">
           Your bank credentials are securely handled by our banking partner and are{" "}
-          <strong>never stored</strong> on our servers. We only receive your account balances
-          and transaction data.
+          <strong>never stored</strong> on our servers.
         </p>
       </div>
 
-      <p className="mb-6 max-w-md text-center text-sm text-zinc-600 dark:text-zinc-400">
-        Link your bank accounts to automatically import transactions, or add accounts
-        manually if you prefer not to share credentials.
-      </p>
+      <div className="mb-4 flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 dark:green-blue-800 dark:bg-green-900/20">
+        <CheckBadgeIcon className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
+        <p className="text-sm text-green-700 dark:text-green-300">
+          Not comfortable sharing your bank credentials? No problem! You can alwasy add accounts and transactions manually.
+        </p>
+      </div>
 
       {linkedCount > 0 && (
         <div className="mb-4 rounded-md bg-green-50 px-4 py-2 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
@@ -55,7 +56,7 @@ export function BankLinkStep({ onNext, onSkip }: BankLinkStepProps) {
           </button>
           <button
             onClick={() => setShowManual(true)}
-            className="cursor-pointer rounded-md border border-card-border px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-accent-subtle hover:text-accent dark:text-zinc-300"
+            className="cursor-pointer rounded-md bg-emerald-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-600"
           >
             Add Manually
           </button>

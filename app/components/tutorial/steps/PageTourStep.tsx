@@ -41,7 +41,6 @@ const PAGES = [
     bgColor: "bg-orange-100 dark:bg-orange-900/30",
     points: [
       "Create rules to automatically categorize transactions based on their description.",
-      "Rules are matched in order — drag to reorder priority.",
       "When editing a transaction, check 'Create Rule' to add a rule for that description.",
     ],
   },
@@ -123,8 +122,7 @@ export function PageTourStep({ onNext }: PageTourStepProps) {
 
           <ul className="space-y-3">
             {page.points.map((point, i) => (
-              <li key={i} className="flex gap-2 text-sm text-zinc-600 dark:text-zinc-300">
-                <span className="mt-1 block h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400 dark:bg-zinc-500" />
+              <li key={i} className="text-sm text-zinc-600 dark:text-zinc-300">
                 {point}
               </li>
             ))}

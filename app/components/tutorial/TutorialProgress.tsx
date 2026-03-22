@@ -1,12 +1,10 @@
 "use client";
 
 const STEP_LABELS = [
-  "Welcome",
   "Tour",
   "Categories",
   "Budgets",
   "Accounts",
-  "Done",
 ];
 
 interface TutorialProgressProps {
@@ -17,7 +15,7 @@ interface TutorialProgressProps {
 export function TutorialProgress({ currentStep, totalSteps }: TutorialProgressProps) {
   return (
     <div className="px-8 py-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         {Array.from({ length: totalSteps }).map((_, i) => (
           <div key={i} className="flex items-center gap-2">
             <div

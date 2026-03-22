@@ -46,8 +46,8 @@ export function TutorialOverlay({ onClose } : TutorialOverlayProps) {
         {/* Progress bar (hidden on welcome and completion steps) */}
         {currentStep > 0 && currentStep < TOTAL_STEPS - 1 && (
           <TutorialProgress
-            currentStep={currentStep}
-            totalSteps={TOTAL_STEPS}
+            currentStep={currentStep - 1}
+            totalSteps={TOTAL_STEPS - 2}
           />
         )}
 

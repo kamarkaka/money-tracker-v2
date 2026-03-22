@@ -242,7 +242,7 @@ export function CategorySetupStep({ onNext, onSkip }: CategorySetupStepProps) {
         Set Up Categories
       </h2>
       <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-        Review the default categories below. Uncheck any you don&apos;t need, rename them, or add your own.
+        Review the default categories below. Feel free to make any changes. You can always refine these later.
       </p>
 
       {error && (
