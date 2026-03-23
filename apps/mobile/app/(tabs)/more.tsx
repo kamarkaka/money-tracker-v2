@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -5,12 +6,15 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useAuth } from "@/lib/auth";
+import { createProfileApi } from "@money-tracker/api-client";
+import { apiClient } from "@/lib/api";
 import { useAppTheme } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
+import { exportToFile, pickAndImport } from "@/lib/db";
 
 interface MenuItem {
   label: string;
@@ -22,88 +26,233 @@ interface MenuItem {
 }
 
 export default function MoreScreen() {
-  const { user, signOut } = useAuth();
   const { theme } = useAppTheme();
   const { i18n } = useI18n();
   const router = useRouter();
 
-  const handleSignOut = () => {
-    Alert.alert(i18n("auth.logout"), i18n("common.continue") + "?", [
-      { text: i18n("common.cancel"), style: "cancel" },
-      { text: i18n("auth.logout"), style: "destructive", onPress: signOut },
-    ]);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+
+  useEffect(() => {
+    const profileApi = createProfileApi(apiClient);
+    profileApi.get().then((p) => setUserName(p.name || null));
+  }, []);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      await exportToFile();
+    } catch (e) {
+      Alert.alert(
+        i18n("common.error"),
+        e instanceof Error ? e.message : "Export failed",
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImport = () => {
+    Alert.alert(
+      i18n("data.importData"),
+      i18n("data.importWarning"),
+      [
+        { text: i18n("common.cancel"), style: "cancel" },
+        {
+          text: i18n("data.importData"),
+          style: "destructive",
+          onPress: async () => {
+            setImporting(true);
+            try {
+              const result = await pickAndImport();
+              Alert.alert(
+                result.success ? i18n("common.success") : i18n("common.error"),
+                result.message,
+              );
+            } catch (e) {
+              Alert.alert(
+                i18n("common.error"),
+                e instanceof Error ? e.message : "Import failed",
+              );
+            } finally {
+              setImporting(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const sections: { title: string; items: MenuItem[] }[] = [
     {
       title: i18n("nav.setting"),
       items: [
-        { label: i18n("nav.setting"), icon: "settings-outline", iconColor: "#71717a", route: "/pages/settings" },
+        {
+          label: i18n("nav.setting"),
+          icon: "settings-outline",
+          iconColor: "#71717a",
+          route: "/pages/settings",
+        },
       ],
     },
     {
       title: "",
       items: [
-        { label: i18n("nav.account"), icon: "business-outline", iconColor: "#3b82f6", route: "/pages/accounts" },
-        { label: i18n("nav.transaction"), icon: "list-outline", iconColor: "#f59e0b", route: "/pages/transactions" },
-        { label: i18n("nav.category"), icon: "bookmark-outline", iconColor: "#8b5cf6", route: "/pages/categories" },
-        { label: i18n("nav.budget"), icon: "wallet-outline", iconColor: "#10b981", route: "/pages/budgets" },
-        { label: i18n("nav.rule"), icon: "funnel-outline", iconColor: "#f97316", route: "/pages/rules" },
-        { label: i18n("nav.tag"), icon: "pricetag-outline", iconColor: "#14b8a6", route: "/pages/tags" },
+        {
+          label: i18n("nav.account"),
+          icon: "business-outline",
+          iconColor: "#3b82f6",
+          route: "/pages/accounts",
+        },
+        {
+          label: i18n("nav.transaction"),
+          icon: "list-outline",
+          iconColor: "#f59e0b",
+          route: "/pages/transactions",
+        },
+        {
+          label: i18n("nav.category"),
+          icon: "bookmark-outline",
+          iconColor: "#8b5cf6",
+          route: "/pages/categories",
+        },
+        {
+          label: i18n("nav.budget"),
+          icon: "wallet-outline",
+          iconColor: "#10b981",
+          route: "/pages/budgets",
+        },
+        {
+          label: i18n("nav.rule"),
+          icon: "funnel-outline",
+          iconColor: "#f97316",
+          route: "/pages/rules",
+        },
+        {
+          label: i18n("nav.tag"),
+          icon: "pricetag-outline",
+          iconColor: "#14b8a6",
+          route: "/pages/tags",
+        },
       ],
     },
     {
       title: "",
       items: [
-        { label: i18n("auth.logout"), icon: "log-out-outline", iconColor: "#ef4444", textColor: "#ef4444", onPress: handleSignOut },
+        {
+          label: i18n("data.exportData"),
+          icon: "share-outline",
+          iconColor: "#0ea5e9",
+          onPress: handleExport,
+        },
+        {
+          label: i18n("data.importData"),
+          icon: "download-outline",
+          iconColor: "#8b5cf6",
+          onPress: handleImport,
+        },
       ],
     },
   ];
 
   return (
-    <ScrollView style={{ backgroundColor: theme.background }} contentContainerStyle={styles.content}>
-      {/* User info — taps to profile */}
+    <ScrollView
+      style={{ backgroundColor: theme.background }}
+      contentContainerStyle={styles.content}
+    >
+      {/* User info */}
       <TouchableOpacity
-        style={[styles.profileCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+        style={[
+          styles.profileCard,
+          { backgroundColor: theme.card, borderColor: theme.cardBorder },
+        ]}
         onPress={() => router.push("/pages/profile" as any)}
         activeOpacity={0.7}
       >
         <View style={[styles.avatar, { backgroundColor: theme.accent }]}>
-          <Text style={{ color: theme.accentText, fontSize: 22, fontWeight: "700" }}>
-            {(user?.name || user?.email || "?").charAt(0).toUpperCase()}
+          <Text
+            style={{ color: theme.accentText, fontSize: 22, fontWeight: "700" }}
+          >
+            {(userName || "U").charAt(0).toUpperCase()}
           </Text>
         </View>
         <View style={{ flex: 1 }}>
-          {user?.name && <Text style={{ color: theme.text, fontSize: 17, fontWeight: "600" }}>{user.name}</Text>}
-          <Text style={{ color: theme.textSecondary, fontSize: 14 }}>{user?.email}</Text>
+          <Text
+            style={{ color: theme.text, fontSize: 17, fontWeight: "600" }}
+          >
+            {userName || i18n("profile.localUser")}
+          </Text>
+          <Text style={{ color: theme.textSecondary, fontSize: 14 }}>
+            {i18n("profile.localDevice")}
+          </Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+        <Ionicons
+          name="chevron-forward"
+          size={18}
+          color={theme.textSecondary}
+        />
       </TouchableOpacity>
 
       {sections.map((section, si) => (
         <View key={si} style={styles.section}>
           {section.title ? (
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>{section.title}</Text>
+            <Text
+              style={[styles.sectionTitle, { color: theme.textSecondary }]}
+            >
+              {section.title}
+            </Text>
           ) : null}
-          <View style={[styles.sectionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+          <View
+            style={[
+              styles.sectionCard,
+              { backgroundColor: theme.card, borderColor: theme.cardBorder },
+            ]}
+          >
             {section.items.map((item, ii) => (
               <TouchableOpacity
                 key={ii}
                 style={[
                   styles.menuItem,
-                  ii < section.items.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.cardBorder },
+                  ii < section.items.length - 1 && {
+                    borderBottomWidth: StyleSheet.hairlineWidth,
+                    borderBottomColor: theme.cardBorder,
+                  },
                 ]}
                 onPress={() => {
                   if (item.onPress) item.onPress();
                   else if (item.route) router.push(item.route as any);
                 }}
                 activeOpacity={0.6}
+                disabled={exporting || importing}
               >
-                <View style={[styles.iconCircle, { backgroundColor: item.iconColor + "18" }]}>
+                <View
+                  style={[
+                    styles.iconCircle,
+                    { backgroundColor: item.iconColor + "18" },
+                  ]}
+                >
                   <Ionicons name={item.icon} size={20} color={item.iconColor} />
                 </View>
-                <Text style={{ color: item.textColor || theme.text, fontSize: 16, flex: 1 }}>{item.label}</Text>
-                <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+                <Text
+                  style={{
+                    color: item.textColor || theme.text,
+                    fontSize: 16,
+                    flex: 1,
+                  }}
+                >
+                  {item.label}
+                </Text>
+                {(item.onPress === handleExport && exporting) ||
+                (item.onPress === handleImport && importing) ? (
+                  <ActivityIndicator size="small" color={theme.accent} />
+                ) : (
+                  <Ionicons
+                    name="chevron-forward"
+                    size={18}
+                    color={theme.textSecondary}
+                  />
+                )}
               </TouchableOpacity>
             ))}
           </View>
@@ -132,9 +281,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   section: { marginBottom: 20 },
-  sectionTitle: { fontSize: 13, fontWeight: "600", textTransform: "uppercase", marginBottom: 8, marginLeft: 4 },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    marginBottom: 8,
+    marginLeft: 4,
+  },
   sectionCard: { borderWidth: 1, borderRadius: 14, overflow: "hidden" },
-  menuItem: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14 },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 14,
+  },
   iconCircle: {
     width: 36,
     height: 36,

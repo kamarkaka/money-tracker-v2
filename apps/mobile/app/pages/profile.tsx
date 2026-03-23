@@ -9,7 +9,6 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { createProfileApi } from "@money-tracker/api-client";
 import { apiClient } from "@/lib/api";
 import { useAppTheme } from "@/lib/themeContext";
@@ -19,8 +18,6 @@ interface Profile {
   id: string;
   name?: string | null;
   email: string;
-  authProvider: string;
-  hasPassword?: boolean;
 }
 
 export default function ProfilePage() {
@@ -31,7 +28,6 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -39,14 +35,15 @@ export default function ProfilePage() {
     const data = await profileApi.get();
     setProfile(data as unknown as Profile);
     setName((data as unknown as Profile).name || "");
-    setEmail((data as unknown as Profile).email || "");
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchProfile(); }, [fetchProfile]);
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   const handleSave = async () => {
-    if (name === (profile?.name || "") && email === (profile?.email || "")) {
+    if (name === (profile?.name || "")) {
       setMessage(i18n("common.noChanges"));
       setTimeout(() => setMessage(""), 2000);
       return;
@@ -74,19 +71,31 @@ export default function ProfilePage() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: theme.background }} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={{ backgroundColor: theme.background }}
+      contentContainerStyle={styles.content}
+    >
       {/* Avatar */}
       <View style={styles.avatarSection}>
         <View style={[styles.avatar, { backgroundColor: theme.accent }]}>
-          <Text style={{ color: theme.accentText, fontSize: 32, fontWeight: "700" }}>
-            {(profile?.name || profile?.email || "?").charAt(0).toUpperCase()}
+          <Text
+            style={{ color: theme.accentText, fontSize: 32, fontWeight: "700" }}
+          >
+            {(profile?.name || "U").charAt(0).toUpperCase()}
           </Text>
         </View>
       </View>
 
       {/* User info card */}
-      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-        <Text style={[styles.cardTitle, { color: theme.text }]}>{i18n("profile.userInfo")}</Text>
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: theme.card, borderColor: theme.cardBorder },
+        ]}
+      >
+        <Text style={[styles.cardTitle, { color: theme.text }]}>
+          {i18n("profile.userInfo")}
+        </Text>
 
         {message ? (
           <View style={[styles.messageBanner, { backgroundColor: "#ecfdf5" }]}>
@@ -94,49 +103,45 @@ export default function ProfilePage() {
           </View>
         ) : null}
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n("profile.userId")}</Text>
-        <Text style={[styles.idText, { color: theme.textSecondary }]}>{profile?.id}</Text>
-
-        <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n("common.name")}</Text>
+        <Text style={[styles.label, { color: theme.textSecondary }]}>
+          {i18n("common.name")}
+        </Text>
         <TextInput
-          style={[styles.input, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.cardBorder }]}
+          style={[
+            styles.input,
+            {
+              backgroundColor: theme.inputBg,
+              color: theme.text,
+              borderColor: theme.cardBorder,
+            },
+          ]}
           value={name}
           onChangeText={setName}
           placeholder="Your name"
           placeholderTextColor={theme.textSecondary}
         />
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n("common.email")}</Text>
-        <TextInput
-          style={[styles.input, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.cardBorder }]}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Email"
-          placeholderTextColor={theme.textSecondary}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          editable={false}
-        />
-
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Auth Provider</Text>
+        <Text style={[styles.label, { color: theme.textSecondary }]}>
+          {i18n("profile.storageMode")}
+        </Text>
         <View style={styles.providerRow}>
-          <Ionicons
-            name={profile?.authProvider === "google" ? "logo-google" : "key-outline"}
-            size={16}
-            color={theme.textSecondary}
-          />
-          <Text style={{ color: theme.text, fontSize: 14, textTransform: "capitalize" }}>
-            {profile?.authProvider || "credentials"}
+          <Text style={{ color: theme.text, fontSize: 14 }}>
+            {i18n("profile.localDevice")}
           </Text>
         </View>
 
         <TouchableOpacity
-          style={[styles.saveBtn, { backgroundColor: theme.accent, opacity: saving ? 0.6 : 1 }]}
+          style={[
+            styles.saveBtn,
+            { backgroundColor: theme.accent, opacity: saving ? 0.6 : 1 },
+          ]}
           onPress={handleSave}
           disabled={saving}
           activeOpacity={0.8}
         >
-          <Text style={{ color: theme.accentText, fontSize: 15, fontWeight: "600" }}>
+          <Text
+            style={{ color: theme.accentText, fontSize: 15, fontWeight: "600" }}
+          >
             {saving ? i18n("common.saving") : i18n("common.saveChanges")}
           </Text>
         </TouchableOpacity>
@@ -169,8 +174,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 12,
   },
-  label: { fontSize: 13, fontWeight: "600", marginBottom: 6, marginTop: 12 },
-  idText: { fontSize: 12, fontFamily: "monospace", marginBottom: 4 },
+  label: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 6,
+    marginTop: 12,
+  },
   input: {
     height: 46,
     borderWidth: 1,
@@ -178,7 +187,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     fontSize: 15,
   },
-  providerRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
+  providerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
   saveBtn: {
     height: 46,
     borderRadius: 10,

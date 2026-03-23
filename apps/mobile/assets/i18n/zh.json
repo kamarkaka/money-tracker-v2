@@ -23,6 +23,7 @@
     "applying": "应用中...",
     "changing": "更改中...",
     "error": "发生错误",
+    "success": "成功",
     "noChanges": "没有更改需要保存。",
     "required": "必填",
     "email": "电子邮件",
@@ -240,6 +241,9 @@
     "purgeFinalConfirm": "这是您最后的机会。所有数据将被永久清除，无法恢复。您确定吗？",
     "purgeEverything": "清除所有数据",
     "purgeSuccess": "所有数据已成功清除。",
+    "localUser": "本地用户",
+    "localDevice": "数据存储在此设备上",
+    "storageMode": "存储方式",
     "tutorialSection": "教程",
     "tutorialDescription": "浏览应用设置指南，包括分类和预算配置。",
     "startTutorial": "开始教程"
@@ -327,6 +331,11 @@
     "modeProPoint1": "银行同步导入",
     "modeProPoint2": "预算与规则",
     "modeProPoint3": "标签与分类"
+  },
+  "data": {
+    "exportData": "导出数据",
+    "importData": "导入数据",
+    "importWarning": "这将用导入的文件替换所有现有数据。此操作无法撤销。是否继续？"
   },
   "guide": {
     "casualOverview": {

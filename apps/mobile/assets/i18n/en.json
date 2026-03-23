@@ -23,6 +23,7 @@
     "applying": "Applying...",
     "changing": "Changing...",
     "error": "An error occurred",
+    "success": "Success",
     "noChanges": "No changes to save.",
     "required": "Required",
     "email": "Email",
@@ -240,6 +241,9 @@
     "purgeFinalConfirm": "This is your last chance. All your data will be permanently erased and cannot be recovered. Are you absolutely sure?",
     "purgeEverything": "Purge Everything",
     "purgeSuccess": "All data has been purged successfully.",
+    "localUser": "Local User",
+    "localDevice": "Data stored on this device",
+    "storageMode": "Storage",
     "tutorialSection": "Tutorial",
     "tutorialDescription": "Walk through the app setup guide, including category and budget configuration.",
     "startTutorial": "Start Tutorial"
@@ -327,6 +331,11 @@
     "modeProPoint1": "Bank sync & import",
     "modeProPoint2": "Budgets & rules",
     "modeProPoint3": "Tags & categories"
+  },
+  "data": {
+    "exportData": "Export Data",
+    "importData": "Import Data",
+    "importWarning": "This will replace all existing data with the imported file. This cannot be undone. Continue?"
   },
   "guide": {
     "casualOverview": {

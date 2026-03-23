@@ -48,7 +48,21 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountId, setAccountId] = useState("");
   const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
+  const [rawCents, setRawCents] = useState("");
+
+  const displayAmount = rawCents
+    ? (parseInt(rawCents, 10) / 100).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : "";
+
+  const handleAmountChange = (text: string) => {
+    const digits = text.replace(/[^0-9]/g, "").replace(/^0+/, "") || "";
+    // Cap at $100 million (10 digits of cents)
+    if (digits.length > 10) return;
+    setRawCents(digits);
+  };
   const [isExpense, setIsExpense] = useState(true);
   const [date, setDate] = useState(new Date());
   const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
@@ -62,14 +76,14 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
 
       if (editTransaction) {
         const amt = parseAmount(editTransaction.amount);
-        setAmount(String(Math.abs(amt)));
+        setRawCents(String(Math.round(Math.abs(amt) * 100)));
         setIsExpense(amt < 0);
         setDescription(editTransaction.description || "");
         setDate(new Date(editTransaction.date));
         setSelectedEmoji(editTransaction.category?.emoji || null);
         setAccountId(editTransaction.account?.id || "");
       } else {
-        setAmount("");
+        setRawCents("");
         setDescription("");
         setDate(new Date());
         setSelectedEmoji(null);
@@ -116,8 +130,9 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
 
   const handleSave = async () => {
     if (!accountId) { Alert.alert(i18n("common.error"), i18n("transaction.accountRequired")); return; }
-    const parsed = parseFloat(amount);
-    if (isNaN(parsed) || parsed <= 0) { Alert.alert(i18n("common.error"), i18n("transaction.amountRequired")); return; }
+    const cents = parseInt(rawCents, 10);
+    if (!cents || cents <= 0) { Alert.alert(i18n("common.error"), i18n("transaction.amountRequired")); return; }
+    const parsed = cents / 100;
 
     setSaving(true);
     try {
@@ -252,14 +267,23 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
           </View>
 
           {/* Amount */}
-          <TextInput
-            style={[styles.amountInput, { color: amountColor }]}
-            placeholder="0.00"
-            placeholderTextColor={theme.textSecondary}
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="decimal-pad"
-          />
+          <View style={styles.amountRow}>
+            <View style={styles.amountInner}>
+              <Text style={[styles.amountCurrency, { color: displayAmount ? amountColor : theme.textSecondary }]}>$</Text>
+              <Text style={[styles.amountMirror, { color: "transparent" }]}>
+                {displayAmount || "0.00"}
+              </Text>
+              <TextInput
+                style={[styles.amountInput, { color: amountColor }]}
+                placeholder="0.00"
+                placeholderTextColor={theme.textSecondary}
+                value={displayAmount}
+                onChangeText={handleAmountChange}
+                keyboardType="number-pad"
+                caretHidden
+              />
+            </View>
+          </View>
 
           {/* Category */}
           <ScrollView ref={categoryScrollRef} horizontal showsHorizontalScrollIndicator={false} style={styles.categorySection}>
@@ -346,7 +370,11 @@ const styles = StyleSheet.create({
   },
   toggleRow: { flexDirection: "row", justifyContent: "center", gap: 8, marginBottom: 16 },
   toggleBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 },
-  amountInput: { fontSize: 44, fontWeight: "800", textAlign: "center", width: "100%", marginBottom: 16 },
+  amountRow: { alignItems: "center", marginBottom: 16 },
+  amountInner: { flexDirection: "row", alignItems: "center", position: "relative" },
+  amountCurrency: { fontSize: 44, fontWeight: "800", marginRight: 2 },
+  amountMirror: { fontSize: 44, fontWeight: "800" },
+  amountInput: { fontSize: 44, fontWeight: "800", position: "absolute", left: 0, right: 0, top: 0, bottom: 0, textAlign: "right" },
   categorySection: { marginBottom: 16 },
   categoryCol: { gap: 8, marginRight: 8 },
   categoryBtn: {

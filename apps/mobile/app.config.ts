@@ -27,7 +27,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     package: "com.moneytracker.app",
   },
-  plugins: ["expo-router", "expo-secure-store"],
+  plugins: ["expo-router", "expo-secure-store", "expo-sqlite", "expo-document-picker"],
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000",
   },
