@@ -9,8 +9,11 @@ import {
   Platform,
   Alert,
   useColorScheme,
+  Image,
+  ScrollView,
 } from "react-native";
 import { Link } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/lib/auth";
 import { colors } from "@/lib/theme";
 
@@ -38,73 +41,142 @@ export default function LoginScreen() {
     }
   };
 
+  const handleGoogleLogin = () => {
+    Alert.alert("Google Sign In", "Google sign-in will be available soon.");
+  };
+
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <View style={styles.inner}>
-        <Text style={[styles.title, { color: theme.text }]}>Money Tracker</Text>
-        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Sign in to your account
-        </Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Logo */}
+        <View style={styles.logoSection}>
+          <Image
+            source={require("@/assets/logo.png")}
+            style={styles.logo}
+          />
+          <View style={styles.titleRow}>
+            <Text style={[styles.title, { color: theme.text }]}>Money Tracker 2</Text>
+            <View style={styles.betaBadge}>
+              <Text style={styles.betaText}>BETA</Text>
+            </View>
+          </View>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+            Track your personal finances
+          </Text>
+        </View>
 
+        {/* Form */}
         <View style={styles.form}>
-          <TextInput
-            style={[styles.input, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.cardBorder }]}
-            placeholder="Email"
-            placeholderTextColor={theme.textSecondary}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          <TextInput
-            style={[styles.input, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.cardBorder }]}
-            placeholder="Password"
-            placeholderTextColor={theme.textSecondary}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <View style={[styles.inputRow, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder }]}>
+            <Ionicons name="mail-outline" size={18} color={theme.textSecondary} />
+            <TextInput
+              style={[styles.inputText, { color: theme.text }]}
+              placeholder="Email"
+              placeholderTextColor={theme.textSecondary}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+          <View style={[styles.inputRow, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder }]}>
+            <Ionicons name="lock-closed-outline" size={18} color={theme.textSecondary} />
+            <TextInput
+              style={[styles.inputText, { color: theme.text }]}
+              placeholder="Password"
+              placeholderTextColor={theme.textSecondary}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
           <TouchableOpacity
             style={[styles.button, { backgroundColor: theme.accent, opacity: loading ? 0.6 : 1 }]}
             onPress={handleLogin}
             disabled={loading}
+            activeOpacity={0.8}
           >
             <Text style={[styles.buttonText, { color: theme.accentText }]}>
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Logging in..." : "Log In"}
             </Text>
           </TouchableOpacity>
         </View>
 
+        {/* Or divider */}
+        <View style={styles.divider}>
+          <View style={[styles.dividerLine, { backgroundColor: theme.cardBorder }]} />
+          <Text style={[styles.dividerText, { color: theme.textSecondary }]}>or</Text>
+          <View style={[styles.dividerLine, { backgroundColor: theme.cardBorder }]} />
+        </View>
+
+        {/* Google sign in */}
+        <TouchableOpacity
+          style={[styles.googleButton, { borderColor: theme.cardBorder, backgroundColor: theme.inputBg }]}
+          onPress={handleGoogleLogin}
+          activeOpacity={0.7}
+        >
+          <GoogleIcon />
+          <Text style={{ color: theme.text, fontSize: 15, fontWeight: "500" }}>Log in with Google</Text>
+        </TouchableOpacity>
+
+        {/* Footer */}
         <View style={styles.footer}>
-          <Text style={{ color: theme.textSecondary }}>Don&apos;t have an account? </Text>
+          <Text style={{ color: theme.textSecondary, fontSize: 14 }}>Don&apos;t have an account? </Text>
           <Link href="/(auth)/register" asChild>
             <TouchableOpacity>
-              <Text style={{ color: theme.accent, fontWeight: "600" }}>Sign Up</Text>
+              <Text style={{ color: theme.accent, fontWeight: "600", fontSize: 14 }}>Register</Text>
             </TouchableOpacity>
           </Link>
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <View style={{ width: 20, height: 20 }}>
+      <Text style={{ fontSize: 18, lineHeight: 22 }}>G</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  inner: { flex: 1, justifyContent: "center", paddingHorizontal: 24 },
-  title: { fontSize: 32, fontWeight: "800", textAlign: "center", marginBottom: 8 },
-  subtitle: { fontSize: 16, textAlign: "center", marginBottom: 32 },
+  scrollContent: { flexGrow: 1, justifyContent: "center", paddingHorizontal: 24, paddingVertical: 40 },
+  logoSection: { alignItems: "center", marginBottom: 32 },
+  logo: { width: 80, height: 80, borderRadius: 16 },
+  titleRow: { flexDirection: "row", alignItems: "flex-start", marginTop: 16 },
+  title: { fontSize: 28, fontWeight: "800" },
+  betaBadge: {
+    borderWidth: 1,
+    borderColor: "#ef4444",
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 4,
+    marginTop: -2,
+  },
+  betaText: { fontSize: 9, fontWeight: "700", color: "#ef4444" },
+  subtitle: { fontSize: 14, marginTop: 4 },
   form: { gap: 14 },
-  input: {
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
     height: 50,
     borderWidth: 1,
     borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
+    paddingHorizontal: 14,
+    gap: 10,
   },
+  inputText: { flex: 1, fontSize: 16, height: "100%" },
   button: {
     height: 50,
     borderRadius: 12,
@@ -113,6 +185,22 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   buttonText: { fontSize: 16, fontWeight: "700" },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 24,
+  },
+  dividerLine: { flex: 1, height: 1 },
+  dividerText: { paddingHorizontal: 12, fontSize: 12 },
+  googleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 50,
+    borderWidth: 1,
+    borderRadius: 12,
+    gap: 10,
+  },
   footer: {
     flexDirection: "row",
     justifyContent: "center",

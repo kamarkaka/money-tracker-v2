@@ -84,8 +84,15 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal/add-transaction" options={{ presentation: "modal", headerShown: false }} />
           <Stack.Screen name="modal/transaction-detail" options={{ presentation: "modal", headerShown: false }} />
+          <Stack.Screen name="pages/profile" options={{ title: "Profile" }} />
+          <Stack.Screen name="pages/settings" options={{ title: "Settings" }} />
+          <Stack.Screen name="pages/accounts" options={{ title: "Accounts" }} />
+          <Stack.Screen name="pages/categories" options={{ title: "Categories" }} />
+          <Stack.Screen name="pages/budgets" options={{ title: "Budgets" }} />
+          <Stack.Screen name="pages/rules" options={{ title: "Rules" }} />
+          <Stack.Screen name="pages/tags" options={{ title: "Tags" }} />
+          <Stack.Screen name="pages/transactions" options={{ title: "Transactions" }} />
           <Stack.Screen name="index" options={{ headerShown: false }} />
         </Stack>
       </ApiClientContext.Provider>
