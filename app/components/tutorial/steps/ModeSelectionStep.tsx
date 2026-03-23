@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChartBarIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import { LockClosedIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import { useTranslations } from "next-intl";
 
 interface ModeSelectionStepProps {
@@ -51,14 +51,12 @@ export function ModeSelectionStep({ onSelectPro, onSelectCasual }: ModeSelection
           </ul>
         </button>
 
-        {/* Pro */}
-        <button
-          onClick={onSelectPro}
-          disabled={loading}
-          className="card-hover flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-card-border bg-gradient-to-b from-blue-50 to-white p-6 text-center transition-colors hover:border-accent disabled:opacity-50 dark:from-blue-950 dark:to-zinc-900"
+        {/* Pro — disabled for now */}
+        <div
+          className="flex flex-col items-center gap-3 rounded-xl border-2 border-card-border bg-gradient-to-b from-blue-50 to-white p-6 text-center opacity-50 dark:from-blue-950 dark:to-zinc-900"
         >
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white">
-            <ChartBarIcon className="h-7 w-7" />
+            <LockClosedIcon className="h-7 w-7" />
           </div>
           <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
             {i18n("modeProTitle")}
@@ -71,7 +69,8 @@ export function ModeSelectionStep({ onSelectPro, onSelectCasual }: ModeSelection
             <li>📊 {i18n("modeProPoint2")}</li>
             <li>🏷️ {i18n("modeProPoint3")}</li>
           </ul>
-        </button>
+          <p className="mt-2 text-[10px] text-zinc-400">Coming soon</p>
+        </div>
       </div>
     </div>
   );
