@@ -11,8 +11,9 @@ import {
   Animated,
   Dimensions,
   TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { createTransactionApi, createAccountApi } from "@money-tracker/api-client";
 import type { Account, Transaction } from "@money-tracker/shared";
@@ -43,7 +44,9 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
 
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
+  const keyboardOffset = useRef(new Animated.Value(0)).current;
   const categoryScrollRef = useRef<ScrollView>(null);
+  const amountRef = useRef<TextInput>(null);
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountId, setAccountId] = useState("");
@@ -68,6 +71,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
   const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [pendingDate, setPendingDate] = useState(new Date());
 
   useEffect(() => {
     if (open) {
@@ -121,11 +125,41 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
     }
   }, [open, editTransaction]);
 
+  useEffect(() => {
+    const showSub = Keyboard.addListener("keyboardWillShow", (e) => {
+      Animated.timing(keyboardOffset, {
+        toValue: -(e.endCoordinates.height * 0.4),
+        duration: e.duration || 250,
+        useNativeDriver: true,
+      }).start();
+    });
+    const hideSub = Keyboard.addListener("keyboardWillHide", (e) => {
+      Animated.timing(keyboardOffset, {
+        toValue: 0,
+        duration: e.duration || 250,
+        useNativeDriver: true,
+      }).start();
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   const handleClose = () => onClose();
 
-  const handleDateChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
+  const handleDateChange = (_event: unknown, selectedDate?: Date) => {
+    if (selectedDate) setPendingDate(selectedDate);
+  };
+
+  const confirmDate = () => {
+    setDate(pendingDate);
     setShowDatePicker(false);
-    if (selectedDate) setDate(selectedDate);
+  };
+
+  const openDatePicker = () => {
+    setPendingDate(date);
+    setShowDatePicker(!showDatePicker);
   };
 
   const handleSave = async () => {
@@ -216,38 +250,38 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
         pointerEvents={open ? "auto" : "none"}
         style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.4)", opacity: backdropAnim, zIndex: 90 }]}
       >
-        <TouchableWithoutFeedback onPress={handleClose}>
-          <View style={StyleSheet.absoluteFill} />
-        </TouchableWithoutFeedback>
+        <View style={StyleSheet.absoluteFill} />
       </Animated.View>
 
       <Animated.View style={[
         styles.modal,
-        { backgroundColor: theme.card, transform: [{ translateY: slideAnim }], zIndex: 100 },
+        { backgroundColor: theme.card, transform: [{ translateY: slideAnim }, { translateY: keyboardOffset }], zIndex: 100 },
       ]}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.content}>
-          <View style={styles.handleBar}>
-            <View style={[styles.handle, { backgroundColor: theme.cardBorder }]} />
-          </View>
-
           {/* Date */}
           <View style={styles.dateRow}>
             <Text style={[styles.dateText, { color: theme.text }]}>{dateLabel}</Text>
             <TouchableOpacity
-              onPress={() => setShowDatePicker(!showDatePicker)}
+              onPress={openDatePicker}
               style={[styles.calendarBtn, { backgroundColor: theme.cardBorder + "30" }]}
             >
-              <Ionicons name="calendar-outline" size={20} color={theme.accent} />
+              <Ionicons name="calendar-outline" size={20} color="#10b981" />
             </TouchableOpacity>
           </View>
           {showDatePicker && (
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={handleDateChange}
-              themeVariant={isDark ? "dark" : "light"}
-            />
+            <View style={[styles.datePickerOverlay, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+              <DateTimePicker
+                value={pendingDate}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onValueChange={handleDateChange}
+                themeVariant={isDark ? "dark" : "light"}
+              />
+              <TouchableOpacity style={styles.dateConfirmBtn} onPress={confirmDate} activeOpacity={0.7}>
+                <Ionicons name="checkmark-circle" size={36} color="#10b981" />
+              </TouchableOpacity>
+            </View>
           )}
 
           {/* Toggle */}
@@ -267,23 +301,22 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
           </View>
 
           {/* Amount */}
-          <View style={styles.amountRow}>
-            <View style={styles.amountInner}>
+          <TouchableWithoutFeedback onPress={() => amountRef.current?.focus()}>
+            <View style={[styles.amountRow, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder }]}>
               <Text style={[styles.amountCurrency, { color: displayAmount ? amountColor : theme.textSecondary }]}>$</Text>
-              <Text style={[styles.amountMirror, { color: "transparent" }]}>
+              <Text style={[styles.amountDisplay, { color: displayAmount ? amountColor : theme.textSecondary }]}>
                 {displayAmount || "0.00"}
               </Text>
-              <TextInput
-                style={[styles.amountInput, { color: amountColor }]}
-                placeholder="0.00"
-                placeholderTextColor={theme.textSecondary}
-                value={displayAmount}
-                onChangeText={handleAmountChange}
-                keyboardType="number-pad"
-                caretHidden
-              />
             </View>
-          </View>
+          </TouchableWithoutFeedback>
+          <TextInput
+            ref={amountRef}
+            style={styles.amountHiddenInput}
+            value={rawCents}
+            onChangeText={handleAmountChange}
+            keyboardType="number-pad"
+            caretHidden
+          />
 
           {/* Category */}
           <ScrollView ref={categoryScrollRef} horizontal showsHorizontalScrollIndicator={false} style={styles.categorySection}>
@@ -302,8 +335,8 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
             placeholderTextColor={theme.textSecondary}
             value={description}
             onChangeText={setDescription}
-            multiline
-            numberOfLines={2}
+            returnKeyType="done"
+            blurOnSubmit
             textAlignVertical="top"
           />
 
@@ -331,6 +364,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
             </TouchableOpacity>
           </View>
         </View>
+        </TouchableWithoutFeedback>
       </Animated.View>
     </>
   );
@@ -350,9 +384,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 10,
   },
-  content: { paddingHorizontal: 20, paddingBottom: 112 },
-  handleBar: { alignItems: "center", paddingTop: 10, paddingBottom: 6 },
-  handle: { width: 40, height: 4, borderRadius: 2 },
+  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 112 },
   dateRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -368,13 +400,32 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  datePickerOverlay: {
+    position: "absolute",
+    top: 50,
+    left: 40,
+    right: 40,
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingBottom: 8,
+    zIndex: 200,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  dateConfirmBtn: {
+    alignSelf: "center",
+    marginTop: 4,
+    marginBottom: 4,
+  },
   toggleRow: { flexDirection: "row", justifyContent: "center", gap: 8, marginBottom: 16 },
   toggleBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 },
-  amountRow: { alignItems: "center", marginBottom: 16 },
-  amountInner: { flexDirection: "row", alignItems: "center", position: "relative" },
+  amountRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginBottom: 16, borderWidth: 1, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 16 },
   amountCurrency: { fontSize: 44, fontWeight: "800", marginRight: 2 },
-  amountMirror: { fontSize: 44, fontWeight: "800" },
-  amountInput: { fontSize: 44, fontWeight: "800", position: "absolute", left: 0, right: 0, top: 0, bottom: 0, textAlign: "right" },
+  amountDisplay: { fontSize: 44, fontWeight: "800" },
+  amountHiddenInput: { position: "absolute", width: 1, height: 1, opacity: 0 },
   categorySection: { marginBottom: 16 },
   categoryCol: { gap: 8, marginRight: 8 },
   categoryBtn: {

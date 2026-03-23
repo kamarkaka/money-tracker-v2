@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useFocusEffect } from "expo-router";
 import {
   View,
   Text,
@@ -166,6 +167,13 @@ export default function OverviewScreen() {
       if (initialLoad) setInitialLoad(false);
     });
   }, [fetchData]);
+
+  // Re-fetch when tab gains focus (e.g. after import in settings)
+  useFocusEffect(
+    useCallback(() => {
+      if (!initialLoad) fetchData();
+    }, [fetchData, initialLoad]),
+  );
 
   // Register fetchData so the transaction modal refreshes data after save/delete
   useEffect(() => {
