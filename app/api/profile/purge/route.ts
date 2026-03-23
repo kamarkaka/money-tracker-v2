@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/db";
+import { GUIDE_PAGES } from "@/app/lib/guide-pages";
 
 export async function DELETE() {
   const session = await auth();
@@ -21,6 +22,11 @@ export async function DELETE() {
     await tx.account.deleteMany({ where: { userId } });
     await tx.institution.deleteMany({ where: { userId } });
     await tx.userSetting.deleteMany({ where: { userId } });
+    await tx.pageGuideCompletion.deleteMany({ where: { userId } });
+    // Re-insert guide records so guides show again
+    await tx.pageGuideCompletion.createMany({
+      data: GUIDE_PAGES.map((page) => ({ userId, page })),
+    });
 
     await tx.user.update({
       where: { id: userId },

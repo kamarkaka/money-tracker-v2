@@ -233,7 +233,7 @@
     "systemDesc": "跟随浏览器设置",
     "language": "语言",
     "languageDesc": "选择您偏好的显示语言。",
-    "switchToPro": "切换到专业模式",
+    "switchToPro": "解锁专业模式",
     "switchToProDesc": "解锁银行同步、预算、规则、标签和完整分类管理。",
     "switchToProConfirm": "切换到专业模式？这将解锁所有功能。您的现有数据将被保留。此更改无法撤销。"
   },
@@ -304,5 +304,27 @@
     "modeProPoint1": "银行同步导入",
     "modeProPoint2": "预算与规则",
     "modeProPoint3": "标签与分类"
+  },
+  "guide": {
+    "casualOverview": {
+      "summaryTitle": "每月概览",
+      "summaryDesc": "一目了然地查看您的收入、支出和净储蓄。",
+      "monthTitle": "切换月份",
+      "monthDesc": "点击月份查看该时期的财务数据。",
+      "addTitle": "添加交易",
+      "addDesc": "点击 + 按钮快速记录支出或收入。",
+      "emojiTitle": "支出明细",
+      "emojiDesc": "每个圆圈代表一个类别。圆环显示其占总额的比例。点击查看详情。"
+    },
+    "casualAdd": {
+      "dateTitle": "设置日期",
+      "dateDesc": "今天的日期已自动填写。点击日历图标可更改。",
+      "emojiTitle": "选择分类",
+      "emojiDesc": "选择一个表情符号来分类您的交易。最近使用的会显示以便快速选择。",
+      "amountTitle": "输入金额",
+      "amountDesc": "直接输入数字，小数点会自动处理。",
+      "noteTitle": "添加备注",
+      "noteDesc": "可选择描述这笔交易的用途。可以留空。"
+    }
   }
 }

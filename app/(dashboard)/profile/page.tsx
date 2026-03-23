@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { ConfirmDialog } from "@/app/components/ui/ConfirmDialog";
-import { BookOpenIcon, ChartBarIcon } from "@heroicons/react/24/outline";
+import { BookOpenIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import { useMode } from "@/app/components/ModeProvider";
 
 interface UserProfile {
@@ -279,7 +279,7 @@ export default function ProfilePage() {
         <div className="mt-6 rounded-lg border border-card-border bg-gradient-to-r from-blue-50 to-white p-6 dark:from-blue-950 dark:to-zinc-900">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white">
-              <ChartBarIcon className="h-5 w-5" />
+              <LockClosedIcon className="h-5 w-5" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{i18nSetting("switchToPro")}</h2>
@@ -337,6 +337,59 @@ export default function ProfilePage() {
         confirmLabel={i18n("purgeEverything")}
         loading={purging}
       />
+
+      {/* Dev Tools */}
+      {process.env.NEXT_PUBLIC_DEBUG === "true" && (
+        <DevTools />
+      )}
+    </div>
+  );
+}
+
+function DevTools() {
+  const [status, setStatus] = useState("");
+
+  const runAction = async (url: string, label: string) => {
+    setStatus(`${label}...`);
+    const res = await fetch(url, { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      setStatus(`✓ ${label} done${data.count ? ` (${data.count} created)` : ""}`);
+    } else {
+      setStatus(`✗ ${label} failed`);
+    }
+    setTimeout(() => setStatus(""), 3000);
+  };
+
+  return (
+    <div className="mt-6 rounded-lg border border-dashed border-amber-300 bg-amber-50 p-6 dark:border-amber-700 dark:bg-amber-950/20">
+      <h2 className="mb-1 text-lg font-semibold text-amber-700 dark:text-amber-400">🛠 Dev Tools</h2>
+      <p className="mb-4 text-xs text-amber-600 dark:text-amber-500">Only visible when DEBUG=true</p>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => runAction("/api/dev/reset-tutorial", "Reset Tutorial")}
+          className="cursor-pointer rounded-md bg-amber-200 px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-200 dark:hover:bg-amber-700"
+        >
+          Reset Tutorial
+        </button>
+        <button
+          onClick={() => runAction("/api/dev/reset-guides", "Reset Guides")}
+          className="cursor-pointer rounded-md bg-amber-200 px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-200 dark:hover:bg-amber-700"
+        >
+          Reset Guides
+        </button>
+        <button
+          onClick={() => runAction("/api/dev/generate-transactions", "Generate Transactions")}
+          className="cursor-pointer rounded-md bg-amber-200 px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-200 dark:hover:bg-amber-700"
+        >
+          Generate Transactions
+        </button>
+      </div>
+
+      {status && (
+        <p className="mt-3 text-sm text-amber-700 dark:text-amber-400">{status}</p>
+      )}
     </div>
   );
 }

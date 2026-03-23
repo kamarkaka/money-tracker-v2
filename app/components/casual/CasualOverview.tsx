@@ -8,6 +8,9 @@ import { MonthlySummaryHeader } from "@/app/components/overview/MonthlySummaryHe
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { formatCurrency } from "@/app/lib/utils";
 import { CasualAddModal } from "./CasualAddModal";
+import { PageGuide } from "@/app/components/guide/PageGuide";
+import { usePageGuide } from "@/app/components/guide/usePageGuide";
+import { CASUAL_OVERVIEW_STEPS } from "@/app/components/guide/guide-steps";
 
 interface Transaction {
   id: string;
@@ -26,6 +29,7 @@ interface EmojiGroup {
 
 export function CasualOverview() {
   const i18n = useTranslations("overview");
+  const i18nGuide = useTranslations("guide");
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -35,6 +39,7 @@ export function CasualOverview() {
   const [expandedEmoji, setExpandedEmoji] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [editTx, setEditTx] = useState<Transaction | null>(null);
+  const { shouldShow: showGuide, complete: completeGuide } = usePageGuide("casual-overview");
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -101,20 +106,29 @@ export function CasualOverview() {
     <div>
       <div className="mb-6">
         <h1 className="mb-4 text-2xl font-bold text-zinc-900 dark:text-zinc-50">{i18n("title")}</h1>
-        <MonthPicker year={year} month={month} onChange={(y, m) => { setYear(y); setMonth(m); }} />
+        <div data-guide="month-picker">
+          <MonthPicker year={year} month={month} onChange={(y, m) => { setYear(y); setMonth(m); }} />
+        </div>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4" data-guide="summary-cards">
         <MonthlySummaryHeader totalIncome={totalIncome} totalExpenses={totalExpenses} />
       </div>
 
       {/* Spending grid */}
       {groups.length === 0 ? (
-        <div className="py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
-          {i18n("noTransactions")}
+        <div className="flex flex-col items-center gap-4 py-12">
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-full bg-zinc-200 text-zinc-400 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-500 dark:hover:bg-zinc-700"
+          >
+            <PlusIcon className="h-10 w-10" />
+          </button>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            {i18n("noTransactions")}</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-5" style={{ transition: "all 0.3s ease" }}>
+        <div className="flex flex-col gap-5" data-guide="emoji-grid" style={{ transition: "all 0.3s ease" }}>
           {Array.from({ length: Math.ceil(groups.length / 4) }).map((_, rowIdx) => {
             const rowGroups = groups.slice(rowIdx * 4, rowIdx * 4 + 4);
             const expandedInRow = rowGroups.find((g) => g.emoji === expandedEmoji);
@@ -218,6 +232,7 @@ export function CasualOverview() {
 
       {/* Quick-add FAB — always visible, toggles modal */}
       <button
+        data-guide="add-button"
         onClick={() => {
           if (editTx) {
             setEditTx(null);
@@ -249,6 +264,18 @@ export function CasualOverview() {
         transactions={transactions}
         editTransaction={editTx}
       />
+
+      {/* In-page guide */}
+      {!loading && !showAdd && !editTx && showGuide && (
+        <PageGuide
+          steps={CASUAL_OVERVIEW_STEPS.map((s) => ({
+            ...s,
+            title: i18nGuide(s.title),
+            description: i18nGuide(s.description),
+          }))}
+          onComplete={completeGuide}
+        />
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { hashSync } from "bcryptjs";
 import { prisma } from "@/app/lib/db";
 import { ensureSophtronCustomer } from "@/app/lib/sophtron/create-customer";
 import { rateLimit } from "@/app/lib/rate-limit";
+import { GUIDE_PAGES } from "@/app/lib/guide-pages";
 
 export async function POST(request: NextRequest) {
   const limited = rateLimit(request, { maxRequests: 5, windowMs: 60_000, prefix: "register" });
@@ -42,6 +43,11 @@ export async function POST(request: NextRequest) {
 
   // Create Sophtron customer in the background
   ensureSophtronCustomer(user.id);
+
+  // Seed guide records for all pages
+  await prisma.pageGuideCompletion.createMany({
+    data: GUIDE_PAGES.map((page) => ({ userId: user.id, page })),
+  });
 
   return NextResponse.json(
     { id: user.id, email: user.email, name: user.name },

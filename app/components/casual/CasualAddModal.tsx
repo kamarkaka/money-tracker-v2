@@ -155,7 +155,7 @@ export function CasualAddModal({ open, onClose, onComplete, accountId, transacti
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:items-center" onClick={handleClose}>
       <div className="mb-24 w-full max-w-lg rounded-2xl border border-card-border bg-card-bg px-6 pb-6 pt-5 shadow-xl md:mb-0" onClick={(e) => e.stopPropagation()}>
         {/* Date — text style with calendar icon */}
-        <div className="mb-5 flex items-center justify-center gap-2">
+        <div data-guide="modal-date" className="mb-5 flex items-center justify-center gap-2">
           <span className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
             {new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
           </span>
@@ -172,7 +172,7 @@ export function CasualAddModal({ open, onClose, onComplete, accountId, transacti
         </div>
 
         {/* Emoji category selector — big round button */}
-        <div className="relative mb-5 flex flex-col items-center">
+        <div data-guide="modal-emoji" className="relative mb-5 flex flex-col items-center">
           <button
             type="button"
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -313,7 +313,7 @@ export function CasualAddModal({ open, onClose, onComplete, accountId, transacti
         </div>
 
         {/* Big amount input */}
-        <div className="mb-5 py-4">
+        <div data-guide="modal-amount" className="mb-5 py-4">
           <CurrencyInput
             value={amount}
             onChange={setAmount}
@@ -324,6 +324,7 @@ export function CasualAddModal({ open, onClose, onComplete, accountId, transacti
 
         {/* Optional note */}
         <textarea
+          data-guide="modal-note"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder={i18n("descriptionOptional")}

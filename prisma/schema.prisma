@@ -27,8 +27,19 @@ model User {
   tags                 Tag[]
   transactions         Transaction[]
   setting              UserSetting?
+  pageGuides           PageGuideCompletion[]
 
   @@map("user")
+}
+
+model PageGuideCompletion {
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  page   String @db.VarChar(50)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, page])
+  @@map("page_guide_completion")
 }
 
 model UserSetting {

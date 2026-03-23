@@ -233,7 +233,7 @@
     "systemDesc": "Follow your browser setting",
     "language": "Language",
     "languageDesc": "Choose your preferred display language.",
-    "switchToPro": "Switch to Pro Mode",
+    "switchToPro": "Unlock Pro Mode",
     "switchToProDesc": "Unlock bank sync, budgets, rules, tags, and full category management.",
     "switchToProConfirm": "Switch to Pro Mode? This will unlock all features. Your existing data will be preserved. This change cannot be undone."
   },
@@ -304,5 +304,27 @@
     "modeProPoint1": "Bank sync & import",
     "modeProPoint2": "Budgets & rules",
     "modeProPoint3": "Tags & categories"
+  },
+  "guide": {
+    "casualOverview": {
+      "summaryTitle": "Your Monthly Snapshot",
+      "summaryDesc": "See your income, expenses, and net savings at a glance.",
+      "monthTitle": "Navigate Months",
+      "monthDesc": "Tap a month to see your financial data for that period.",
+      "addTitle": "Add a Transaction",
+      "addDesc": "Tap the + button to quickly log an expense or income.",
+      "emojiTitle": "Spending Breakdown",
+      "emojiDesc": "Each circle shows a category. The ring shows its share of your total. Tap to see details."
+    },
+    "casualAdd": {
+      "dateTitle": "Set the Date",
+      "dateDesc": "Today's date is auto-filled. Tap the calendar icon to change it.",
+      "emojiTitle": "Pick a Category",
+      "emojiDesc": "Choose an emoji to categorize your transaction. Recent picks appear for quick access.",
+      "amountTitle": "Enter the Amount",
+      "amountDesc": "Just type the digits. The decimal is placed automatically.",
+      "noteTitle": "Add a Note",
+      "noteDesc": "Optionally describe what this was for. You can leave it blank."
+    }
   }
 }
