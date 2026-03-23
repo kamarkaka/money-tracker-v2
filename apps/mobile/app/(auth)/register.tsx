@@ -8,19 +8,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  useColorScheme,
   Image,
   ScrollView,
 } from "react-native";
 import { Link } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/lib/auth";
-import { colors } from "@/lib/theme";
+import { useAppTheme } from "@/lib/themeContext";
+import { useI18n } from "@/lib/i18n";
 
 export default function RegisterScreen() {
   const { signUp } = useAuth();
-  const scheme = useColorScheme();
-  const theme = colors[scheme === "dark" ? "dark" : "light"];
+  const { theme } = useAppTheme();
+  const { i18n } = useI18n();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -66,7 +66,7 @@ export default function RegisterScreen() {
             source={require("@/assets/logo.png")}
             style={styles.logo}
           />
-          <Text style={[styles.title, { color: theme.text }]}>Register</Text>
+          <Text style={[styles.title, { color: theme.text }]}>{i18n("auth.register")}</Text>
         </View>
 
         {/* Form */}
@@ -75,7 +75,7 @@ export default function RegisterScreen() {
             <Ionicons name="person-outline" size={18} color={theme.textSecondary} />
             <TextInput
               style={[styles.inputText, { color: theme.text }]}
-              placeholder="Name"
+              placeholder={i18n("common.name")}
               placeholderTextColor={theme.textSecondary}
               value={name}
               onChangeText={setName}
@@ -86,7 +86,7 @@ export default function RegisterScreen() {
             <Ionicons name="mail-outline" size={18} color={theme.textSecondary} />
             <TextInput
               style={[styles.inputText, { color: theme.text }]}
-              placeholder="Email"
+              placeholder={i18n("common.email")}
               placeholderTextColor={theme.textSecondary}
               value={email}
               onChangeText={setEmail}
@@ -99,7 +99,7 @@ export default function RegisterScreen() {
             <Ionicons name="lock-closed-outline" size={18} color={theme.textSecondary} />
             <TextInput
               style={[styles.inputText, { color: theme.text }]}
-              placeholder="Password"
+              placeholder={i18n("common.password")}
               placeholderTextColor={theme.textSecondary}
               value={password}
               onChangeText={setPassword}
@@ -110,7 +110,7 @@ export default function RegisterScreen() {
             <Ionicons name="lock-closed-outline" size={18} color={theme.textSecondary} />
             <TextInput
               style={[styles.inputText, { color: theme.text }]}
-              placeholder="Confirm Password"
+              placeholder={i18n("auth.confirmPassword")}
               placeholderTextColor={theme.textSecondary}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -124,17 +124,17 @@ export default function RegisterScreen() {
             activeOpacity={0.8}
           >
             <Text style={[styles.buttonText, { color: theme.accentText }]}>
-              {loading ? "Creating account..." : "Register"}
+              {loading ? i18n("common.loading") : i18n("auth.register")}
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={{ color: theme.textSecondary, fontSize: 14 }}>Already have an account? </Text>
+          <Text style={{ color: theme.textSecondary, fontSize: 14 }}>{i18n("auth.hasAccount")} </Text>
           <Link href="/(auth)/login" asChild>
             <TouchableOpacity>
-              <Text style={{ color: theme.accent, fontWeight: "600", fontSize: 14 }}>Log In</Text>
+              <Text style={{ color: theme.accent, fontWeight: "600", fontSize: 14 }}>{i18n("auth.login")}</Text>
             </TouchableOpacity>
           </Link>
         </View>

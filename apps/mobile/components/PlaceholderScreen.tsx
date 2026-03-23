@@ -1,6 +1,6 @@
-import { View, Text, useColorScheme } from "react-native";
+import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { colors } from "@/lib/theme";
+import { useAppTheme } from "@/lib/themeContext";
 
 interface Props {
   icon: keyof typeof Ionicons.glyphMap;
@@ -9,8 +9,7 @@ interface Props {
 }
 
 export function PlaceholderScreen({ icon, iconColor, title }: Props) {
-  const scheme = useColorScheme();
-  const theme = colors[scheme === "dark" ? "dark" : "light"];
+  const { theme } = useAppTheme();
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: theme.background, gap: 12 }}>

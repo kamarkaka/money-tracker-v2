@@ -4,13 +4,13 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  useColorScheme,
   Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/lib/auth";
-import { colors } from "@/lib/theme";
+import { useAppTheme } from "@/lib/themeContext";
+import { useI18n } from "@/lib/i18n";
 
 interface MenuItem {
   label: string;
@@ -23,48 +23,51 @@ interface MenuItem {
 
 export default function MoreScreen() {
   const { user, signOut } = useAuth();
-  const scheme = useColorScheme();
-  const theme = colors[scheme === "dark" ? "dark" : "light"];
+  const { theme } = useAppTheme();
+  const { i18n } = useI18n();
   const router = useRouter();
 
   const handleSignOut = () => {
-    Alert.alert("Sign Out", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Sign Out", style: "destructive", onPress: signOut },
+    Alert.alert(i18n("auth.logout"), i18n("common.continue") + "?", [
+      { text: i18n("common.cancel"), style: "cancel" },
+      { text: i18n("auth.logout"), style: "destructive", onPress: signOut },
     ]);
   };
 
   const sections: { title: string; items: MenuItem[] }[] = [
     {
-      title: "Account",
+      title: i18n("nav.setting"),
       items: [
-        { label: "Profile", icon: "person-outline", iconColor: "#6366f1", route: "/pages/profile" },
-        { label: "Settings", icon: "settings-outline", iconColor: "#71717a", route: "/pages/settings" },
-      ],
-    },
-    {
-      title: "Finance",
-      items: [
-        { label: "Accounts", icon: "business-outline", iconColor: "#3b82f6", route: "/pages/accounts" },
-        { label: "Transactions", icon: "list-outline", iconColor: "#f59e0b", route: "/pages/transactions" },
-        { label: "Categories", icon: "bookmark-outline", iconColor: "#8b5cf6", route: "/pages/categories" },
-        { label: "Budgets", icon: "wallet-outline", iconColor: "#10b981", route: "/pages/budgets" },
-        { label: "Rules", icon: "funnel-outline", iconColor: "#f97316", route: "/pages/rules" },
-        { label: "Tags", icon: "pricetag-outline", iconColor: "#14b8a6", route: "/pages/tags" },
+        { label: i18n("nav.setting"), icon: "settings-outline", iconColor: "#71717a", route: "/pages/settings" },
       ],
     },
     {
       title: "",
       items: [
-        { label: "Sign Out", icon: "log-out-outline", iconColor: "#ef4444", textColor: "#ef4444", onPress: handleSignOut },
+        { label: i18n("nav.account"), icon: "business-outline", iconColor: "#3b82f6", route: "/pages/accounts" },
+        { label: i18n("nav.transaction"), icon: "list-outline", iconColor: "#f59e0b", route: "/pages/transactions" },
+        { label: i18n("nav.category"), icon: "bookmark-outline", iconColor: "#8b5cf6", route: "/pages/categories" },
+        { label: i18n("nav.budget"), icon: "wallet-outline", iconColor: "#10b981", route: "/pages/budgets" },
+        { label: i18n("nav.rule"), icon: "funnel-outline", iconColor: "#f97316", route: "/pages/rules" },
+        { label: i18n("nav.tag"), icon: "pricetag-outline", iconColor: "#14b8a6", route: "/pages/tags" },
+      ],
+    },
+    {
+      title: "",
+      items: [
+        { label: i18n("auth.logout"), icon: "log-out-outline", iconColor: "#ef4444", textColor: "#ef4444", onPress: handleSignOut },
       ],
     },
   ];
 
   return (
     <ScrollView style={{ backgroundColor: theme.background }} contentContainerStyle={styles.content}>
-      {/* User info */}
-      <View style={[styles.profileCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+      {/* User info — taps to profile */}
+      <TouchableOpacity
+        style={[styles.profileCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+        onPress={() => router.push("/pages/profile" as any)}
+        activeOpacity={0.7}
+      >
         <View style={[styles.avatar, { backgroundColor: theme.accent }]}>
           <Text style={{ color: theme.accentText, fontSize: 22, fontWeight: "700" }}>
             {(user?.name || user?.email || "?").charAt(0).toUpperCase()}
@@ -74,7 +77,8 @@ export default function MoreScreen() {
           {user?.name && <Text style={{ color: theme.text, fontSize: 17, fontWeight: "600" }}>{user.name}</Text>}
           <Text style={{ color: theme.textSecondary, fontSize: 14 }}>{user?.email}</Text>
         </View>
-      </View>
+        <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+      </TouchableOpacity>
 
       {sections.map((section, si) => (
         <View key={si} style={styles.section}>

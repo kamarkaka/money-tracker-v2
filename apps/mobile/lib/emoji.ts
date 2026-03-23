@@ -6,48 +6,48 @@ import type { Ionicons } from "@expo/vector-icons";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
-interface EmojiIcon {
+export interface EmojiIcon {
   icon: IconName;
   color: string;
   label: string;
+  i18nKey: string;
 }
 
 // Map from emoji character → icon definition
-// Covers all emojis used in the web app's casual mode
 const EMOJI_ICON_MAP: Record<string, EmojiIcon> = {};
 
-function register(emoji: string, icon: IconName, color: string, label: string) {
-  EMOJI_ICON_MAP[emoji] = { icon, color, label };
+function register(emoji: string, icon: IconName, color: string, label: string, i18nKey: string) {
+  EMOJI_ICON_MAP[emoji] = { icon, color, label, i18nKey };
 }
 
 // Use String.fromCodePoint so the keys match what the API returns
 function e(cp: number) { return String.fromCodePoint(cp); }
 function e2(cp1: number, cp2: number) { return String.fromCodePoint(cp1, cp2); }
 
-register(e(0x1F354),        "restaurant-outline", "#ef4444", "Food & Dining");  // 🍔
-register(e(0x1F6D2),        "cart-outline",       "#f59e0b", "Groceries");      // 🛒
-register(e(0x2615),         "cafe-outline",       "#92400e", "Coffee");         // ☕
-register(e(0x1F697),        "car-outline",        "#3b82f6", "Transportation"); // 🚗
-register(e(0x26FD),         "flame-outline",      "#f97316", "Gas");            // ⛽
-register(e(0x1F3E0),        "home-outline",       "#8b5cf6", "Housing");        // 🏠
-register(e(0x1F48A),        "medkit-outline",     "#ec4899", "Health");         // 💊
-register(e(0x1F3AE),        "game-controller-outline", "#6366f1", "Entertainment"); // 🎮
-register(e(0x1F455),        "shirt-outline",      "#14b8a6", "Shopping");       // 👕
-register(e(0x1F4F1),        "phone-portrait-outline", "#0ea5e9", "Subscriptions"); // 📱
-register(e2(0x2708, 0xFE0F),"airplane-outline",   "#0284c7", "Travel");        // ✈️
-register(e(0x2708),         "airplane-outline",   "#0284c7", "Travel");         // ✈ (without FE0F)
-register(e(0x1F393),        "school-outline",     "#7c3aed", "Education");      // 🎓
-register(e(0x1F4B0),        "cash-outline",       "#16a34a", "Income");         // 💰
-register(e(0x1F4B3),        "card-outline",       "#dc2626", "Bills");          // 💳
-register(e(0x1F43E),        "paw-outline",        "#a16207", "Pets");           // 🐾
-register(e(0x1F476),        "happy-outline",      "#e879f9", "Kids");           // 👶
-register(e(0x1F487),        "cut-outline",        "#d946ef", "Personal Care");  // 💇
-register(e(0x1F381),        "gift-outline",       "#e11d48", "Gifts");          // 🎁
-register(e2(0x1F3CB, 0xFE0F),"barbell-outline",   "#059669", "Fitness");       // 🏋️
-register(e(0x1F3CB),        "barbell-outline",    "#059669", "Fitness");        // 🏋 (without FE0F)
-register(e(0x1F4E6),        "cube-outline",       "#71717a", "Others");         // 📦
+register(e(0x1F354),        "restaurant-outline", "#ef4444", "Food & Dining",  "categoryName.foodDining");
+register(e(0x1F6D2),        "cart-outline",       "#f59e0b", "Groceries",      "categoryName.groceries");
+register(e(0x2615),         "cafe-outline",       "#92400e", "Coffee",         "categoryName.coffee");
+register(e(0x1F697),        "car-outline",        "#3b82f6", "Transportation", "categoryName.transportation");
+register(e(0x26FD),         "flame-outline",      "#f97316", "Gas",            "categoryName.gas");
+register(e(0x1F3E0),        "home-outline",       "#8b5cf6", "Housing",        "categoryName.housing");
+register(e(0x1F48A),        "medkit-outline",     "#ec4899", "Health",         "categoryName.health");
+register(e(0x1F3AE),        "game-controller-outline", "#6366f1", "Entertainment", "categoryName.entertainment");
+register(e(0x1F455),        "shirt-outline",      "#14b8a6", "Shopping",       "categoryName.shopping");
+register(e(0x1F4F1),        "phone-portrait-outline", "#0ea5e9", "Subscriptions", "categoryName.subscriptions");
+register(e2(0x2708, 0xFE0F),"airplane-outline",   "#0284c7", "Travel",        "categoryName.travel");
+register(e(0x2708),         "airplane-outline",   "#0284c7", "Travel",         "categoryName.travel");
+register(e(0x1F393),        "school-outline",     "#7c3aed", "Education",      "categoryName.education");
+register(e(0x1F4B0),        "cash-outline",       "#16a34a", "Income",         "categoryName.income");
+register(e(0x1F4B3),        "card-outline",       "#dc2626", "Bills",          "categoryName.bills");
+register(e(0x1F43E),        "paw-outline",        "#a16207", "Pets",           "categoryName.pets");
+register(e(0x1F476),        "happy-outline",      "#e879f9", "Kids",           "categoryName.kids");
+register(e(0x1F487),        "cut-outline",        "#d946ef", "Personal Care",  "categoryName.personalCare");
+register(e(0x1F381),        "gift-outline",       "#e11d48", "Gifts",          "categoryName.gifts");
+register(e2(0x1F3CB, 0xFE0F),"barbell-outline",   "#059669", "Fitness",       "categoryName.fitness");
+register(e(0x1F3CB),        "barbell-outline",    "#059669", "Fitness",        "categoryName.fitness");
+register(e(0x1F4E6),        "cube-outline",       "#71717a", "Others",         "categoryName.others");
 
-const FALLBACK_ICON: EmojiIcon = { icon: "cube-outline", color: "#71717a", label: "Others" };
+const FALLBACK_ICON: EmojiIcon = { icon: "cube-outline", color: "#71717a", label: "Others", i18nKey: "categoryName.others" };
 
 export function getEmojiIcon(emoji: string | null | undefined): EmojiIcon {
   if (!emoji) return FALLBACK_ICON;

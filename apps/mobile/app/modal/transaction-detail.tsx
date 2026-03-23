@@ -7,19 +7,17 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  useColorScheme,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { createTransactionApi, createCategoryApi } from "@money-tracker/api-client";
 import { formatCurrency, formatDate, parseAmount } from "@money-tracker/shared";
 import type { Transaction, Category } from "@money-tracker/shared";
 import { apiClient } from "@/lib/api";
-import { colors } from "@/lib/theme";
+import { useAppTheme } from "@/lib/themeContext";
 
 export default function TransactionDetailModal() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const scheme = useColorScheme();
-  const theme = colors[scheme === "dark" ? "dark" : "light"];
+  const { theme } = useAppTheme();
   const router = useRouter();
   const txApi = createTransactionApi(apiClient);
   const catApi = createCategoryApi(apiClient);
@@ -157,7 +155,7 @@ export default function TransactionDetailModal() {
   );
 }
 
-function DetailRow({ label, value, theme }: { label: string; value: string; theme: typeof colors.light }) {
+function DetailRow({ label, value, theme }: { label: string; value: string; theme: { text: string; textSecondary: string } }) {
   return (
     <View style={styles.detailRow}>
       <Text style={{ color: theme.textSecondary, fontSize: 14 }}>{label}</Text>

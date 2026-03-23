@@ -1,15 +1,16 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Tabs } from "expo-router";
-import { View, TouchableOpacity, StyleSheet, useColorScheme, Animated } from "react-native";
+import { View, TouchableOpacity, StyleSheet, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { Transaction } from "@money-tracker/shared";
-import { colors } from "@/lib/theme";
+import { useAppTheme } from "@/lib/themeContext";
+import { useI18n } from "@/lib/i18n";
 import { ModalContext } from "@/lib/addModal";
 import { TransactionModal } from "@/components/TransactionModal";
 
 export default function TabLayout() {
-  const scheme = useColorScheme();
-  const theme = colors[scheme === "dark" ? "dark" : "light"];
+  const { theme } = useAppTheme();
+  const { i18n } = useI18n();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editTx, setEditTx] = useState<Transaction | null>(null);
@@ -68,9 +69,13 @@ export default function TabLayout() {
             tabBarStyle: {
               backgroundColor: theme.card,
               borderTopColor: theme.cardBorder,
-              height: 88,
-              paddingBottom: 28,
+              height: 82,
+              paddingBottom: 16,
               paddingTop: 8,
+            },
+            tabBarLabelStyle: {
+              fontSize: 12,
+              fontWeight: "600",
             },
             headerStyle: { backgroundColor: theme.card },
             headerTintColor: theme.text,
@@ -80,10 +85,10 @@ export default function TabLayout() {
           <Tabs.Screen
             name="overview"
             options={{
-              title: "Overview",
+              title: i18n("nav.overview"),
               headerShown: false,
               tabBarIcon: ({ color, focused }) => (
-                <Ionicons name={focused ? "pie-chart" : "pie-chart-outline"} size={24} color={color} />
+                <Ionicons name={focused ? "pie-chart" : "pie-chart-outline"} size={28} color={color} />
               ),
             }}
           />
@@ -97,9 +102,9 @@ export default function TabLayout() {
           <Tabs.Screen
             name="more"
             options={{
-              title: "More",
+              title: i18n("nav.more"),
               tabBarIcon: ({ color, focused }) => (
-                <Ionicons name={focused ? "menu" : "menu-outline"} size={24} color={color} />
+                <Ionicons name={focused ? "menu" : "menu-outline"} size={28} color={color} />
               ),
             }}
           />
@@ -133,7 +138,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: "absolute",
-    bottom: 44,
+    bottom: 34,
     alignSelf: "center",
     width: 56,
     height: 56,

@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  useColorScheme,
   RefreshControl,
   NativeSyntheticEvent,
   NativeScrollEvent,
@@ -18,10 +17,11 @@ import { createTransactionApi, createCategoryApi } from "@money-tracker/api-clie
 import { formatCurrency, parseAmount } from "@money-tracker/shared";
 import type { Transaction, Category } from "@money-tracker/shared";
 import { apiClient } from "@/lib/api";
-import { colors } from "@/lib/theme";
+import { useAppTheme } from "@/lib/themeContext";
 import { FALLBACK_EMOJI, getEmojiIcon } from "@/lib/emoji";
 import { useTransactionModal } from "@/lib/addModal";
 import { SlotNumber } from "@/components/SlotNumber";
+import { useI18n } from "@/lib/i18n";
 
 const RING_COLORS = [
   "#3b82f6", "#10b981", "#8b5cf6", "#f59e0b",
@@ -36,9 +36,9 @@ interface EmojiGroup {
   transactions: Transaction[];
 }
 
-function getShortMonths(): string[] {
+function getShortMonths(locale: string): string[] {
   return Array.from({ length: 12 }, (_, i) =>
-    new Intl.DateTimeFormat("en", { month: "short" }).format(new Date(2000, i, 1))
+    new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(2000, i, 1))
   );
 }
 
@@ -104,8 +104,8 @@ function ProgressRing({ size, strokeWidth, pct, ringColor, trackColor, children 
 }
 
 export default function OverviewScreen() {
-  const scheme = useColorScheme();
-  const theme = colors[scheme === "dark" ? "dark" : "light"];
+  const { theme, isDark } = useAppTheme();
+  const { i18n, locale } = useI18n();
   const insets = useSafeAreaInsets();
   const txApi = createTransactionApi(apiClient);
   const catApi = createCategoryApi(apiClient);
@@ -131,7 +131,7 @@ export default function OverviewScreen() {
   const [anchorEnd, setAnchorEnd] = useState({ y: now.getFullYear(), m: now.getMonth() });
   const monthScrollRef = useRef<ScrollView>(null);
 
-  const shortMonths = getShortMonths();
+  const shortMonths = getShortMonths(locale);
 
   const fetchData = useCallback(async () => {
     const startDate = new Date(year, month, 1).toISOString().split("T")[0];
@@ -174,7 +174,7 @@ export default function OverviewScreen() {
   for (const t of transactions) {
     const rawEmoji = t.category?.emoji;
     const emoji = rawEmoji && rawEmoji.length > 0 ? rawEmoji : FALLBACK_EMOJI;
-    const name = t.category?.name || "Others";
+    const name = t.category?.name || i18n("overview.others");
     if (!groupMap.has(emoji)) {
       groupMap.set(emoji, { emoji, name, total: 0, transactions: [] });
     }
@@ -273,36 +273,46 @@ export default function OverviewScreen() {
 
       {/* Summary cards */}
       <View style={[styles.summaryFull, {
-        backgroundColor: netSavings >= 0 ? "#eff6ff" : "#fef2f2",
-        borderColor: netSavings >= 0 ? "#bfdbfe" : "#fecaca",
+        backgroundColor: netSavings >= 0
+          ? (isDark ? "#1e3a5f" : "#eff6ff")
+          : (isDark ? "#4c1d1d" : "#fef2f2"),
+        borderColor: netSavings >= 0
+          ? (isDark ? "#1e40af" : "#bfdbfe")
+          : (isDark ? "#991b1b" : "#fecaca"),
       }]}>
-        <Text style={{ fontSize: 12, fontWeight: "600", color: netSavings >= 0 ? "#1d4ed8" : "#b91c1c" }}>
-          Net Savings
+        <Text style={{ fontSize: 12, fontWeight: "600", color: netSavings >= 0 ? (isDark ? "#93c5fd" : "#1d4ed8") : (isDark ? "#fca5a5" : "#b91c1c") }}>
+          {i18n("overview.netSavings")}
         </Text>
         <View style={{ marginTop: 2 }}>
           <SlotNumber
             value={formatCurrency(netSavings, "USD", true)}
-            style={{ fontSize: 28, fontWeight: "800", color: netSavings >= 0 ? "#2563eb" : "#dc2626" }}
+            style={{ fontSize: 28, fontWeight: "800", color: netSavings >= 0 ? (isDark ? "#60a5fa" : "#2563eb") : (isDark ? "#f87171" : "#dc2626") }}
           />
         </View>
       </View>
 
       <View style={styles.summaryRow}>
-        <View style={[styles.summaryHalf, { backgroundColor: "#ecfdf5", borderColor: "#a7f3d0" }]}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: "#047857" }}>Income</Text>
+        <View style={[styles.summaryHalf, {
+          backgroundColor: isDark ? "#064e3b" : "#ecfdf5",
+          borderColor: isDark ? "#065f46" : "#a7f3d0",
+        }]}>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: isDark ? "#6ee7b7" : "#047857" }}>{i18n("overview.totalIncome")}</Text>
           <View style={{ marginTop: 2 }}>
             <SlotNumber
               value={formatCurrency(totalIncome, "USD", true)}
-              style={{ fontSize: 20, fontWeight: "800", color: "#059669" }}
+              style={{ fontSize: 20, fontWeight: "800", color: isDark ? "#34d399" : "#059669" }}
             />
           </View>
         </View>
-        <View style={[styles.summaryHalf, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: "#b91c1c" }}>Expenses</Text>
+        <View style={[styles.summaryHalf, {
+          backgroundColor: isDark ? "#4c1d1d" : "#fef2f2",
+          borderColor: isDark ? "#991b1b" : "#fecaca",
+        }]}>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: isDark ? "#fca5a5" : "#b91c1c" }}>{i18n("overview.totalExpenses")}</Text>
           <View style={{ marginTop: 2 }}>
             <SlotNumber
               value={formatCurrency(Math.abs(totalExpenses), "USD", true)}
-              style={{ fontSize: 20, fontWeight: "800", color: "#dc2626" }}
+              style={{ fontSize: 20, fontWeight: "800", color: isDark ? "#f87171" : "#dc2626" }}
             />
           </View>
         </View>
@@ -311,7 +321,7 @@ export default function OverviewScreen() {
       {/* Category grid */}
       {groups.length === 0 ? (
         <Text style={{ color: theme.textSecondary, textAlign: "center", marginTop: 40, fontSize: 14 }}>
-          No transactions this month
+          {i18n("overview.noTransactions")}
         </Text>
       ) : (
         <View style={{ marginTop: 8 }}>
@@ -349,7 +359,7 @@ export default function OverviewScreen() {
                           <Ionicons name={iconInfo.icon} size={28} color={ringColor} />
                         </ProgressRing>
                         <Text style={{ fontSize: 11, color: ringColor, marginTop: 4 }} numberOfLines={1}>
-                          {group.name}
+                          {i18n(iconInfo.i18nKey)}
                         </Text>
                         <Text style={{ fontSize: 13, fontWeight: "700", color: ringColor }}>
                           {formatCurrency(Math.round(absTotal), "USD", true)}
@@ -378,7 +388,7 @@ export default function OverviewScreen() {
                           activeOpacity={0.6}
                         >
                           <Text style={{ width: 54, fontSize: 13, color: txColor }}>
-                            {new Date(t.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                            {new Date(t.date).toLocaleDateString(locale, { month: "short", day: "numeric" })}
                           </Text>
                           <Text style={{ flex: 1, fontSize: 15, fontWeight: "500", color: txColor }} numberOfLines={1}>
                             {t.description}

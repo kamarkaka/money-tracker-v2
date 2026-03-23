@@ -8,19 +8,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  useColorScheme,
   Image,
   ScrollView,
 } from "react-native";
 import { Link } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/lib/auth";
-import { colors } from "@/lib/theme";
+import { useAppTheme } from "@/lib/themeContext";
+import { useI18n } from "@/lib/i18n";
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
-  const scheme = useColorScheme();
-  const theme = colors[scheme === "dark" ? "dark" : "light"];
+  const { theme } = useAppTheme();
+  const { i18n } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -67,7 +67,7 @@ export default function LoginScreen() {
             </View>
           </View>
           <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-            Track your personal finances
+            {i18n("auth.tagline")}
           </Text>
         </View>
 
@@ -77,7 +77,7 @@ export default function LoginScreen() {
             <Ionicons name="mail-outline" size={18} color={theme.textSecondary} />
             <TextInput
               style={[styles.inputText, { color: theme.text }]}
-              placeholder="Email"
+              placeholder={i18n("common.email")}
               placeholderTextColor={theme.textSecondary}
               value={email}
               onChangeText={setEmail}
@@ -90,7 +90,7 @@ export default function LoginScreen() {
             <Ionicons name="lock-closed-outline" size={18} color={theme.textSecondary} />
             <TextInput
               style={[styles.inputText, { color: theme.text }]}
-              placeholder="Password"
+              placeholder={i18n("common.password")}
               placeholderTextColor={theme.textSecondary}
               value={password}
               onChangeText={setPassword}
@@ -104,7 +104,7 @@ export default function LoginScreen() {
             activeOpacity={0.8}
           >
             <Text style={[styles.buttonText, { color: theme.accentText }]}>
-              {loading ? "Logging in..." : "Log In"}
+              {loading ? i18n("common.loading") : i18n("auth.login")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -112,7 +112,7 @@ export default function LoginScreen() {
         {/* Or divider */}
         <View style={styles.divider}>
           <View style={[styles.dividerLine, { backgroundColor: theme.cardBorder }]} />
-          <Text style={[styles.dividerText, { color: theme.textSecondary }]}>or</Text>
+          <Text style={[styles.dividerText, { color: theme.textSecondary }]}>{i18n("auth.or")}</Text>
           <View style={[styles.dividerLine, { backgroundColor: theme.cardBorder }]} />
         </View>
 
@@ -123,15 +123,15 @@ export default function LoginScreen() {
           activeOpacity={0.7}
         >
           <GoogleIcon />
-          <Text style={{ color: theme.text, fontSize: 15, fontWeight: "500" }}>Log in with Google</Text>
+          <Text style={{ color: theme.text, fontSize: 15, fontWeight: "500" }}>{i18n("auth.signInWithGoogle")}</Text>
         </TouchableOpacity>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={{ color: theme.textSecondary, fontSize: 14 }}>Don&apos;t have an account? </Text>
+          <Text style={{ color: theme.textSecondary, fontSize: 14 }}>{i18n("auth.noAccount")} </Text>
           <Link href="/(auth)/register" asChild>
             <TouchableOpacity>
-              <Text style={{ color: theme.accent, fontWeight: "600", fontSize: 14 }}>Register</Text>
+              <Text style={{ color: theme.accent, fontWeight: "600", fontSize: 14 }}>{i18n("auth.register")}</Text>
             </TouchableOpacity>
           </Link>
         </View>

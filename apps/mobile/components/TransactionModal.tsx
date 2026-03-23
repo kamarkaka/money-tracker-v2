@@ -7,7 +7,6 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
-  useColorScheme,
   Platform,
   Animated,
   Dimensions,
@@ -19,7 +18,8 @@ import { createTransactionApi, createAccountApi } from "@money-tracker/api-clien
 import type { Account, Transaction } from "@money-tracker/shared";
 import { parseAmount } from "@money-tracker/shared";
 import { apiClient } from "@/lib/api";
-import { colors } from "@/lib/theme";
+import { useAppTheme } from "@/lib/themeContext";
+import { useI18n } from "@/lib/i18n";
 import { DEFAULT_CATEGORY_ICONS } from "@/lib/emoji";
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
@@ -36,8 +36,8 @@ interface Props {
 
 export function TransactionModal({ open, onClose, onComplete, editTransaction }: Props) {
   const isEdit = !!editTransaction;
-  const scheme = useColorScheme();
-  const theme = colors[scheme === "dark" ? "dark" : "light"];
+  const { theme, isDark } = useAppTheme();
+  const { i18n, locale } = useI18n();
   const txApi = createTransactionApi(apiClient);
   const accApi = createAccountApi(apiClient);
 
@@ -115,9 +115,9 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
   };
 
   const handleSave = async () => {
-    if (!accountId) { Alert.alert("Error", "Please select an account"); return; }
+    if (!accountId) { Alert.alert(i18n("common.error"), i18n("transaction.accountRequired")); return; }
     const parsed = parseFloat(amount);
-    if (isNaN(parsed) || parsed <= 0) { Alert.alert("Error", "Please enter a valid amount"); return; }
+    if (isNaN(parsed) || parsed <= 0) { Alert.alert(i18n("common.error"), i18n("transaction.amountRequired")); return; }
 
     setSaving(true);
     try {
@@ -140,8 +140,8 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
       onComplete?.();
       handleClose();
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Failed to save";
-      Alert.alert("Error", msg);
+      const msg = e instanceof Error ? e.message : i18n("common.error");
+      Alert.alert(i18n("common.error"), msg);
     } finally {
       setSaving(false);
     }
@@ -149,10 +149,10 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
 
   const handleDelete = () => {
     if (!editTransaction) return;
-    Alert.alert("Delete Transaction", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(i18n("transaction.deleteTransaction"), i18n("transaction.deleteWarning"), [
+      { text: i18n("common.cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: i18n("common.delete"),
         style: "destructive",
         onPress: async () => {
           setSaving(true);
@@ -161,7 +161,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
             onComplete?.();
             handleClose();
           } catch {
-            Alert.alert("Error", "Failed to delete");
+            Alert.alert(i18n("common.error"), i18n("common.error"));
           } finally {
             setSaving(false);
           }
@@ -170,7 +170,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
     ]);
   };
 
-  const dateLabel = date.toLocaleDateString("en-US", {
+  const dateLabel = date.toLocaleDateString(locale, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -231,7 +231,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
               mode="date"
               display={Platform.OS === "ios" ? "spinner" : "default"}
               onChange={handleDateChange}
-              themeVariant={scheme === "dark" ? "dark" : "light"}
+              themeVariant={isDark ? "dark" : "light"}
             />
           )}
 
@@ -241,13 +241,13 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
               style={[styles.toggleBtn, isExpense && { backgroundColor: "#fee2e2" }]}
               onPress={() => setIsExpense(true)}
             >
-              <Text style={{ color: isExpense ? "#dc2626" : theme.textSecondary, fontWeight: "600" }}>Expense</Text>
+              <Text style={{ color: isExpense ? "#dc2626" : theme.textSecondary, fontWeight: "600" }}>{i18n("transaction.expense")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toggleBtn, !isExpense && { backgroundColor: "#dcfce7" }]}
               onPress={() => setIsExpense(false)}
             >
-              <Text style={{ color: !isExpense ? "#16a34a" : theme.textSecondary, fontWeight: "600" }}>Income</Text>
+              <Text style={{ color: !isExpense ? "#16a34a" : theme.textSecondary, fontWeight: "600" }}>{i18n("transaction.income")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -274,7 +274,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
           {/* Description */}
           <TextInput
             style={[styles.textArea, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.cardBorder }]}
-            placeholder="What was this for?"
+            placeholder={i18n("transaction.descriptionOptional")}
             placeholderTextColor={theme.textSecondary}
             value={description}
             onChangeText={setDescription}
@@ -302,7 +302,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
               activeOpacity={0.8}
             >
               <Text style={styles.saveButtonText}>
-                {saving ? "Saving..." : isEdit ? "Save Changes" : "Add Transaction"}
+                {saving ? i18n("common.saving") : isEdit ? i18n("common.saveChanges") : i18n("transaction.addTransaction")}
               </Text>
             </TouchableOpacity>
           </View>
