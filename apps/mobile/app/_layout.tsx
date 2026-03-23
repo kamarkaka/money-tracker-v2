@@ -90,10 +90,6 @@ export default function RootLayout() {
               options={{ presentation: "modal", headerShown: false }}
             />
             <Stack.Screen
-              name="pages/profile"
-              options={{ title: "Profile", headerBackTitle: "Back" }}
-            />
-            <Stack.Screen
               name="pages/settings"
               options={{ title: "Settings", headerBackTitle: "Back" }}
             />

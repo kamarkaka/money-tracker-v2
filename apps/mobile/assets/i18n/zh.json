@@ -68,6 +68,10 @@
     "more": "更多",
     "welcome": "欢迎，{name}"
   },
+  "more": {
+    "proFeatures": "专业功能",
+    "unlockPro": "解锁专业版"
+  },
   "categoryName": {
     "foodDining": "餐饮",
     "groceries": "杂货",
@@ -335,7 +339,9 @@
   "data": {
     "exportData": "导出数据",
     "importData": "导入数据",
-    "importWarning": "这将用导入的文件替换所有现有数据。此操作无法撤销。是否继续？"
+    "importWarning": "这将用导入的文件替换所有现有数据。此操作无法撤销。是否继续？",
+    "dataManagement": "数据",
+    "dataManagementDesc": "导出或导入您的财务数据。"
   },
   "guide": {
     "casualOverview": {

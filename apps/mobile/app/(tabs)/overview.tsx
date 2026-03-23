@@ -118,6 +118,7 @@ export default function OverviewScreen() {
   const [showLeftFade, setShowLeftFade] = useState(false);
   const [showRightFade, setShowRightFade] = useState(true);
   const { openEdit, setOnComplete } = useTransactionModal();
+  const [earliestDate, setEarliestDate] = useState<{ y: number; m: number } | null>(null);
 
   const handleMonthScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
@@ -128,8 +129,21 @@ export default function OverviewScreen() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
-  const [anchorEnd, setAnchorEnd] = useState({ y: now.getFullYear(), m: now.getMonth() });
   const monthScrollRef = useRef<ScrollView>(null);
+
+  const refreshEarliestDate = useCallback(() => {
+    txApi.list({ pageSize: 1, sortBy: "date", sortOrder: "asc" }).then((res) => {
+      if (res.transactions.length > 0) {
+        const d = new Date(res.transactions[0].date);
+        setEarliestDate({ y: d.getFullYear(), m: d.getMonth() });
+      }
+    });
+  }, []);
+
+  // Fetch the earliest transaction date to determine month picker range
+  useEffect(() => {
+    refreshEarliestDate();
+  }, [refreshEarliestDate]);
 
   const shortMonths = getShortMonths(locale);
 
@@ -144,7 +158,8 @@ export default function OverviewScreen() {
 
     setTransactions(txData.transactions);
     setCategories(catData);
-  }, [year, month]);
+    refreshEarliestDate();
+  }, [year, month, refreshEarliestDate]);
 
   useEffect(() => {
     fetchData().finally(() => {
@@ -163,10 +178,19 @@ export default function OverviewScreen() {
     setRefreshing(false);
   };
 
-  // Build month pills
+  // Build month pills from current month back to earliest transaction (min 12 months)
   const monthPills: { y: number; m: number }[] = [];
-  for (let i = 0; i < 12; i++) {
-    monthPills.push(addMonths(anchorEnd.y, anchorEnd.m, -i));
+  {
+    const endY = now.getFullYear();
+    const endM = now.getMonth();
+    let minMonths = 12;
+    if (earliestDate) {
+      const totalMonths = (endY - earliestDate.y) * 12 + (endM - earliestDate.m) + 1;
+      if (totalMonths > minMonths) minMonths = totalMonths;
+    }
+    for (let i = 0; i < minMonths; i++) {
+      monthPills.push(addMonths(endY, endM, -i));
+    }
   }
 
   // Group transactions by emoji
@@ -231,12 +255,12 @@ export default function OverviewScreen() {
               <TouchableOpacity
                 key={`${y}-${m}`}
                 onPress={() => { setYear(y); setMonth(m); setExpandedEmoji(null); }}
-                style={[styles.monthPill, isSelected && { backgroundColor: theme.accent }]}
+                style={[styles.monthPill, isSelected && { backgroundColor: "#10b981" }]}
                 activeOpacity={0.7}
               >
                 <Text style={[
                   styles.monthPillText,
-                  { color: isSelected ? theme.accentText : theme.textSecondary },
+                  { color: isSelected ? "#ffffff" : theme.textSecondary },
                   isSelected && { fontWeight: "700" },
                 ]}>
                   {shortMonths[m]}

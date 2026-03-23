@@ -68,6 +68,10 @@
     "more": "More",
     "welcome": "Welcome, {name}"
   },
+  "more": {
+    "proFeatures": "Pro Features",
+    "unlockPro": "Unlock Pro"
+  },
   "categoryName": {
     "foodDining": "Food & Dining",
     "groceries": "Groceries",
@@ -335,7 +339,9 @@
   "data": {
     "exportData": "Export Data",
     "importData": "Import Data",
-    "importWarning": "This will replace all existing data with the imported file. This cannot be undone. Continue?"
+    "importWarning": "This will replace all existing data with the imported file. This cannot be undone. Continue?",
+    "dataManagement": "Data",
+    "dataManagementDesc": "Export or import your financial data."
   },
   "guide": {
     "casualOverview": {

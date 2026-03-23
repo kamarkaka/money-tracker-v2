@@ -6,12 +6,14 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { createSettingsApi } from "@money-tracker/api-client";
 import { apiClient } from "@/lib/api";
 import { useAppTheme } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
+import { exportToFile, pickAndImport } from "@/lib/db";
 
 type ThemeSetting = "light" | "dark" | "system";
 
@@ -32,6 +34,8 @@ export default function SettingsPage() {
   const api = useRef(createSettingsApi(apiClient)).current;
 
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     api.get().then(() => {
@@ -44,7 +48,52 @@ export default function SettingsPage() {
   };
 
   const handleLangChange = (code: string) => {
-    setLocale(code); // Updates i18n context + saves to API
+    setLocale(code);
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      await exportToFile();
+    } catch (e) {
+      Alert.alert(
+        i18n("common.error"),
+        e instanceof Error ? e.message : "Export failed",
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImport = () => {
+    Alert.alert(
+      i18n("data.importData"),
+      i18n("data.importWarning"),
+      [
+        { text: i18n("common.cancel"), style: "cancel" },
+        {
+          text: i18n("data.importData"),
+          style: "destructive",
+          onPress: async () => {
+            setImporting(true);
+            try {
+              const result = await pickAndImport();
+              Alert.alert(
+                result.success ? i18n("common.success") : i18n("common.error"),
+                result.message,
+              );
+            } catch (e) {
+              Alert.alert(
+                i18n("common.error"),
+                e instanceof Error ? e.message : "Import failed",
+              );
+            } finally {
+              setImporting(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   if (loading) {
@@ -126,6 +175,46 @@ export default function SettingsPage() {
           })}
         </View>
       </View>
+
+      {/* Data */}
+      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+        <Text style={[styles.cardTitle, { color: theme.text }]}>{i18n("data.dataManagement")}</Text>
+        <Text style={[styles.cardDesc, { color: theme.textSecondary }]}>{i18n("data.dataManagementDesc")}</Text>
+
+        <TouchableOpacity
+          style={[styles.dataBtn, { borderColor: theme.cardBorder }]}
+          onPress={handleExport}
+          disabled={exporting || importing}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="share-outline" size={20} color="#0ea5e9" />
+          <Text style={{ fontSize: 15, fontWeight: "600", color: theme.text, flex: 1 }}>
+            {i18n("data.exportData")}
+          </Text>
+          {exporting ? (
+            <ActivityIndicator size="small" color={theme.accent} />
+          ) : (
+            <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.dataBtn, { borderColor: theme.cardBorder }]}
+          onPress={handleImport}
+          disabled={exporting || importing}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="download-outline" size={20} color="#8b5cf6" />
+          <Text style={{ fontSize: 15, fontWeight: "600", color: theme.text, flex: 1 }}>
+            {i18n("data.importData")}
+          </Text>
+          {importing ? (
+            <ActivityIndicator size="small" color={theme.accent} />
+          ) : (
+            <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+          )}
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -156,5 +245,12 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     alignItems: "center",
+  },
+  dataBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
 });

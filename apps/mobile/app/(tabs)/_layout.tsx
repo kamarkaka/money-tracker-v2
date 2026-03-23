@@ -64,7 +64,7 @@ export default function TabLayout() {
       <View style={{ flex: 1 }}>
         <Tabs
           screenOptions={{
-            tabBarActiveTintColor: theme.accent,
+            tabBarActiveTintColor: "#10b981",
             tabBarInactiveTintColor: theme.textSecondary,
             tabBarStyle: {
               backgroundColor: theme.card,
