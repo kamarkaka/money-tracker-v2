@@ -1,41 +1,16 @@
 {
-  "name": "money-tracker-2",
-  "version": "0.1.0",
+  "name": "money-tracker",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@heroicons/react": "2.2.0",
-    "@prisma/adapter-pg": "7.5.0",
-    "@prisma/client": "7.5.0",
-    "bcryptjs": "3.0.3",
-    "next": "16.1.6",
-    "next-auth": "5.0.0-beta.30",
-    "next-intl": "^4.8.3",
-    "nodemailer": "7.0.11",
-    "pg": "8.20.0",
-    "prisma": "7.5.0",
-    "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web",
+    "lint": "npm run lint --workspace=apps/web"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "4.2.1",
-    "@types/node": "20.19.37",
-    "@types/nodemailer": "7.0.11",
-    "@types/pg": "8.18.0",
-    "@types/react": "19.2.14",
-    "@types/react-dom": "19.2.3",
-    "dotenv": "17.3.1",
-    "eslint": "9.28.0",
-    "eslint-config-next": "16.1.6",
-    "tailwindcss": "4.2.1",
-    "typescript": "5.8.3"
-  },
-  "overrides": {
-    "nodemailer": "7.0.11"
+    "turbo": "^2.5.0"
   }
 }

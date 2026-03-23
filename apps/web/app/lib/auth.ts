@@ -2,10 +2,12 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from 'next-auth/providers/google';
 import { compareSync } from "bcryptjs";
+import { headers } from "next/headers";
 import { prisma } from "@/app/lib/db";
 import { ensureSophtronCustomer } from "@/app/lib/sophtron/create-customer";
+import { verifyMobileToken } from "@/app/lib/mobile-jwt";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+const nextAuth = NextAuth({
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
@@ -111,3 +113,41 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
 });
+
+export const { handlers, signIn, signOut } = nextAuth;
+
+/**
+ * Extended auth: tries NextAuth session first, then falls back to mobile Bearer token.
+ * All existing API routes calling auth() automatically support mobile clients.
+ */
+export async function auth() {
+  const session = await nextAuth.auth();
+  if (session?.user?.id) {
+    return session;
+  }
+
+  // Fall back to mobile Bearer token
+  try {
+    const headerStore = await headers();
+    const authorization = headerStore.get("authorization");
+    if (authorization?.startsWith("Bearer ")) {
+      const token = authorization.slice(7);
+      const payload = await verifyMobileToken(token);
+      if (payload) {
+        return {
+          user: {
+            id: payload.userId,
+            email: payload.email,
+            name: undefined as string | undefined,
+            image: undefined as string | undefined,
+          },
+          expires: "",
+        };
+      }
+    }
+  } catch {
+    // headers() may throw outside of request context; ignore
+  }
+
+  return null;
+}

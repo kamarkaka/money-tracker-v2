@@ -1,0 +1,18 @@
+{
+  "name": "@money-tracker/hooks",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@money-tracker/api-client": "*",
+    "@money-tracker/shared": "*"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "typescript": "5.8.3"
+  }
+}
