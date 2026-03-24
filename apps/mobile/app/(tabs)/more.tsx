@@ -1,16 +1,18 @@
+import { useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
 import { MENU_COLORS } from "@/lib/colors";
+import { useSubscription } from "@/lib/subscription";
+import { ProPaywall } from "@/components/ProPaywall";
 
 interface MenuItem {
   label: string;
@@ -23,6 +25,8 @@ export default function MoreScreen() {
   const { theme } = useAppTheme();
   const { i18n } = useI18n();
   const router = useRouter();
+  const { isPro } = useSubscription();
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const settingsItems: MenuItem[] = [
     { label: i18n("nav.setting"), icon: "settings-outline", iconColor: MENU_COLORS.settings, route: "/pages/settings" },
@@ -80,46 +84,57 @@ export default function MoreScreen() {
           {i18n("more.proFeatures")}
         </Text>
 
-        {/* Unlock Pro button */}
-        <TouchableOpacity
-          style={[styles.unlockBtn, { backgroundColor: theme.brand }]}
-          activeOpacity={0.8}
-          onPress={() => Alert.alert(i18n("more.comingSoon"))}
-        >
-          <Ionicons name="lock-open-outline" size={18} color={theme.brandText} />
-          <Text style={[styles.unlockBtnText, { color: theme.brandText }]}>{i18n("more.unlockPro")}</Text>
-        </TouchableOpacity>
+        {!isPro && (
+          <TouchableOpacity
+            style={[styles.unlockBtn, { backgroundColor: theme.brand }]}
+            activeOpacity={0.8}
+            onPress={() => setShowPaywall(true)}
+          >
+            <Ionicons name="lock-open-outline" size={18} color={theme.brandText} />
+            <Text style={[styles.unlockBtnText, { color: theme.brandText }]}>{i18n("more.unlockPro")}</Text>
+          </TouchableOpacity>
+        )}
 
         <View
           style={[
             styles.sectionCard,
-            { backgroundColor: theme.card, borderColor: theme.cardBorder, opacity: 0.5 },
+            { backgroundColor: theme.card, borderColor: theme.cardBorder },
+            !isPro && { opacity: 0.5 },
           ]}
         >
-          {proItems.map((item, ii) => (
-            <View
-              key={ii}
-              style={[
-                styles.menuItem,
-                ii < proItems.length - 1 && {
-                  borderBottomWidth: StyleSheet.hairlineWidth,
-                  borderBottomColor: theme.cardBorder,
-                },
-              ]}
-            >
-              <View
-                style={[styles.iconCircle, { backgroundColor: item.iconColor + "18" }]}
+          {proItems.map((item, ii) => {
+            const ItemWrapper = isPro ? TouchableOpacity : View;
+            return (
+              <ItemWrapper
+                key={ii}
+                style={[
+                  styles.menuItem,
+                  ii < proItems.length - 1 && {
+                    borderBottomWidth: StyleSheet.hairlineWidth,
+                    borderBottomColor: theme.cardBorder,
+                  },
+                ]}
+                {...(isPro ? { onPress: () => router.push(item.route as any), activeOpacity: 0.6 } : {})}
               >
-                <Ionicons name={item.icon} size={20} color={item.iconColor} />
-              </View>
-              <Text style={{ color: theme.text, fontSize: 16, flex: 1 }}>
-                {item.label}
-              </Text>
-              <Ionicons name="lock-closed" size={16} color={theme.textSecondary} />
-            </View>
-          ))}
+                <View
+                  style={[styles.iconCircle, { backgroundColor: item.iconColor + "18" }]}
+                >
+                  <Ionicons name={item.icon} size={20} color={item.iconColor} />
+                </View>
+                <Text style={{ color: theme.text, fontSize: 16, flex: 1 }}>
+                  {item.label}
+                </Text>
+                <Ionicons
+                  name={isPro ? "chevron-forward" : "lock-closed"}
+                  size={isPro ? 18 : 16}
+                  color={theme.textSecondary}
+                />
+              </ItemWrapper>
+            );
+          })}
         </View>
       </View>
+      <ProPaywall visible={showPaywall} onClose={() => setShowPaywall(false)} />
     </ScrollView>
   );
 }

@@ -15,6 +15,7 @@ import { useAppTheme, type ThemeSetting } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
 import { exportToFile, pickAndImport } from "@/lib/db";
 import { MENU_COLORS } from "@/lib/colors";
+import { useSubscription } from "@/lib/subscription";
 
 const THEME_OPTIONS: { value: ThemeSetting; icon: keyof typeof Ionicons.glyphMap; labelKey: string }[] = [
   { value: "light", icon: "sunny-outline", labelKey: "setting.light" },
@@ -35,6 +36,8 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const { restore } = useSubscription();
 
   useEffect(() => {
     api.get().then(() => {
@@ -93,6 +96,21 @@ export default function SettingsPage() {
         },
       ],
     );
+  };
+
+  const handleRestore = async () => {
+    setRestoring(true);
+    try {
+      const restored = await restore();
+      Alert.alert(
+        restored ? i18n("common.success") : i18n("paywall.restoreFailed"),
+        restored ? i18n("paywall.restoreSuccess") : i18n("paywall.noSubscription"),
+      );
+    } catch {
+      Alert.alert(i18n("common.error"), i18n("common.error"));
+    } finally {
+      setRestoring(false);
+    }
   };
 
   if (loading) {
@@ -208,6 +226,23 @@ export default function SettingsPage() {
             {i18n("data.importData")}
           </Text>
           {importing ? (
+            <ActivityIndicator size="small" color={theme.accent} />
+          ) : (
+            <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.dataBtn, { borderColor: theme.cardBorder }]}
+          onPress={handleRestore}
+          disabled={restoring}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="refresh-outline" size={20} color={theme.brand} />
+          <Text style={{ fontSize: 15, fontWeight: "600", color: theme.text, flex: 1 }}>
+            {i18n("paywall.restore")}
+          </Text>
+          {restoring ? (
             <ActivityIndicator size="small" color={theme.accent} />
           ) : (
             <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />

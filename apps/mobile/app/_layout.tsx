@@ -10,6 +10,7 @@ import { colors } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
 import { getDatabase } from "@/lib/db";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SubscriptionProvider } from "@/lib/subscription";
 
 export default function RootLayout() {
   const systemScheme = useColorScheme();
@@ -89,6 +90,7 @@ export default function RootLayout() {
     >
       <I18nProvider initialLocale={locale}>
         <ApiClientContext.Provider value={apiClient}>
+          <SubscriptionProvider>
           <ThemeProvider value={{
             ...(isDark ? DarkTheme : DefaultTheme),
             colors: {
@@ -139,6 +141,7 @@ export default function RootLayout() {
             <Stack.Screen name="index" options={{ headerShown: false }} />
           </Stack>
           </ThemeProvider>
+          </SubscriptionProvider>
         </ApiClientContext.Provider>
       </I18nProvider>
     </ThemeContext.Provider>
