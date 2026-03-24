@@ -51,3 +51,7 @@ apps/mobile/ios/
 apps/mobile/android/
 
 money_tracker_backup.sql
+
+# build/publish info
+apps/mobile/app.config.ts
+apps/mobile/eas.json
