@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -82,6 +83,7 @@ export default function MoreScreen() {
         <TouchableOpacity
           style={styles.unlockBtn}
           activeOpacity={0.8}
+          onPress={() => Alert.alert(i18n("more.comingSoon"))}
         >
           <Ionicons name="lock-open-outline" size={18} color="#ffffff" />
           <Text style={styles.unlockBtnText}>{i18n("more.unlockPro")}</Text>

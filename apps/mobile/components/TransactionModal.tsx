@@ -128,7 +128,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardWillShow", (e) => {
       Animated.timing(keyboardOffset, {
-        toValue: -(e.endCoordinates.height * 0.4),
+        toValue: -(e.endCoordinates.height * 0.6),
         duration: e.duration || 250,
         useNativeDriver: true,
       }).start();

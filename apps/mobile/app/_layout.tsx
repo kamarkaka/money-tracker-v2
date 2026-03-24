@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useColorScheme, ActivityIndicator, View } from "react-native";
 import { Stack } from "expo-router";
+import { ThemeProvider, DarkTheme, DefaultTheme } from "@react-navigation/native";
 import { ApiClientContext } from "@money-tracker/hooks";
 import { createSettingsApi } from "@money-tracker/api-client";
 import { apiClient } from "@/lib/api";
@@ -83,7 +84,24 @@ export default function RootLayout() {
     >
       <I18nProvider initialLocale={locale}>
         <ApiClientContext.Provider value={apiClient}>
-          <Stack>
+          <ThemeProvider value={{
+            ...(isDark ? DarkTheme : DefaultTheme),
+            colors: {
+              ...(isDark ? DarkTheme : DefaultTheme).colors,
+              background: theme.background,
+              card: theme.card,
+              text: theme.text,
+              border: theme.cardBorder,
+              primary: theme.accent,
+            },
+          }}>
+          <Stack
+            screenOptions={{
+              headerStyle: { backgroundColor: theme.card },
+              headerTintColor: theme.text,
+              headerShadowVisible: false,
+            }}
+          >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen
               name="modal/transaction-detail"
@@ -119,6 +137,7 @@ export default function RootLayout() {
             />
             <Stack.Screen name="index" options={{ headerShown: false }} />
           </Stack>
+          </ThemeProvider>
         </ApiClientContext.Provider>
       </I18nProvider>
     </ThemeContext.Provider>

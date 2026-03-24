@@ -10,8 +10,13 @@ import {
   RefreshControl,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Dimensions,
+  PanResponder,
+  GestureResponderEvent,
+  PanResponderGestureState,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import Svg, { Circle } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { createTransactionApi, createCategoryApi } from "@money-tracker/api-client";
@@ -24,10 +29,11 @@ import { useTransactionModal } from "@/lib/addModal";
 import { SlotNumber } from "@/components/SlotNumber";
 import { useI18n } from "@/lib/i18n";
 
+// #3 — Harmonized teal/cyan/blue palette (avoids #10b981 green button)
 const RING_COLORS = [
-  "#3b82f6", "#10b981", "#8b5cf6", "#f59e0b",
-  "#f43f5e", "#14b8a6", "#f97316", "#6366f1",
-  "#ec4899", "#06b6d4",
+  "#0ea5e9", "#8b5cf6", "#06b6d4", "#f59e0b",
+  "#0891b2", "#6366f1", "#0d9488", "#ec4899",
+  "#0284c7", "#0e7490",
 ];
 
 interface EmojiGroup {
@@ -51,7 +57,6 @@ function addMonths(y: number, m: number, delta: number): { y: number; m: number 
   return { y: newY, m: newM };
 }
 
-// Pure View-based circular progress ring
 function ProgressRing({ size, strokeWidth, pct, ringColor, trackColor, children }: {
   size: number;
   strokeWidth: number;
@@ -60,44 +65,28 @@ function ProgressRing({ size, strokeWidth, pct, ringColor, trackColor, children 
   trackColor: string;
   children: React.ReactNode;
 }) {
-  const radius = size / 2;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
   const clampedPct = Math.min(Math.max(pct, 0), 1);
-  const degrees = clampedPct * 360;
+  const offset = circumference - clampedPct * circumference;
+  const center = size / 2;
 
   return (
     <View style={{ width: size, height: size }}>
-      <View style={{
-        position: "absolute", width: size, height: size,
-        borderRadius: radius, borderWidth: strokeWidth, borderColor: trackColor,
-      }} />
-      {clampedPct > 0 && (
-        <View style={{ position: "absolute", width: size, height: size }}>
-          <View style={{ position: "absolute", width: size, height: size, overflow: "hidden" }}>
-            <View style={{ position: "absolute", width: size / 2, height: size, left: size / 2, overflow: "hidden" }}>
-              <View style={{
-                width: size, height: size, left: -(size / 2),
-                borderRadius: radius, borderWidth: strokeWidth, borderColor: ringColor,
-                transform: [{ rotate: `${Math.min(degrees, 180)}deg` }],
-              }} />
-            </View>
-          </View>
-          {degrees > 180 && (
-            <View style={{ position: "absolute", width: size, height: size, overflow: "hidden" }}>
-              <View style={{ position: "absolute", width: size / 2, height: size, left: 0, overflow: "hidden" }}>
-                <View style={{
-                  width: size, height: size,
-                  borderRadius: radius, borderWidth: strokeWidth, borderColor: ringColor,
-                  transform: [{ rotate: `${degrees}deg` }],
-                }} />
-              </View>
-            </View>
-          )}
-        </View>
-      )}
-      <View style={{
-        position: "absolute", width: size, height: size,
-        justifyContent: "center", alignItems: "center",
-      }}>
+      <Svg width={size} height={size} style={{ position: "absolute", transform: [{ rotate: "-90deg" }] }}>
+        <Circle
+          cx={center} cy={center} r={radius}
+          fill="none" stroke={trackColor} strokeWidth={strokeWidth}
+        />
+        <Circle
+          cx={center} cy={center} r={radius}
+          fill="none" stroke={ringColor} strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+        />
+      </Svg>
+      <View style={{ position: "absolute", width: size, height: size, justifyContent: "center", alignItems: "center" }}>
         {children}
       </View>
     </View>
@@ -116,21 +105,53 @@ export default function OverviewScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [expandedEmoji, setExpandedEmoji] = useState<string | null>(null);
-  const [showLeftFade, setShowLeftFade] = useState(false);
-  const [showRightFade, setShowRightFade] = useState(true);
+  const [showScrollBar, setShowScrollBar] = useState(true);
   const { openEdit, setOnComplete } = useTransactionModal();
   const [earliestDate, setEarliestDate] = useState<{ y: number; m: number } | null>(null);
 
+  const now = new Date();
+  const [yearMonth, setYearMonth] = useState({ year: now.getFullYear(), month: now.getMonth() });
+  const { year, month } = yearMonth;
+  const monthScrollRef = useRef<ScrollView>(null);
+
+  const screenWidth = Dimensions.get("window").width;
+  const EDGE_ZONE = 50;
+  const SWIPE_THRESHOLD = 40;
+
+  const swipeRef = useRef({ setYearMonth, setExpandedEmoji, yearMonth });
+  swipeRef.current = { setYearMonth, setExpandedEmoji, yearMonth };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_e: GestureResponderEvent, gs: PanResponderGestureState) => {
+        const startX = (gs as any).x0 ?? 0;
+        const sw = Dimensions.get("window").width;
+        const isEdge = startX <= 50 || startX >= sw - 50;
+        return isEdge && Math.abs(gs.dx) > 15 && Math.abs(gs.dx) > Math.abs(gs.dy) * 2;
+      },
+      onPanResponderRelease: (_e: GestureResponderEvent, gs: PanResponderGestureState) => {
+        const startX = (gs as any).x0 ?? 0;
+        const sw = Dimensions.get("window").width;
+        const { setYearMonth: setYM, setExpandedEmoji: setEE, yearMonth: ym } = swipeRef.current;
+        if (startX >= sw - 50 && gs.dx < -40) {
+          const prev = addMonths(ym.year, ym.month, -1);
+          setYM({ year: prev.y, month: prev.m });
+          setEE(null);
+        } else if (startX <= 50 && gs.dx > 40) {
+          const n = new Date();
+          if (ym.year === n.getFullYear() && ym.month === n.getMonth()) return;
+          const next = addMonths(ym.year, ym.month, 1);
+          setYM({ year: next.y, month: next.m });
+          setEE(null);
+        }
+      },
+    }),
+  ).current;
+
   const handleMonthScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
-    setShowLeftFade(contentOffset.x > 10);
-    setShowRightFade(contentOffset.x < contentSize.width - layoutMeasurement.width - 10);
+    setShowScrollBar(contentOffset.x < contentSize.width - layoutMeasurement.width - 10);
   };
-
-  const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth());
-  const monthScrollRef = useRef<ScrollView>(null);
 
   const refreshEarliestDate = useCallback(() => {
     txApi.list({ pageSize: 1, sortBy: "date", sortOrder: "asc" }).then((res) => {
@@ -175,6 +196,20 @@ export default function OverviewScreen() {
     }, [fetchData, initialLoad]),
   );
 
+  // Scroll month picker to reveal selected month
+  useEffect(() => {
+    const nowY = now.getFullYear();
+    const nowM = now.getMonth();
+    // Index in monthPills (0 = current month, increasing = older)
+    const idx = (nowY - year) * 12 + (nowM - month);
+    if (idx >= 0 && monthScrollRef.current) {
+      const PILL_WIDTH = 82; // approximate pill width + gap
+      setTimeout(() => {
+        monthScrollRef.current?.scrollTo({ x: Math.max(0, idx * PILL_WIDTH - 40), animated: true });
+      }, 50);
+    }
+  }, [year, month]);
+
   // Register fetchData so the transaction modal refreshes data after save/delete
   useEffect(() => {
     setOnComplete(() => fetchData);
@@ -182,7 +217,10 @@ export default function OverviewScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchData();
+    await Promise.all([
+      fetchData(),
+      new Promise((r) => setTimeout(r, 1000)),
+    ]);
     setRefreshing(false);
   };
 
@@ -228,6 +266,15 @@ export default function OverviewScreen() {
   const totalExpenses = nonTransfer.filter((t) => parseAmount(t.amount) < 0).reduce((s, t) => s + parseAmount(t.amount), 0);
   const netSavings = totalIncome + totalExpenses;
 
+  // Ring percentages use all transactions (including transfers), matching web app
+  const allIncome = transactions.filter((t) => parseAmount(t.amount) > 0).reduce((s, t) => s + parseAmount(t.amount), 0);
+  const allExpenses = transactions.filter((t) => parseAmount(t.amount) < 0).reduce((s, t) => s + parseAmount(t.amount), 0);
+
+  // #7 — Net savings color
+  const savingsColor = netSavings >= 0
+    ? (isDark ? "#34d399" : "#059669")
+    : (isDark ? "#f87171" : "#dc2626");
+
   if (initialLoad) {
     return (
       <View style={[styles.center, { backgroundColor: theme.background, paddingTop: insets.top }]}>
@@ -239,11 +286,19 @@ export default function OverviewScreen() {
   const labeledYears = new Set<number>();
 
   return (
+    <View style={{ flex: 1, backgroundColor: theme.background }} {...panResponder.panHandlers}>
+    {/* #1 — Gradient header background */}
+    <LinearGradient
+      colors={isDark ? ["#064e3b", theme.background] : ["#ecfdf5", theme.background]}
+      style={styles.headerGradient}
+      pointerEvents="none"
+    />
     <ScrollView
-      style={{ backgroundColor: theme.background }}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + 8 }]}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.accent} />}
+      style={{ backgroundColor: "transparent" }}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top }]}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10b981" progressViewOffset={insets.top} />}
     >
+
       {/* Month picker */}
       <View style={styles.monthPickerContainer}>
         <ScrollView
@@ -262,7 +317,7 @@ export default function OverviewScreen() {
             return (
               <TouchableOpacity
                 key={`${y}-${m}`}
-                onPress={() => { setYear(y); setMonth(m); setExpandedEmoji(null); }}
+                onPress={() => { setYearMonth({ year: y, month: m }); setExpandedEmoji(null); }}
                 style={[styles.monthPill, isSelected && { backgroundColor: "#10b981" }]}
                 activeOpacity={0.7}
               >
@@ -278,74 +333,48 @@ export default function OverviewScreen() {
             );
           })}
         </ScrollView>
-        {showLeftFade && (
-          <LinearGradient
-            colors={[theme.background, theme.background + "00"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.fade, styles.fadeLeft]}
-            pointerEvents="none"
-          />
-        )}
-        {showRightFade && (
-          <>
-            <LinearGradient
-              colors={[theme.background + "00", theme.background]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={[styles.fade, styles.fadeRight]}
-              pointerEvents="none"
-            />
-            <View style={styles.scrollHint} pointerEvents="none">
-              <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
-            </View>
-          </>
+        {showScrollBar && (
+          <View style={styles.monthScrollBar} pointerEvents="none" />
         )}
       </View>
 
-      {/* Summary cards */}
-      <View style={[styles.summaryFull, {
-        backgroundColor: netSavings >= 0
-          ? (isDark ? "#1e3a5f" : "#eff6ff")
-          : (isDark ? "#4c1d1d" : "#fef2f2"),
-        borderColor: netSavings >= 0
-          ? (isDark ? "#1e40af" : "#bfdbfe")
-          : (isDark ? "#991b1b" : "#fecaca"),
-      }]}>
-        <Text style={{ fontSize: 12, fontWeight: "600", color: netSavings >= 0 ? (isDark ? "#93c5fd" : "#1d4ed8") : (isDark ? "#fca5a5" : "#b91c1c") }}>
+      {/* #7 — Net Savings hero card */}
+      <View style={[styles.savingsCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+        <Text style={[styles.savingsLabel, { color: theme.textSecondary }]}>
           {i18n("overview.netSavings")}
         </Text>
-        <View style={{ marginTop: 2 }}>
+        <View style={{ marginTop: 4 }}>
           <SlotNumber
             value={formatCurrency(netSavings, "USD", true)}
-            style={{ fontSize: 28, fontWeight: "800", color: netSavings >= 0 ? (isDark ? "#60a5fa" : "#2563eb") : (isDark ? "#f87171" : "#dc2626") }}
+            style={[styles.savingsAmount, { color: savingsColor, textShadowColor: savingsColor + "40", textShadowRadius: 12 }]}
           />
         </View>
       </View>
 
+      {/* #2 — Summary cards with left accent border */}
       <View style={styles.summaryRow}>
-        <View style={[styles.summaryHalf, {
-          backgroundColor: isDark ? "#064e3b" : "#ecfdf5",
-          borderColor: isDark ? "#065f46" : "#a7f3d0",
-        }]}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: isDark ? "#6ee7b7" : "#047857" }}>{i18n("overview.totalIncome")}</Text>
-          <View style={{ marginTop: 2 }}>
-            <SlotNumber
-              value={formatCurrency(totalIncome, "USD", true)}
-              style={{ fontSize: 20, fontWeight: "800", color: isDark ? "#34d399" : "#059669" }}
-            />
+        <View style={[styles.summaryCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+          <View style={[styles.summaryAccent, { backgroundColor: isDark ? "#34d399" : "#059669" }]} />
+          <View style={styles.summaryContent}>
+            <Text style={{ fontSize: 12, fontWeight: "600", color: theme.textSecondary }}>{i18n("overview.totalIncome")}</Text>
+            <View style={{ marginTop: 2 }}>
+              <SlotNumber
+                value={formatCurrency(totalIncome, "USD", true)}
+                style={{ fontSize: 20, fontWeight: "800", color: isDark ? "#34d399" : "#059669" }}
+              />
+            </View>
           </View>
         </View>
-        <View style={[styles.summaryHalf, {
-          backgroundColor: isDark ? "#4c1d1d" : "#fef2f2",
-          borderColor: isDark ? "#991b1b" : "#fecaca",
-        }]}>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: isDark ? "#fca5a5" : "#b91c1c" }}>{i18n("overview.totalExpenses")}</Text>
-          <View style={{ marginTop: 2 }}>
-            <SlotNumber
-              value={formatCurrency(Math.abs(totalExpenses), "USD", true)}
-              style={{ fontSize: 20, fontWeight: "800", color: isDark ? "#f87171" : "#dc2626" }}
-            />
+        <View style={[styles.summaryCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+          <View style={[styles.summaryAccent, { backgroundColor: isDark ? "#f87171" : "#dc2626" }]} />
+          <View style={styles.summaryContent}>
+            <Text style={{ fontSize: 12, fontWeight: "600", color: theme.textSecondary }}>{i18n("overview.totalExpenses")}</Text>
+            <View style={{ marginTop: 2 }}>
+              <SlotNumber
+                value={formatCurrency(Math.abs(totalExpenses), "USD", true)}
+                style={{ fontSize: 20, fontWeight: "800", color: isDark ? "#f87171" : "#dc2626" }}
+              />
+            </View>
           </View>
         </View>
       </View>
@@ -368,16 +397,21 @@ export default function OverviewScreen() {
                     const index = groups.indexOf(group);
                     const absTotal = Math.abs(group.total);
                     const isIncome = group.total > 0;
-                    const base = isIncome ? totalIncome : Math.abs(totalExpenses);
+                    const base = isIncome ? allIncome : Math.abs(allExpenses);
                     const pct = base > 0 ? Math.min(absTotal / base, 1) : 0;
                     const ringColor = RING_COLORS[index % RING_COLORS.length];
                     const isExpanded = expandedEmoji === group.emoji;
                     const iconInfo = getEmojiIcon(group.emoji);
 
                     return (
+                      // #4 — Category chip cards with tinted background
                       <TouchableOpacity
                         key={group.emoji}
-                        style={[styles.emojiCell, isExpanded && { backgroundColor: theme.cardBorder + "40" }]}
+                        style={[
+                          styles.emojiCell,
+                          isExpanded && { backgroundColor: ringColor + "20" },
+                          isExpanded && { borderColor: ringColor + "40", borderWidth: 1 },
+                        ]}
                         onPress={() => setExpandedEmoji(isExpanded ? null : group.emoji)}
                         activeOpacity={0.7}
                       >
@@ -404,11 +438,12 @@ export default function OverviewScreen() {
                   ))}
                 </View>
 
-                {/* Expanded transaction list */}
+                {/* #8 — Expanded transaction list with color dots */}
                 {expandedInRow && (
                   <View style={[styles.expandedCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                     {expandedInRow.transactions.map((t, i) => {
-                      const txColor = RING_COLORS[groups.indexOf(expandedInRow) % RING_COLORS.length];
+                      const dotColor = RING_COLORS[groups.indexOf(expandedInRow) % RING_COLORS.length];
+                      const amt = parseAmount(t.amount);
                       return (
                         <TouchableOpacity
                           key={t.id}
@@ -419,14 +454,15 @@ export default function OverviewScreen() {
                           onPress={() => openEdit(t)}
                           activeOpacity={0.6}
                         >
-                          <Text style={{ width: 54, fontSize: 13, color: txColor }}>
+                          <View style={[styles.txDot, { backgroundColor: dotColor }]} />
+                          <Text style={{ width: 54, fontSize: 13, color: theme.textSecondary }}>
                             {new Date(t.date).toLocaleDateString(locale, { month: "short", day: "numeric" })}
                           </Text>
-                          <Text style={{ flex: 1, fontSize: 15, fontWeight: "500", color: txColor }} numberOfLines={1}>
+                          <Text style={{ flex: 1, fontSize: 15, fontWeight: "500", color: theme.text }} numberOfLines={1}>
                             {t.description}
                           </Text>
-                          <Text style={{ fontSize: 15, fontWeight: "600", color: txColor }}>
-                            {formatCurrency(Math.abs(parseAmount(t.amount)))}
+                          <Text style={{ fontSize: 15, fontWeight: "600", color: amt < 0 ? (isDark ? "#f87171" : "#dc2626") : (isDark ? "#34d399" : "#059669") }}>
+                            {formatCurrency(Math.abs(amt))}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -438,36 +474,64 @@ export default function OverviewScreen() {
           })}
         </View>
       )}
+
     </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   content: { padding: 16, paddingBottom: 32 },
-  monthPickerContainer: { position: "relative", marginBottom: 4 },
+  // #1
+  headerGradient: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 200,
+    zIndex: -1,
+  },
+  monthPickerContainer: { position: "relative", marginBottom: 4, marginTop: 8 },
   monthRow: { gap: 6, paddingBottom: 12, paddingHorizontal: 4 },
-  fade: { position: "absolute", top: 0, bottom: 0, width: 32 },
-  fadeLeft: { left: 0 },
-  fadeRight: { right: 0 },
-  scrollHint: { position: "absolute", right: 2, top: 0, bottom: 12, justifyContent: "center" },
+  monthScrollBar: {
+    position: "absolute",
+    right: 0,
+    top: 6,
+    bottom: 18,
+    width: 3,
+    borderRadius: 1.5,
+    backgroundColor: "rgba(255,255,255,0.5)",
+  },
   monthPill: { paddingHorizontal: 16, paddingVertical: 14, borderRadius: 10 },
   monthPillText: { fontSize: 15, fontWeight: "500" },
-  summaryFull: {
+  // #7
+  savingsCard: {
     borderWidth: 1,
     borderRadius: 16,
-    padding: 16,
+    padding: 20,
     alignItems: "center",
     marginBottom: 10,
   },
+  savingsLabel: { fontSize: 13, fontWeight: "600", textTransform: "uppercase", letterSpacing: 1 },
+  savingsAmount: { fontSize: 24, fontWeight: "800" },
+  // #2
   summaryRow: { flexDirection: "row", gap: 10, marginBottom: 12 },
-  summaryHalf: {
+  summaryCard: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 16,
-    padding: 14,
-    alignItems: "center",
+    borderRadius: 14,
+    flexDirection: "row",
+    overflow: "hidden",
   },
+  summaryAccent: {
+    width: 4,
+  },
+  summaryContent: {
+    flex: 1,
+    padding: 14,
+  },
+  // #4
   emojiRow: { flexDirection: "row", marginBottom: 8 },
   emojiCell: {
     flex: 1,
@@ -475,6 +539,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 12,
   },
+  // #8
   expandedCard: {
     borderWidth: 1,
     borderRadius: 14,
@@ -488,5 +553,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     minHeight: 56,
+  },
+  txDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });
