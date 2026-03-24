@@ -17,5 +17,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       NSPhotoLibraryUsageDescription: "Used to export financial data files.",
     },
   },
+  extra: {
+    eas: {
+      projectId: "d838744b-1862-4e19-9179-a81b0376ff6b",
+    },
+  },
   plugins: ["expo-router", "expo-secure-store", "expo-sqlite", "expo-document-picker"],
 });
