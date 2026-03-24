@@ -1,196 +1,84 @@
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import { BlobWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
 import { getDatabase } from "./database";
 
-export interface ExportData {
-  version: number;
-  exportedAt: string;
-  data: {
-    institutions: {
-      id: string;
-      name: string;
-      isManual: boolean;
-    }[];
-    accounts: {
-      id: string;
-      institutionId: string;
-      name: string;
-      type: string;
-      subtype: string | null;
-      balance: number;
-      currency: string;
-      isHidden: boolean;
-      isManual: boolean;
-    }[];
-    categories: {
-      id: string;
-      name: string;
-      emoji: string | null;
-      parentId: string | null;
-    }[];
-    transactions: {
-      id: string;
-      accountId: string;
-      categoryId: string | null;
-      description: string;
-      amount: number;
-      date: string;
-      isHidden: boolean;
-      isManual: boolean;
-      tagIds: string[];
-    }[];
-    tags: {
-      id: string;
-      name: string;
-      color: string;
-    }[];
-    budgets: {
-      id: string;
-      name: string;
-      icon: string | null;
-      amount: number;
-      categoryIds: string[];
-    }[];
-    categoryRules: {
-      id: string;
-      sequence: number;
-      match: string;
-      categoryId: string;
-    }[];
-    settings: {
-      theme: string;
-      language: string;
-      mode: string;
-    };
-  };
+function escapeCsv(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const str = String(value);
+  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
 }
 
-export async function buildExportData(): Promise<ExportData> {
-  const db = await getDatabase();
-
-  const institutions = await db.getAllAsync<Record<string, unknown>>(
-    "SELECT * FROM institutions",
-  );
-  const accounts = await db.getAllAsync<Record<string, unknown>>(
-    "SELECT * FROM accounts",
-  );
-  const categories = await db.getAllAsync<Record<string, unknown>>(
-    "SELECT * FROM categories",
-  );
-  const transactions = await db.getAllAsync<Record<string, unknown>>(
-    "SELECT * FROM transactions",
-  );
-  const tags = await db.getAllAsync<Record<string, unknown>>(
-    "SELECT * FROM tags",
-  );
-  const transactionTags = await db.getAllAsync<Record<string, unknown>>(
-    "SELECT * FROM transaction_tags",
-  );
-  const budgets = await db.getAllAsync<Record<string, unknown>>(
-    "SELECT * FROM budgets",
-  );
-  const budgetCategories = await db.getAllAsync<Record<string, unknown>>(
-    "SELECT * FROM budget_categories",
-  );
-  const rules = await db.getAllAsync<Record<string, unknown>>(
-    "SELECT * FROM category_rules ORDER BY sequence",
-  );
-  const settings = await db.getFirstAsync<Record<string, unknown>>(
-    "SELECT * FROM settings WHERE id = 'default'",
-  );
-
-  // Build tag lookup per transaction
-  const txTagMap: Record<string, string[]> = {};
-  for (const tt of transactionTags) {
-    const txId = tt.transaction_id as string;
-    if (!txTagMap[txId]) txTagMap[txId] = [];
-    txTagMap[txId].push(tt.tag_id as string);
+function toCsv(headers: string[], rows: Record<string, unknown>[]): string {
+  const lines = [headers.join(",")];
+  for (const row of rows) {
+    lines.push(headers.map((h) => escapeCsv(row[h])).join(","));
   }
-
-  // Build category lookup per budget
-  const budgetCatMap: Record<string, string[]> = {};
-  for (const bc of budgetCategories) {
-    const bId = bc.budget_id as string;
-    if (!budgetCatMap[bId]) budgetCatMap[bId] = [];
-    budgetCatMap[bId].push(bc.category_id as string);
-  }
-
-  return {
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    data: {
-      institutions: institutions.map((r) => ({
-        id: r.id as string,
-        name: r.name as string,
-        isManual: !!(r.is_manual as number),
-      })),
-      accounts: accounts.map((r) => ({
-        id: r.id as string,
-        institutionId: r.institution_id as string,
-        name: r.name as string,
-        type: r.type as string,
-        subtype: (r.subtype as string) || null,
-        balance: r.balance as number,
-        currency: r.currency as string,
-        isHidden: !!(r.is_hidden as number),
-        isManual: !!(r.is_manual as number),
-      })),
-      categories: categories.map((r) => ({
-        id: r.id as string,
-        name: r.name as string,
-        emoji: (r.emoji as string) || null,
-        parentId: (r.parent_id as string) || null,
-      })),
-      transactions: transactions.map((r) => ({
-        id: r.id as string,
-        accountId: r.account_id as string,
-        categoryId: (r.category_id as string) || null,
-        description: r.description as string,
-        amount: r.amount as number,
-        date: r.date as string,
-        isHidden: !!(r.is_hidden as number),
-        isManual: !!(r.is_manual as number),
-        tagIds: txTagMap[r.id as string] || [],
-      })),
-      tags: tags.map((r) => ({
-        id: r.id as string,
-        name: r.name as string,
-        color: r.color as string,
-      })),
-      budgets: budgets.map((r) => ({
-        id: r.id as string,
-        name: r.name as string,
-        icon: (r.icon as string) || null,
-        amount: r.amount as number,
-        categoryIds: budgetCatMap[r.id as string] || [],
-      })),
-      categoryRules: rules.map((r) => ({
-        id: r.id as string,
-        sequence: r.sequence as number,
-        match: r.match as string,
-        categoryId: r.category_id as string,
-      })),
-      settings: {
-        theme: (settings?.theme as string) || "system",
-        language: (settings?.language as string) || "en",
-        mode: (settings?.mode as string) || "casual",
-      },
-    },
-  };
+  return lines.join("\n");
 }
 
 export async function exportToFile(): Promise<void> {
-  const data = await buildExportData();
-  const json = JSON.stringify(data, null, 2);
+  const db = await getDatabase();
 
-  const filename = `money-tracker-export-${new Date().toISOString().split("T")[0]}.json`;
+  const tables: { name: string; query: string }[] = [
+    { name: "institutions", query: "SELECT * FROM institutions" },
+    { name: "accounts", query: "SELECT * FROM accounts" },
+    { name: "categories", query: "SELECT * FROM categories" },
+    { name: "transactions", query: "SELECT * FROM transactions" },
+    { name: "tags", query: "SELECT * FROM tags" },
+    { name: "transaction_tags", query: "SELECT * FROM transaction_tags" },
+    { name: "budgets", query: "SELECT * FROM budgets" },
+    { name: "budget_categories", query: "SELECT * FROM budget_categories" },
+    {
+      name: "category_rules",
+      query: "SELECT * FROM category_rules ORDER BY sequence",
+    },
+    {
+      name: "settings",
+      query: "SELECT * FROM settings WHERE id = 'default'",
+    },
+  ];
+
+  // Build zip in memory
+  const blobWriter = new BlobWriter("application/zip");
+  const zipWriter = new ZipWriter(blobWriter);
+
+  for (const table of tables) {
+    const rows = await db.getAllAsync<Record<string, unknown>>(table.query);
+    if (rows.length === 0) {
+      // Write empty CSV with no headers
+      await zipWriter.add(`${table.name}.csv`, new TextReader(""));
+      continue;
+    }
+    const headers = Object.keys(rows[0]);
+    const csv = toCsv(headers, rows);
+    await zipWriter.add(`${table.name}.csv`, new TextReader(csv));
+  }
+
+  await zipWriter.close();
+  const blob = await blobWriter.getData();
+
+  // Convert blob to base64 and write to file
+  const arrayBuffer = await blob.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+  const chunkSize = 8192;
+  const chunks: string[] = [];
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    chunks.push(String.fromCharCode(...bytes.subarray(i, i + chunkSize)));
+  }
+  const base64 = btoa(chunks.join(""));
+
+  const filename = `money-tracker-export-${new Date().toISOString().split("T")[0]}.zip`;
   const file = new File(Paths.cache, filename);
   file.create();
-  file.write(json);
+  file.write(base64, { encoding: "base64" });
 
   await Sharing.shareAsync(file.uri, {
-    mimeType: "application/json",
+    mimeType: "application/zip",
     dialogTitle: "Export Money Tracker Data",
-    UTI: "public.json",
+    UTI: "public.zip-archive",
   });
 }

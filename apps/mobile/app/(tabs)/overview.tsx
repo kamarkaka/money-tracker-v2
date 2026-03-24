@@ -346,7 +346,7 @@ export default function OverviewScreen() {
         <View style={{ marginTop: 4 }}>
           <SlotNumber
             value={formatCurrency(netSavings, "USD", true)}
-            style={[styles.savingsAmount, { color: savingsColor, textShadowColor: savingsColor + "40", textShadowRadius: 12 }]}
+            style={{ ...styles.savingsAmount, color: savingsColor, textShadowColor: savingsColor + "40", textShadowRadius: 12 }}
           />
         </View>
       </View>

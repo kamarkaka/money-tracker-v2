@@ -1,14 +1,60 @@
 import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
+import { BlobReader, TextWriter, ZipReader } from "@zip.js/zip.js";
 import { getDatabase, uuid } from "./database";
-import type { ExportData } from "./export";
+
+function parseCsv(csv: string): Record<string, string>[] {
+  const lines = csv.split("\n").filter((l) => l.trim());
+  if (lines.length < 2) return [];
+  const headers = parseCsvLine(lines[0]);
+  const rows: Record<string, string>[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseCsvLine(lines[i]);
+    const row: Record<string, string> = {};
+    for (let j = 0; j < headers.length; j++) {
+      row[headers[j]] = values[j] || "";
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+function parseCsvLine(line: string): string[] {
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"' && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ",") {
+        result.push(current);
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+  }
+  result.push(current);
+  return result;
+}
 
 export async function pickAndImport(): Promise<{
   success: boolean;
   message: string;
 }> {
   const result = await DocumentPicker.getDocumentAsync({
-    type: "application/json",
+    type: ["application/zip", "application/x-zip-compressed"],
     copyToCacheDirectory: true,
   });
 
@@ -16,29 +62,39 @@ export async function pickAndImport(): Promise<{
     return { success: false, message: "No file selected" };
   }
 
-  const file = new File(result.assets[0].uri);
-  const content = await file.text();
-
-  let data: ExportData;
   try {
-    data = JSON.parse(content);
-  } catch {
-    return { success: false, message: "Invalid JSON file" };
-  }
+    const file = new File(result.assets[0].uri);
+    const fileBlob = new Blob([await file.arrayBuffer()]);
 
-  if (!data.version || !data.data) {
-    return { success: false, message: "Invalid export format" };
-  }
+    const zipReader = new ZipReader(new BlobReader(fileBlob));
+    const entries = await zipReader.getEntries();
 
-  return importData(data);
+    const csvMap: Record<string, string> = {};
+    for (const entry of entries) {
+      if (entry.filename.endsWith(".csv") && !entry.directory) {
+        const content = await entry.getData!(new TextWriter());
+        csvMap[entry.filename.replace(".csv", "")] = content;
+      }
+    }
+    await zipReader.close();
+
+    return importCsvData(csvMap);
+  } catch (error) {
+    return {
+      success: false,
+      message: `Import failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+    };
+  }
 }
 
-export async function importData(
-  data: ExportData,
+async function importCsvData(
+  csvMap: Record<string, string>,
 ): Promise<{ success: boolean; message: string }> {
   const db = await getDatabase();
 
   try {
+    await db.execAsync("BEGIN TRANSACTION");
+
     // Clear all existing data
     await db.execAsync(`
       DELETE FROM transaction_tags;
@@ -52,115 +108,121 @@ export async function importData(
       DELETE FROM tags;
     `);
 
-    const d = data.data;
-
     // Import institutions
-    for (const inst of d.institutions) {
+    for (const row of parseCsv(csvMap.institutions || "")) {
       await db.runAsync(
         "INSERT INTO institutions (id, name, is_manual) VALUES (?, ?, ?)",
-        [inst.id, inst.name, inst.isManual ? 1 : 0],
+        [row.id, row.name, Number(row.is_manual)],
       );
     }
 
     // Import accounts
-    for (const acct of d.accounts) {
+    for (const row of parseCsv(csvMap.accounts || "")) {
       await db.runAsync(
         `INSERT INTO accounts (id, institution_id, name, type, subtype, balance, currency, is_hidden, is_manual)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          acct.id,
-          acct.institutionId,
-          acct.name,
-          acct.type,
-          acct.subtype,
-          acct.balance,
-          acct.currency,
-          acct.isHidden ? 1 : 0,
-          acct.isManual ? 1 : 0,
+          row.id,
+          row.institution_id,
+          row.name,
+          row.type,
+          row.subtype || null,
+          Number(row.balance),
+          row.currency,
+          Number(row.is_hidden),
+          Number(row.is_manual),
         ],
       );
     }
 
     // Import categories (parents first, then children)
-    const parentCats = d.categories.filter((c) => !c.parentId);
-    const childCats = d.categories.filter((c) => c.parentId);
-    for (const cat of [...parentCats, ...childCats]) {
+    const allCats = parseCsv(csvMap.categories || "");
+    const parentCats = allCats.filter((c) => !c.parent_id);
+    const childCats = allCats.filter((c) => c.parent_id);
+    for (const row of [...parentCats, ...childCats]) {
       await db.runAsync(
         "INSERT INTO categories (id, name, emoji, parent_id) VALUES (?, ?, ?, ?)",
-        [cat.id, cat.name, cat.emoji, cat.parentId],
+        [row.id, row.name, row.emoji || null, row.parent_id || null],
       );
     }
 
     // Import tags
-    for (const tag of d.tags) {
+    for (const row of parseCsv(csvMap.tags || "")) {
       await db.runAsync(
         "INSERT INTO tags (id, name, color) VALUES (?, ?, ?)",
-        [tag.id, tag.name, tag.color],
+        [row.id, row.name, row.color],
       );
     }
 
     // Import transactions
-    for (const tx of d.transactions) {
+    const txRows = parseCsv(csvMap.transactions || "");
+    for (const row of txRows) {
       await db.runAsync(
         `INSERT INTO transactions (id, account_id, category_id, description, amount, date, is_hidden, is_manual)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          tx.id,
-          tx.accountId,
-          tx.categoryId,
-          tx.description,
-          tx.amount,
-          tx.date,
-          tx.isHidden ? 1 : 0,
-          tx.isManual ? 1 : 0,
+          row.id,
+          row.account_id,
+          row.category_id || null,
+          row.description,
+          Number(row.amount),
+          row.date,
+          Number(row.is_hidden),
+          Number(row.is_manual),
         ],
       );
+    }
 
-      // Import transaction tags
-      for (const tagId of tx.tagIds || []) {
-        await db.runAsync(
-          "INSERT OR IGNORE INTO transaction_tags (id, transaction_id, tag_id) VALUES (?, ?, ?)",
-          [uuid(), tx.id, tagId],
-        );
-      }
+    // Import transaction tags
+    for (const row of parseCsv(csvMap.transaction_tags || "")) {
+      await db.runAsync(
+        "INSERT OR IGNORE INTO transaction_tags (id, transaction_id, tag_id) VALUES (?, ?, ?)",
+        [row.id || uuid(), row.transaction_id, row.tag_id],
+      );
     }
 
     // Import budgets
-    for (const budget of d.budgets) {
+    for (const row of parseCsv(csvMap.budgets || "")) {
       await db.runAsync(
         "INSERT INTO budgets (id, name, icon, amount) VALUES (?, ?, ?, ?)",
-        [budget.id, budget.name, budget.icon, budget.amount],
+        [row.id, row.name, row.icon || null, Number(row.amount)],
       );
-      for (const catId of budget.categoryIds || []) {
-        await db.runAsync(
-          "INSERT OR IGNORE INTO budget_categories (id, budget_id, category_id) VALUES (?, ?, ?)",
-          [uuid(), budget.id, catId],
-        );
-      }
+    }
+
+    // Import budget categories
+    for (const row of parseCsv(csvMap.budget_categories || "")) {
+      await db.runAsync(
+        "INSERT OR IGNORE INTO budget_categories (id, budget_id, category_id) VALUES (?, ?, ?)",
+        [row.id || uuid(), row.budget_id, row.category_id],
+      );
     }
 
     // Import category rules
-    for (const rule of d.categoryRules || []) {
+    for (const row of parseCsv(csvMap.category_rules || "")) {
       await db.runAsync(
         "INSERT INTO category_rules (id, sequence, match, category_id) VALUES (?, ?, ?, ?)",
-        [rule.id, rule.sequence, rule.match, rule.categoryId],
+        [row.id, Number(row.sequence), row.match, row.category_id],
       );
     }
 
     // Import settings
-    if (d.settings) {
+    const settingsRows = parseCsv(csvMap.settings || "");
+    if (settingsRows.length > 0) {
+      const s = settingsRows[0];
       await db.runAsync(
         "UPDATE settings SET theme = ?, language = ?, mode = ? WHERE id = 'default'",
-        [d.settings.theme, d.settings.language, d.settings.mode],
+        [s.theme || "system", s.language || "en", s.mode || "casual"],
       );
     }
 
-    const txCount = d.transactions.length;
+    await db.execAsync("COMMIT");
+
     return {
       success: true,
-      message: `Imported ${txCount} transactions, ${d.categories.length} categories, ${d.accounts.length} accounts`,
+      message: `Imported ${txRows.length} transactions, ${allCats.length} categories`,
     };
   } catch (error) {
+    await db.execAsync("ROLLBACK").catch(() => {});
     return {
       success: false,
       message: `Import failed: ${error instanceof Error ? error.message : "Unknown error"}`,
