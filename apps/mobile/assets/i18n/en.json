@@ -64,7 +64,7 @@
     "rule": "Rule",
     "tag": "Tag",
     "profile": "Profile",
-    "setting": "Setting",
+    "setting": "Settings",
     "more": "More",
     "welcome": "Welcome, {name}"
   },

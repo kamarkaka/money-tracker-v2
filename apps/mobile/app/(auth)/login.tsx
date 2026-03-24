@@ -157,14 +157,14 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: "800" },
   betaBadge: {
     borderWidth: 1,
-    borderColor: "#ef4444",
+    borderColor: "#dc2626",
     borderRadius: 10,
     paddingHorizontal: 6,
     paddingVertical: 2,
     marginLeft: 4,
     marginTop: -2,
   },
-  betaText: { fontSize: 9, fontWeight: "700", color: "#ef4444" },
+  betaText: { fontSize: 9, fontWeight: "700", color: "#dc2626" },
   subtitle: { fontSize: 14, marginTop: 4 },
   form: { gap: 14 },
   inputRow: {

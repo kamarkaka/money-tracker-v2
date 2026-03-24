@@ -9,9 +9,9 @@ import {
   Alert,
   Platform,
   Animated,
-  Dimensions,
   TouchableWithoutFeedback,
   Keyboard,
+  useWindowDimensions,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,11 +19,14 @@ import { createTransactionApi, createAccountApi } from "@money-tracker/api-clien
 import type { Account, Transaction } from "@money-tracker/shared";
 import { parseAmount } from "@money-tracker/shared";
 import { apiClient } from "@/lib/api";
+import { getDatabase } from "@/lib/db";
 import { useAppTheme } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
-import { DEFAULT_CATEGORY_ICONS } from "@/lib/emoji";
+import { DEFAULT_CATEGORY_ICONS, getEmojiIcon } from "@/lib/emoji";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const SCREEN_HEIGHT = Dimensions.get("window").height;
+const txApi = createTransactionApi(apiClient);
+const accApi = createAccountApi(apiClient);
 
 const ICONS_ROW_1 = DEFAULT_CATEGORY_ICONS.slice(0, Math.ceil(DEFAULT_CATEGORY_ICONS.length / 2));
 const ICONS_ROW_2 = DEFAULT_CATEGORY_ICONS.slice(Math.ceil(DEFAULT_CATEGORY_ICONS.length / 2));
@@ -39,14 +42,15 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
   const isEdit = !!editTransaction;
   const { theme, isDark } = useAppTheme();
   const { i18n, locale } = useI18n();
-  const txApi = createTransactionApi(apiClient);
-  const accApi = createAccountApi(apiClient);
-
-  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
+  const slideAnim = useRef(new Animated.Value(screenHeight)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
   const keyboardOffset = useRef(new Animated.Value(0)).current;
   const categoryScrollRef = useRef<ScrollView>(null);
   const amountRef = useRef<TextInput>(null);
+  const keyboardOpenRef = useRef(false);
+  const dismissedAddRef = useRef(false);
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountId, setAccountId] = useState("");
@@ -86,13 +90,16 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
         setDate(new Date(editTransaction.date));
         setSelectedEmoji(editTransaction.category?.emoji || null);
         setAccountId(editTransaction.account?.id || "");
-      } else {
+        dismissedAddRef.current = false;
+      } else if (!dismissedAddRef.current) {
+        // Fresh add — reset all fields
         setRawCents("");
         setDescription("");
         setDate(new Date());
         setSelectedEmoji(null);
         setIsExpense(true);
       }
+      // else: resuming a dismissed add — keep existing state
 
       accApi.list().then((accs) => {
         setAccounts(accs);
@@ -119,7 +126,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
       });
     } else {
       Animated.parallel([
-        Animated.timing(slideAnim, { toValue: SCREEN_HEIGHT, duration: 300, useNativeDriver: true }),
+        Animated.timing(slideAnim, { toValue: screenHeight, duration: 300, useNativeDriver: true }),
         Animated.timing(backdropAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
       ]).start();
     }
@@ -127,13 +134,16 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
 
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardWillShow", (e) => {
+      keyboardOpenRef.current = true;
+      const offset = Math.min(e.endCoordinates.height * 0.5, 200);
       Animated.timing(keyboardOffset, {
-        toValue: -(e.endCoordinates.height * 0.6),
+        toValue: -offset,
         duration: e.duration || 250,
         useNativeDriver: true,
       }).start();
     });
     const hideSub = Keyboard.addListener("keyboardWillHide", (e) => {
+      keyboardOpenRef.current = false;
       Animated.timing(keyboardOffset, {
         toValue: 0,
         duration: e.duration || 250,
@@ -146,7 +156,26 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
     };
   }, []);
 
-  const handleClose = () => onClose();
+  const handleClose = () => {
+    dismissedAddRef.current = false;
+    onClose();
+  };
+
+  const handleBackdropTap = () => {
+    // If keyboard is open, just dismiss it
+    if (keyboardOpenRef.current) {
+      Keyboard.dismiss();
+      return;
+    }
+    if (isEdit) {
+      // Editing: discard changes, close
+      onClose();
+    } else {
+      // Adding: preserve state for next + tap
+      dismissedAddRef.current = true;
+      onClose();
+    }
+  };
 
   const handleDateChange = (_event: unknown, selectedDate?: Date) => {
     if (selectedDate) setPendingDate(selectedDate);
@@ -172,10 +201,25 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
     try {
       const finalAmount = isExpense ? -Math.abs(parsed) : Math.abs(parsed);
       if (isEdit && editTransaction) {
+        // Resolve emoji to categoryId if changed
+        let categoryId: string | null | undefined;
+        if (selectedEmoji !== (editTransaction.category?.emoji || null)) {
+          if (selectedEmoji) {
+            const db = await getDatabase();
+            const cat = await db.getFirstAsync<{ id: string }>(
+              "SELECT id FROM categories WHERE emoji = ?",
+              [selectedEmoji],
+            );
+            categoryId = cat?.id || null;
+          } else {
+            categoryId = null;
+          }
+        }
         await txApi.update(editTransaction.id, {
           description: description.trim() || "Transaction",
           amount: finalAmount,
           date: date.toISOString().split("T")[0],
+          ...(categoryId !== undefined ? { categoryId } : {}),
         });
       } else {
         await txApi.create({
@@ -186,6 +230,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
           emoji: selectedEmoji || undefined,
         });
       }
+      dismissedAddRef.current = false;
       onComplete?.();
       handleClose();
     } catch (e: unknown) {
@@ -221,11 +266,12 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
 
   const dateLabel = date.toLocaleDateString(locale, {
     weekday: "long",
+    year: "numeric",
     month: "long",
     day: "numeric",
   });
 
-  const amountColor = isExpense ? "#dc2626" : "#16a34a";
+  const amountColor = isExpense ? theme.expense : theme.income;
 
   function renderCategoryBtn(item: (typeof ICONS_ROW_1)[number]) {
     const isSelected = selectedEmoji === item.emoji;
@@ -248,17 +294,19 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
     <>
       <Animated.View
         pointerEvents={open ? "auto" : "none"}
-        style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.4)", opacity: backdropAnim, zIndex: 90 }]}
+        style={[StyleSheet.absoluteFill, { backgroundColor: theme.backdrop, opacity: backdropAnim, zIndex: 90 }]}
       >
-        <View style={StyleSheet.absoluteFill} />
+        <TouchableWithoutFeedback onPress={handleBackdropTap}>
+          <View style={StyleSheet.absoluteFill} />
+        </TouchableWithoutFeedback>
       </Animated.View>
 
       <Animated.View style={[
         styles.modal,
-        { backgroundColor: theme.card, transform: [{ translateY: slideAnim }, { translateY: keyboardOffset }], zIndex: 100 },
+        { backgroundColor: theme.card, shadowColor: theme.shadow, transform: [{ translateY: slideAnim }, { translateY: keyboardOffset }], zIndex: 100 },
       ]}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.content}>
+        <View style={[styles.content, { paddingBottom: insets.bottom + 80 }]}>
           {/* Date */}
           <View style={styles.dateRow}>
             <Text style={[styles.dateText, { color: theme.text }]}>{dateLabel}</Text>
@@ -266,11 +314,11 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
               onPress={openDatePicker}
               style={[styles.calendarBtn, { backgroundColor: theme.cardBorder + "30" }]}
             >
-              <Ionicons name="calendar-outline" size={20} color="#10b981" />
+              <Ionicons name="calendar-outline" size={20} color={theme.brand} />
             </TouchableOpacity>
           </View>
           {showDatePicker && (
-            <View style={[styles.datePickerOverlay, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            <View style={[styles.datePickerOverlay, { backgroundColor: theme.card, borderColor: theme.cardBorder, shadowColor: theme.shadow }]}>
               <DateTimePicker
                 value={pendingDate}
                 mode="date"
@@ -279,7 +327,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
                 themeVariant={isDark ? "dark" : "light"}
               />
               <TouchableOpacity style={styles.dateConfirmBtn} onPress={confirmDate} activeOpacity={0.7}>
-                <Ionicons name="checkmark-circle" size={36} color="#10b981" />
+                <Ionicons name="checkmark-circle" size={36} color={theme.brand} />
               </TouchableOpacity>
             </View>
           )}
@@ -287,16 +335,16 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
           {/* Toggle */}
           <View style={styles.toggleRow}>
             <TouchableOpacity
-              style={[styles.toggleBtn, isExpense && { backgroundColor: "#fee2e2" }]}
+              style={[styles.toggleBtn, isExpense && { backgroundColor: theme.expenseBg }]}
               onPress={() => setIsExpense(true)}
             >
-              <Text style={{ color: isExpense ? "#dc2626" : theme.textSecondary, fontWeight: "600" }}>{i18n("transaction.expense")}</Text>
+              <Text style={{ color: isExpense ? theme.expense : theme.textSecondary, fontWeight: "600" }}>{i18n("transaction.expense")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toggleBtn, !isExpense && { backgroundColor: "#dcfce7" }]}
+              style={[styles.toggleBtn, !isExpense && { backgroundColor: theme.incomeBg }]}
               onPress={() => setIsExpense(false)}
             >
-              <Text style={{ color: !isExpense ? "#16a34a" : theme.textSecondary, fontWeight: "600" }}>{i18n("transaction.income")}</Text>
+              <Text style={{ color: !isExpense ? theme.income : theme.textSecondary, fontWeight: "600" }}>{i18n("transaction.income")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -327,6 +375,11 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
               </View>
             ))}
           </ScrollView>
+          {selectedEmoji && (
+            <Text style={{ textAlign: "center", fontSize: 15, fontWeight: "600", color: theme.textSecondary, marginBottom: 12 }}>
+              {i18n(getEmojiIcon(selectedEmoji).i18nKey)}
+            </Text>
+          )}
 
           {/* Description */}
           <TextInput
@@ -344,21 +397,21 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
           <View style={styles.actionRow}>
             {isEdit && (
               <TouchableOpacity
-                style={styles.deleteBtn}
+                style={[styles.deleteBtn, { backgroundColor: theme.dangerBg }]}
                 onPress={handleDelete}
                 disabled={saving}
                 activeOpacity={0.8}
               >
-                <Ionicons name="trash-outline" size={22} color="#ef4444" />
+                <Ionicons name="trash-outline" size={22} color={theme.danger} />
               </TouchableOpacity>
             )}
             <TouchableOpacity
-              style={[styles.saveButton, { opacity: saving ? 0.6 : 1, flex: 1 }]}
+              style={[styles.saveButton, { opacity: saving ? 0.6 : 1, flex: 1, backgroundColor: theme.brand }]}
               onPress={handleSave}
               disabled={saving}
               activeOpacity={0.8}
             >
-              <Text style={styles.saveButtonText}>
+              <Text style={[styles.saveButtonText, { color: theme.brandText }]}>
                 {saving ? i18n("common.saving") : isEdit ? i18n("common.saveChanges") : i18n("transaction.addTransaction")}
               </Text>
             </TouchableOpacity>
@@ -378,13 +431,12 @@ const styles = StyleSheet.create({
     bottom: 0,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 10,
   },
-  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 112 },
+  content: { paddingHorizontal: 20, paddingTop: 16 },
   dateRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -409,7 +461,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingBottom: 8,
     zIndex: 200,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 12,
@@ -453,16 +504,14 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#fef2f2",
     justifyContent: "center",
     alignItems: "center",
   },
   saveButton: {
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#10b981",
     justifyContent: "center",
     alignItems: "center",
   },
-  saveButtonText: { color: "#ffffff", fontSize: 17, fontWeight: "700" },
+  saveButtonText: { fontSize: 17, fontWeight: "700" },
 });

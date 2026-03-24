@@ -15,12 +15,13 @@ import type { Transaction, Category } from "@money-tracker/shared";
 import { apiClient } from "@/lib/api";
 import { useAppTheme } from "@/lib/themeContext";
 
+const txApi = createTransactionApi(apiClient);
+const catApi = createCategoryApi(apiClient);
+
 export default function TransactionDetailModal() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme } = useAppTheme();
   const router = useRouter();
-  const txApi = createTransactionApi(apiClient);
-  const catApi = createCategoryApi(apiClient);
 
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -93,7 +94,7 @@ export default function TransactionDetailModal() {
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.text }]}>Transaction</Text>
         <TouchableOpacity onPress={handleDelete}>
-          <Text style={{ color: "#ef4444", fontSize: 16 }}>Delete</Text>
+          <Text style={{ color: theme.danger, fontSize: 16 }}>Delete</Text>
         </TouchableOpacity>
       </View>
 
@@ -107,7 +108,7 @@ export default function TransactionDetailModal() {
         <DetailRow label="Description" value={transaction.description} theme={theme} />
         <DetailRow label="Date" value={formatDate(transaction.date)} theme={theme} />
         <DetailRow label="Account" value={transaction.account?.name || "-"} theme={theme} />
-        <View style={styles.detailRow}>
+        <View style={[styles.detailRow, { borderBottomColor: theme.cardBorder }]}>
           <Text style={{ color: theme.textSecondary, fontSize: 14 }}>Category</Text>
           <TouchableOpacity onPress={() => setShowCategories(!showCategories)}>
             <Text style={{ color: theme.accent, fontSize: 14, fontWeight: "500" }}>
@@ -121,7 +122,7 @@ export default function TransactionDetailModal() {
       {showCategories && (
         <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
           <TouchableOpacity
-            style={[styles.catItem, !transaction.categoryId && { backgroundColor: theme.accent + "20" }]}
+            style={[styles.catItem, { borderBottomColor: theme.cardBorder }, !transaction.categoryId && { backgroundColor: theme.accent + "20" }]}
             onPress={() => handleUpdateCategory(null)}
           >
             <Text style={{ color: !transaction.categoryId ? theme.accent : theme.text }}>Uncategorized</Text>
@@ -129,7 +130,7 @@ export default function TransactionDetailModal() {
           {categories.filter((c) => !c.parentId).map((cat) => (
             <View key={cat.id}>
               <TouchableOpacity
-                style={[styles.catItem, transaction.categoryId === cat.id && { backgroundColor: theme.accent + "20" }]}
+                style={[styles.catItem, { borderBottomColor: theme.cardBorder }, transaction.categoryId === cat.id && { backgroundColor: theme.accent + "20" }]}
                 onPress={() => handleUpdateCategory(cat.id)}
               >
                 <Text style={{ color: transaction.categoryId === cat.id ? theme.accent : theme.text, fontWeight: "600" }}>
@@ -139,7 +140,7 @@ export default function TransactionDetailModal() {
               {cat.children?.map((sub) => (
                 <TouchableOpacity
                   key={sub.id}
-                  style={[styles.catItem, { paddingLeft: 28 }, transaction.categoryId === sub.id && { backgroundColor: theme.accent + "20" }]}
+                  style={[styles.catItem, { paddingLeft: 28, borderBottomColor: theme.cardBorder }, transaction.categoryId === sub.id && { backgroundColor: theme.accent + "20" }]}
                   onPress={() => handleUpdateCategory(sub.id)}
                 >
                   <Text style={{ color: transaction.categoryId === sub.id ? theme.accent : theme.text }}>
@@ -155,9 +156,9 @@ export default function TransactionDetailModal() {
   );
 }
 
-function DetailRow({ label, value, theme }: { label: string; value: string; theme: { text: string; textSecondary: string } }) {
+function DetailRow({ label, value, theme }: { label: string; value: string; theme: { text: string; textSecondary: string; cardBorder: string } }) {
   return (
-    <View style={styles.detailRow}>
+    <View style={[styles.detailRow, { borderBottomColor: theme.cardBorder }]}>
       <Text style={{ color: theme.textSecondary, fontSize: 14 }}>{label}</Text>
       <Text style={{ color: theme.text, fontSize: 14, fontWeight: "500" }}>{value}</Text>
     </View>
@@ -171,6 +172,6 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: "700" },
   amount: { fontSize: 40, fontWeight: "800", textAlign: "center", marginBottom: 24 },
   card: { borderWidth: 1, borderRadius: 14, overflow: "hidden", marginBottom: 16 },
-  detailRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#e2e8f0" },
-  catItem: { padding: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#e2e8f0" },
+  detailRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, borderBottomWidth: StyleSheet.hairlineWidth },
+  catItem: { padding: 12, borderBottomWidth: StyleSheet.hairlineWidth },
 });

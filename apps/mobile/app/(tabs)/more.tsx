@@ -10,6 +10,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
+import { MENU_COLORS } from "@/lib/colors";
 
 interface MenuItem {
   label: string;
@@ -24,16 +25,16 @@ export default function MoreScreen() {
   const router = useRouter();
 
   const settingsItems: MenuItem[] = [
-    { label: i18n("nav.setting"), icon: "settings-outline", iconColor: "#71717a", route: "/pages/settings" },
+    { label: i18n("nav.setting"), icon: "settings-outline", iconColor: MENU_COLORS.settings, route: "/pages/settings" },
   ];
 
   const proItems: MenuItem[] = [
-    { label: i18n("nav.account"), icon: "business-outline", iconColor: "#3b82f6", route: "/pages/accounts" },
-    { label: i18n("nav.transaction"), icon: "list-outline", iconColor: "#f59e0b", route: "/pages/transactions" },
-    { label: i18n("nav.category"), icon: "bookmark-outline", iconColor: "#8b5cf6", route: "/pages/categories" },
-    { label: i18n("nav.budget"), icon: "wallet-outline", iconColor: "#10b981", route: "/pages/budgets" },
-    { label: i18n("nav.rule"), icon: "funnel-outline", iconColor: "#f97316", route: "/pages/rules" },
-    { label: i18n("nav.tag"), icon: "pricetag-outline", iconColor: "#14b8a6", route: "/pages/tags" },
+    { label: i18n("nav.account"), icon: "business-outline", iconColor: MENU_COLORS.accounts, route: "/pages/accounts" },
+    { label: i18n("nav.transaction"), icon: "list-outline", iconColor: MENU_COLORS.transactions, route: "/pages/transactions" },
+    { label: i18n("nav.category"), icon: "bookmark-outline", iconColor: MENU_COLORS.categories, route: "/pages/categories" },
+    { label: i18n("nav.budget"), icon: "wallet-outline", iconColor: MENU_COLORS.budgets, route: "/pages/budgets" },
+    { label: i18n("nav.rule"), icon: "funnel-outline", iconColor: MENU_COLORS.rules, route: "/pages/rules" },
+    { label: i18n("nav.tag"), icon: "pricetag-outline", iconColor: MENU_COLORS.tags, route: "/pages/tags" },
   ];
 
   return (
@@ -81,12 +82,12 @@ export default function MoreScreen() {
 
         {/* Unlock Pro button */}
         <TouchableOpacity
-          style={styles.unlockBtn}
+          style={[styles.unlockBtn, { backgroundColor: theme.brand }]}
           activeOpacity={0.8}
           onPress={() => Alert.alert(i18n("more.comingSoon"))}
         >
-          <Ionicons name="lock-open-outline" size={18} color="#ffffff" />
-          <Text style={styles.unlockBtnText}>{i18n("more.unlockPro")}</Text>
+          <Ionicons name="lock-open-outline" size={18} color={theme.brandText} />
+          <Text style={[styles.unlockBtnText, { color: theme.brandText }]}>{i18n("more.unlockPro")}</Text>
         </TouchableOpacity>
 
         <View
@@ -152,13 +153,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: "#10b981",
     borderRadius: 12,
     paddingVertical: 14,
     marginBottom: 12,
   },
   unlockBtnText: {
-    color: "#ffffff",
     fontSize: 16,
     fontWeight: "700",
   },

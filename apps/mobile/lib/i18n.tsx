@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { createSettingsApi } from "@money-tracker/api-client";
 import { apiClient } from "./api";
 
@@ -59,7 +59,7 @@ export function I18nProvider({ children, initialLocale = "en" }: { children: Rea
   }, [locale]);
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale, i18n }}>
+    <I18nContext.Provider value={useMemo(() => ({ locale, setLocale, i18n }), [locale, setLocale, i18n])}>
       {children}
     </I18nContext.Provider>
   );

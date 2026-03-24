@@ -11,11 +11,10 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { createSettingsApi } from "@money-tracker/api-client";
 import { apiClient } from "@/lib/api";
-import { useAppTheme } from "@/lib/themeContext";
+import { useAppTheme, type ThemeSetting } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
 import { exportToFile, pickAndImport } from "@/lib/db";
-
-type ThemeSetting = "light" | "dark" | "system";
+import { MENU_COLORS } from "@/lib/colors";
 
 const THEME_OPTIONS: { value: ThemeSetting; icon: keyof typeof Ionicons.glyphMap; labelKey: string }[] = [
   { value: "light", icon: "sunny-outline", labelKey: "setting.light" },
@@ -187,7 +186,7 @@ export default function SettingsPage() {
           disabled={exporting || importing}
           activeOpacity={0.7}
         >
-          <Ionicons name="share-outline" size={20} color="#0ea5e9" />
+          <Ionicons name="share-outline" size={20} color={MENU_COLORS.export} />
           <Text style={{ fontSize: 15, fontWeight: "600", color: theme.text, flex: 1 }}>
             {i18n("data.exportData")}
           </Text>
@@ -204,7 +203,7 @@ export default function SettingsPage() {
           disabled={exporting || importing}
           activeOpacity={0.7}
         >
-          <Ionicons name="download-outline" size={20} color="#8b5cf6" />
+          <Ionicons name="download-outline" size={20} color={MENU_COLORS.import} />
           <Text style={{ fontSize: 15, fontWeight: "600", color: theme.text, flex: 1 }}>
             {i18n("data.importData")}
           </Text>

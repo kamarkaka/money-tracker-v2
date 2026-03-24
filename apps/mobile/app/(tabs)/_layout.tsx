@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Tabs } from "expo-router";
 import { View, TouchableOpacity, StyleSheet, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Transaction } from "@money-tracker/shared";
 import { useAppTheme } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
@@ -11,6 +12,7 @@ import { TransactionModal } from "@/components/TransactionModal";
 export default function TabLayout() {
   const { theme } = useAppTheme();
   const { i18n } = useI18n();
+  const insets = useSafeAreaInsets();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editTx, setEditTx] = useState<Transaction | null>(null);
@@ -51,7 +53,7 @@ export default function TabLayout() {
   }, [modalOpen, closeModal, openAdd]);
 
   return (
-    <ModalContext.Provider value={{
+    <ModalContext.Provider value={useMemo(() => ({
       isModalOpen: modalOpen,
       openAdd,
       openEdit,
@@ -60,17 +62,17 @@ export default function TabLayout() {
       editTransaction: editTx,
       onComplete,
       setOnComplete,
-    }}>
+    }), [modalOpen, openAdd, openEdit, closeModal, toggle, editTx, onComplete, setOnComplete])}>
       <View style={{ flex: 1 }}>
         <Tabs
           screenOptions={{
-            tabBarActiveTintColor: "#10b981",
+            tabBarActiveTintColor: theme.brand,
             tabBarInactiveTintColor: theme.textSecondary,
             tabBarStyle: {
               backgroundColor: theme.card,
               borderTopColor: theme.cardBorder,
-              height: 82,
-              paddingBottom: 16,
+              height: 50 + insets.bottom,
+              paddingBottom: insets.bottom,
               paddingTop: 8,
             },
             tabBarLabelStyle: {
@@ -119,12 +121,12 @@ export default function TabLayout() {
 
         {/* Floating + / x button */}
         <TouchableOpacity
-          style={styles.fab}
+          style={[styles.fab, { bottom: insets.bottom + 2, backgroundColor: theme.brand, shadowColor: theme.shadow }]}
           onPress={toggle}
           activeOpacity={0.8}
         >
           <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-            <Ionicons name="add" size={32} color="#ffffff" />
+            <Ionicons name="add" size={32} color={theme.brandText} />
           </Animated.View>
         </TouchableOpacity>
       </View>
@@ -138,16 +140,14 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: "absolute",
-    bottom: 34,
+    bottom: 0,
     alignSelf: "center",
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#10b981",
     justifyContent: "center",
     alignItems: "center",
     zIndex: 110,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,

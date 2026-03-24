@@ -1,6 +1,5 @@
 import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
-import { BlobReader, TextWriter, ZipReader } from "@zip.js/zip.js";
 import { getDatabase, uuid } from "./database";
 
 function parseCsv(csv: string): Record<string, string>[] {
@@ -49,6 +48,35 @@ function parseCsvLine(line: string): string[] {
   return result;
 }
 
+// Minimal ZIP reader — reads STORE (uncompressed) entries
+function readZip(data: Uint8Array): Record<string, string> {
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  const decoder = new TextDecoder();
+  const files: Record<string, string> = {};
+  let offset = 0;
+
+  while (offset < data.length - 4) {
+    const sig = view.getUint32(offset, true);
+    if (sig !== 0x04034b50) break; // Not a local file header
+
+    const nameLen = view.getUint16(offset + 26, true);
+    const extraLen = view.getUint16(offset + 28, true);
+    const compressedSize = view.getUint32(offset + 18, true);
+    const name = decoder.decode(data.subarray(offset + 30, offset + 30 + nameLen));
+    const dataStart = offset + 30 + nameLen + extraLen;
+    const fileData = data.subarray(dataStart, dataStart + compressedSize);
+
+    if (name.endsWith(".csv")) {
+      const tableName = name.replace(".csv", "");
+      files[tableName] = decoder.decode(fileData);
+    }
+
+    offset = dataStart + compressedSize;
+  }
+
+  return files;
+}
+
 export async function pickAndImport(): Promise<{
   success: boolean;
   message: string;
@@ -64,19 +92,9 @@ export async function pickAndImport(): Promise<{
 
   try {
     const file = new File(result.assets[0].uri);
-    const fileBlob = new Blob([await file.arrayBuffer()]);
-
-    const zipReader = new ZipReader(new BlobReader(fileBlob));
-    const entries = await zipReader.getEntries();
-
-    const csvMap: Record<string, string> = {};
-    for (const entry of entries) {
-      if (entry.filename.endsWith(".csv") && !entry.directory) {
-        const content = await entry.getData!(new TextWriter());
-        csvMap[entry.filename.replace(".csv", "")] = content;
-      }
-    }
-    await zipReader.close();
+    const arrayBuffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    const csvMap = readZip(bytes);
 
     return importCsvData(csvMap);
   } catch (error) {

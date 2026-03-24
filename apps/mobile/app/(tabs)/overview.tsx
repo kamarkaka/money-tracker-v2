@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo, memo } from "react";
 import { useFocusEffect } from "expo-router";
 import {
   View,
@@ -11,10 +11,8 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   Dimensions,
-  PanResponder,
-  GestureResponderEvent,
-  PanResponderGestureState,
 } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Circle } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
@@ -28,13 +26,10 @@ import { FALLBACK_EMOJI, getEmojiIcon } from "@/lib/emoji";
 import { useTransactionModal } from "@/lib/addModal";
 import { SlotNumber } from "@/components/SlotNumber";
 import { useI18n } from "@/lib/i18n";
+import { RING_COLORS } from "@/lib/colors";
 
-// #3 — Harmonized teal/cyan/blue palette (avoids #10b981 green button)
-const RING_COLORS = [
-  "#0ea5e9", "#8b5cf6", "#06b6d4", "#f59e0b",
-  "#0891b2", "#6366f1", "#0d9488", "#ec4899",
-  "#0284c7", "#0e7490",
-];
+const txApi = createTransactionApi(apiClient);
+const catApi = createCategoryApi(apiClient);
 
 interface EmojiGroup {
   emoji: string;
@@ -57,7 +52,7 @@ function addMonths(y: number, m: number, delta: number): { y: number; m: number 
   return { y: newY, m: newM };
 }
 
-function ProgressRing({ size, strokeWidth, pct, ringColor, trackColor, children }: {
+const ProgressRing = memo(function ProgressRing({ size, strokeWidth, pct, ringColor, trackColor, children }: {
   size: number;
   strokeWidth: number;
   pct: number;
@@ -91,15 +86,12 @@ function ProgressRing({ size, strokeWidth, pct, ringColor, trackColor, children 
       </View>
     </View>
   );
-}
+});
 
 export default function OverviewScreen() {
-  const { theme, isDark } = useAppTheme();
+  const { theme } = useAppTheme();
   const { i18n, locale } = useI18n();
   const insets = useSafeAreaInsets();
-  const txApi = createTransactionApi(apiClient);
-  const catApi = createCategoryApi(apiClient);
-
   const [initialLoad, setInitialLoad] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -109,44 +101,46 @@ export default function OverviewScreen() {
   const { openEdit, setOnComplete } = useTransactionModal();
   const [earliestDate, setEarliestDate] = useState<{ y: number; m: number } | null>(null);
 
-  const now = new Date();
+  const nowRef = useRef(new Date());
+  const now = nowRef.current;
   const [yearMonth, setYearMonth] = useState({ year: now.getFullYear(), month: now.getMonth() });
   const { year, month } = yearMonth;
   const monthScrollRef = useRef<ScrollView>(null);
 
   const screenWidth = Dimensions.get("window").width;
-  const EDGE_ZONE = 50;
-  const SWIPE_THRESHOLD = 40;
 
   const swipeRef = useRef({ setYearMonth, setExpandedEmoji, yearMonth });
   swipeRef.current = { setYearMonth, setExpandedEmoji, yearMonth };
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_e: GestureResponderEvent, gs: PanResponderGestureState) => {
-        const startX = (gs as any).x0 ?? 0;
-        const sw = Dimensions.get("window").width;
-        const isEdge = startX <= 50 || startX >= sw - 50;
-        return isEdge && Math.abs(gs.dx) > 15 && Math.abs(gs.dx) > Math.abs(gs.dy) * 2;
-      },
-      onPanResponderRelease: (_e: GestureResponderEvent, gs: PanResponderGestureState) => {
-        const startX = (gs as any).x0 ?? 0;
-        const sw = Dimensions.get("window").width;
-        const { setYearMonth: setYM, setExpandedEmoji: setEE, yearMonth: ym } = swipeRef.current;
-        if (startX >= sw - 50 && gs.dx < -40) {
-          const prev = addMonths(ym.year, ym.month, -1);
-          setYM({ year: prev.y, month: prev.m });
-          setEE(null);
-        } else if (startX <= 50 && gs.dx > 40) {
-          const n = new Date();
-          if (ym.year === n.getFullYear() && ym.month === n.getMonth()) return;
-          const next = addMonths(ym.year, ym.month, 1);
-          setYM({ year: next.y, month: next.m });
-          setEE(null);
-        }
-      },
-    }),
-  ).current;
+  const goToPrevMonth = useCallback(() => {
+    const { setYearMonth: setYM, setExpandedEmoji: setEE, yearMonth: ym } = swipeRef.current;
+    const prev = addMonths(ym.year, ym.month, -1);
+    setYM({ year: prev.y, month: prev.m });
+    setEE(null);
+  }, []);
+
+  const goToNextMonth = useCallback(() => {
+    const { setYearMonth: setYM, setExpandedEmoji: setEE, yearMonth: ym } = swipeRef.current;
+    const n = new Date();
+    if (ym.year === n.getFullYear() && ym.month === n.getMonth()) return;
+    const next = addMonths(ym.year, ym.month, 1);
+    setYM({ year: next.y, month: next.m });
+    setEE(null);
+  }, []);
+
+  const edgeSwipeGesture = Gesture.Pan()
+    .activeOffsetX([-15, 15])
+    .failOffsetY([-10, 10])
+    .runOnJS(true)
+    .onEnd((e) => {
+      const startX = e.absoluteX - e.translationX;
+      const sw = screenWidth;
+      if (startX >= sw - 50 && e.translationX < -40) {
+        goToPrevMonth();
+      } else if (startX <= 50 && e.translationX > 40) {
+        goToNextMonth();
+      }
+    });
 
   const handleMonthScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
@@ -167,7 +161,7 @@ export default function OverviewScreen() {
     refreshEarliestDate();
   }, [refreshEarliestDate]);
 
-  const shortMonths = getShortMonths(locale);
+  const shortMonths = useMemo(() => getShortMonths(locale), [locale]);
 
   const fetchData = useCallback(async () => {
     const startDate = new Date(year, month, 1).toISOString().split("T")[0];
@@ -239,6 +233,13 @@ export default function OverviewScreen() {
     }
   }
 
+  // Parse amounts once
+  const parsedAmounts = useMemo(
+    () => new Map(transactions.map((t) => [t.id, parseAmount(t.amount)])),
+    [transactions],
+  );
+  const getAmt = (t: Transaction) => parsedAmounts.get(t.id) ?? 0;
+
   // Group transactions by emoji
   const groupMap = new Map<string, EmojiGroup>();
   for (const t of transactions) {
@@ -249,7 +250,7 @@ export default function OverviewScreen() {
       groupMap.set(emoji, { emoji, name, total: 0, transactions: [] });
     }
     const g = groupMap.get(emoji)!;
-    g.total += parseAmount(t.amount);
+    g.total += getAmt(t);
     g.transactions.push(t);
   }
   const groups = Array.from(groupMap.values()).sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
@@ -262,18 +263,15 @@ export default function OverviewScreen() {
     transferCat.children?.forEach((ch) => transferIds.add(ch.id));
   }
   const nonTransfer = transactions.filter((t) => !t.categoryId || !transferIds.has(t.categoryId));
-  const totalIncome = nonTransfer.filter((t) => parseAmount(t.amount) > 0).reduce((s, t) => s + parseAmount(t.amount), 0);
-  const totalExpenses = nonTransfer.filter((t) => parseAmount(t.amount) < 0).reduce((s, t) => s + parseAmount(t.amount), 0);
+  const totalIncome = nonTransfer.filter((t) => getAmt(t) > 0).reduce((s, t) => s + getAmt(t), 0);
+  const totalExpenses = nonTransfer.filter((t) => getAmt(t) < 0).reduce((s, t) => s + getAmt(t), 0);
   const netSavings = totalIncome + totalExpenses;
 
   // Ring percentages use all transactions (including transfers), matching web app
-  const allIncome = transactions.filter((t) => parseAmount(t.amount) > 0).reduce((s, t) => s + parseAmount(t.amount), 0);
-  const allExpenses = transactions.filter((t) => parseAmount(t.amount) < 0).reduce((s, t) => s + parseAmount(t.amount), 0);
+  const allIncome = transactions.filter((t) => getAmt(t) > 0).reduce((s, t) => s + getAmt(t), 0);
+  const allExpenses = transactions.filter((t) => getAmt(t) < 0).reduce((s, t) => s + getAmt(t), 0);
 
-  // #7 — Net savings color
-  const savingsColor = netSavings >= 0
-    ? (isDark ? "#34d399" : "#059669")
-    : (isDark ? "#f87171" : "#dc2626");
+  const savingsColor = netSavings >= 0 ? theme.income : theme.expense;
 
   if (initialLoad) {
     return (
@@ -286,17 +284,18 @@ export default function OverviewScreen() {
   const labeledYears = new Set<number>();
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background }} {...panResponder.panHandlers}>
+    <GestureDetector gesture={edgeSwipeGesture}>
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
     {/* #1 — Gradient header background */}
     <LinearGradient
-      colors={isDark ? ["#064e3b", theme.background] : ["#ecfdf5", theme.background]}
+      colors={[theme.gradientStart, theme.background]}
       style={styles.headerGradient}
       pointerEvents="none"
     />
     <ScrollView
       style={{ backgroundColor: "transparent" }}
       contentContainerStyle={[styles.content, { paddingTop: insets.top }]}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10b981" progressViewOffset={insets.top} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.brand} progressViewOffset={insets.top} />}
     >
 
       {/* Month picker */}
@@ -318,12 +317,12 @@ export default function OverviewScreen() {
               <TouchableOpacity
                 key={`${y}-${m}`}
                 onPress={() => { setYearMonth({ year: y, month: m }); setExpandedEmoji(null); }}
-                style={[styles.monthPill, isSelected && { backgroundColor: "#10b981" }]}
+                style={[styles.monthPill, isSelected && { backgroundColor: theme.brand }]}
                 activeOpacity={0.7}
               >
                 <Text style={[
                   styles.monthPillText,
-                  { color: isSelected ? "#ffffff" : theme.textSecondary },
+                  { color: isSelected ? theme.brandText : theme.textSecondary },
                   isSelected && { fontWeight: "700" },
                 ]}>
                   {shortMonths[m]}
@@ -334,49 +333,58 @@ export default function OverviewScreen() {
           })}
         </ScrollView>
         {showScrollBar && (
-          <View style={styles.monthScrollBar} pointerEvents="none" />
+          <View style={[styles.monthScrollBar, { backgroundColor: theme.scrollIndicator }]} pointerEvents="none" />
         )}
       </View>
 
-      {/* #7 — Net Savings hero card */}
-      <View style={[styles.savingsCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+      {/* Net Savings */}
+      <LinearGradient
+        colors={[netSavings >= 0 ? theme.incomeBg : theme.expenseBg, theme.card]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.savingsCard, { borderColor: theme.cardBorder, shadowColor: theme.shadow }]}
+      >
         <Text style={[styles.savingsLabel, { color: theme.textSecondary }]}>
           {i18n("overview.netSavings")}
         </Text>
-        <View style={{ marginTop: 4 }}>
-          <SlotNumber
-            value={formatCurrency(netSavings, "USD", true)}
-            style={{ ...styles.savingsAmount, color: savingsColor, textShadowColor: savingsColor + "40", textShadowRadius: 12 }}
-          />
-        </View>
-      </View>
+        <SlotNumber
+          value={formatCurrency(netSavings, "USD", true)}
+          style={{ ...styles.savingsAmount, color: savingsColor }}
+        />
+      </LinearGradient>
 
-      {/* #2 — Summary cards with left accent border */}
+      {/* Income + Expenses */}
       <View style={styles.summaryRow}>
-        <View style={[styles.summaryCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          <View style={[styles.summaryAccent, { backgroundColor: isDark ? "#34d399" : "#059669" }]} />
+        <LinearGradient
+          colors={[theme.incomeBg, theme.card]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.summaryCard, { borderColor: theme.cardBorder, shadowColor: theme.shadow }]}
+        >
+          <View style={[styles.summaryAccent, { backgroundColor: theme.income }]} />
           <View style={styles.summaryContent}>
             <Text style={{ fontSize: 12, fontWeight: "600", color: theme.textSecondary }}>{i18n("overview.totalIncome")}</Text>
-            <View style={{ marginTop: 2 }}>
-              <SlotNumber
-                value={formatCurrency(totalIncome, "USD", true)}
-                style={{ fontSize: 20, fontWeight: "800", color: isDark ? "#34d399" : "#059669" }}
-              />
-            </View>
+            <SlotNumber
+              value={formatCurrency(totalIncome, "USD", true)}
+              style={{ fontSize: 20, fontWeight: "800", color: theme.income, marginTop: 2 }}
+            />
           </View>
-        </View>
-        <View style={[styles.summaryCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          <View style={[styles.summaryAccent, { backgroundColor: isDark ? "#f87171" : "#dc2626" }]} />
+        </LinearGradient>
+        <LinearGradient
+          colors={[theme.expenseBg, theme.card]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.summaryCard, { borderColor: theme.cardBorder, shadowColor: theme.shadow }]}
+        >
+          <View style={[styles.summaryAccent, { backgroundColor: theme.expense }]} />
           <View style={styles.summaryContent}>
             <Text style={{ fontSize: 12, fontWeight: "600", color: theme.textSecondary }}>{i18n("overview.totalExpenses")}</Text>
-            <View style={{ marginTop: 2 }}>
-              <SlotNumber
-                value={formatCurrency(Math.abs(totalExpenses), "USD", true)}
-                style={{ fontSize: 20, fontWeight: "800", color: isDark ? "#f87171" : "#dc2626" }}
-              />
-            </View>
+            <SlotNumber
+              value={formatCurrency(Math.abs(totalExpenses), "USD", true)}
+              style={{ fontSize: 20, fontWeight: "800", color: theme.expense, marginTop: 2 }}
+            />
           </View>
-        </View>
+        </LinearGradient>
       </View>
 
       {/* Category grid */}
@@ -461,7 +469,7 @@ export default function OverviewScreen() {
                           <Text style={{ flex: 1, fontSize: 15, fontWeight: "500", color: theme.text }} numberOfLines={1}>
                             {t.description}
                           </Text>
-                          <Text style={{ fontSize: 15, fontWeight: "600", color: amt < 0 ? (isDark ? "#f87171" : "#dc2626") : (isDark ? "#34d399" : "#059669") }}>
+                          <Text style={{ fontSize: 15, fontWeight: "600", color: amt < 0 ? theme.expense : theme.income }}>
                             {formatCurrency(Math.abs(amt))}
                           </Text>
                         </TouchableOpacity>
@@ -477,6 +485,7 @@ export default function OverviewScreen() {
 
     </ScrollView>
     </View>
+    </GestureDetector>
   );
 }
 
@@ -501,7 +510,6 @@ const styles = StyleSheet.create({
     bottom: 18,
     width: 3,
     borderRadius: 1.5,
-    backgroundColor: "rgba(255,255,255,0.5)",
   },
   monthPill: { paddingHorizontal: 16, paddingVertical: 14, borderRadius: 10 },
   monthPillText: { fontSize: 15, fontWeight: "500" },
@@ -512,10 +520,13 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: "center",
     marginBottom: 10,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   savingsLabel: { fontSize: 13, fontWeight: "600", textTransform: "uppercase", letterSpacing: 1 },
   savingsAmount: { fontSize: 24, fontWeight: "800" },
-  // #2
   summaryRow: { flexDirection: "row", gap: 10, marginBottom: 12 },
   summaryCard: {
     flex: 1,
@@ -523,15 +534,13 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     flexDirection: "row",
     overflow: "hidden",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  summaryAccent: {
-    width: 4,
-  },
-  summaryContent: {
-    flex: 1,
-    padding: 14,
-  },
-  // #4
+  summaryAccent: { width: 4 },
+  summaryContent: { flex: 1, padding: 14 },
   emojiRow: { flexDirection: "row", marginBottom: 8 },
   emojiCell: {
     flex: 1,

@@ -1,16 +1,15 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useColorScheme, ActivityIndicator, View } from "react-native";
 import { Stack } from "expo-router";
 import { ThemeProvider, DarkTheme, DefaultTheme } from "@react-navigation/native";
 import { ApiClientContext } from "@money-tracker/hooks";
 import { createSettingsApi } from "@money-tracker/api-client";
 import { apiClient } from "@/lib/api";
-import { ThemeContext } from "@/lib/themeContext";
+import { ThemeContext, type ThemeSetting } from "@/lib/themeContext";
 import { colors } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
 import { getDatabase } from "@/lib/db";
-
-type ThemeSetting = "light" | "dark" | "system";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function RootLayout() {
   const systemScheme = useColorScheme();
@@ -63,6 +62,11 @@ export default function RootLayout() {
     }
   }, []);
 
+  const themeContextValue = useMemo(
+    () => ({ theme, themeSetting, isDark, setThemeSetting }),
+    [theme, themeSetting, isDark, setThemeSetting],
+  );
+
   if (loading) {
     return (
       <View
@@ -79,8 +83,9 @@ export default function RootLayout() {
   }
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <ThemeContext.Provider
-      value={{ theme, themeSetting, isDark, setThemeSetting }}
+      value={themeContextValue}
     >
       <I18nProvider initialLocale={locale}>
         <ApiClientContext.Provider value={apiClient}>
@@ -103,10 +108,6 @@ export default function RootLayout() {
             }}
           >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="modal/transaction-detail"
-              options={{ presentation: "modal", headerShown: false }}
-            />
             <Stack.Screen
               name="pages/settings"
               options={{ title: "Settings", headerBackTitle: "Back" }}
@@ -141,5 +142,6 @@ export default function RootLayout() {
         </ApiClientContext.Provider>
       </I18nProvider>
     </ThemeContext.Provider>
+    </GestureHandlerRootView>
   );
 }

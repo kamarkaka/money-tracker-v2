@@ -98,8 +98,8 @@ export default function ProfilePage() {
         </Text>
 
         {message ? (
-          <View style={[styles.messageBanner, { backgroundColor: "#ecfdf5" }]}>
-            <Text style={{ color: "#047857", fontSize: 13 }}>{message}</Text>
+          <View style={[styles.messageBanner, { backgroundColor: theme.successBg }]}>
+            <Text style={{ color: theme.successText, fontSize: 13 }}>{message}</Text>
           </View>
         ) : null}
 

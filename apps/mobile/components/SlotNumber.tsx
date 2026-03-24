@@ -7,25 +7,20 @@ interface SlotNumberProps {
   duration?: number;
 }
 
-function getCellHeight(fontSize: number): number {
-  return Math.ceil(fontSize * 1.3);
-}
+const CELL_HEIGHT = 28;
 
-function SlotDigit({ char, delay, duration, style, cellHeight }: {
+function SlotDigit({ char, delay, duration, color }: {
   char: string;
   delay: number;
   duration: number;
-  style?: TextStyle;
-  cellHeight: number;
+  color?: string;
 }) {
   const isDigit = /\d/.test(char);
   const anim = useRef(new Animated.Value(0)).current;
-  const prevChar = useRef(char);
 
   useEffect(() => {
     if (!isDigit) return;
     anim.setValue(0);
-    prevChar.current = char;
     const timer = setTimeout(() => {
       Animated.timing(anim, {
         toValue: 1,
@@ -37,7 +32,7 @@ function SlotDigit({ char, delay, duration, style, cellHeight }: {
   }, [char, delay, duration, isDigit]);
 
   if (!isDigit) {
-    return <Text style={[styles.char, style, { height: cellHeight, lineHeight: cellHeight }]}>{char}</Text>;
+    return <Text style={[styles.cell, { height: CELL_HEIGHT, lineHeight: CELL_HEIGHT, color }]}>{char}</Text>;
   }
 
   const digit = parseInt(char);
@@ -46,16 +41,14 @@ function SlotDigit({ char, delay, duration, style, cellHeight }: {
 
   const translateY = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -(stripLength - 1) * cellHeight],
+    outputRange: [0, -(stripLength - 1) * CELL_HEIGHT],
   });
 
   return (
-    <View style={[styles.digitContainer, { height: cellHeight }]}>
+    <View style={{ height: CELL_HEIGHT, overflow: "hidden" }}>
       <Animated.View style={{ transform: [{ translateY }] }}>
         {strip.map((d, i) => (
-          <Text key={i} style={[styles.digitCell, style, { height: cellHeight, lineHeight: cellHeight }]}>
-            {d}
-          </Text>
+          <Text key={i} style={[styles.cell, { height: CELL_HEIGHT, lineHeight: CELL_HEIGHT, color }]}>{d}</Text>
         ))}
       </Animated.View>
     </View>
@@ -63,13 +56,19 @@ function SlotDigit({ char, delay, duration, style, cellHeight }: {
 }
 
 export function SlotNumber({ value, style, duration = 800 }: SlotNumberProps) {
-  const chars = value.split("");
   const fontSize = (style?.fontSize as number) || 20;
-  const cellHeight = getCellHeight(fontSize);
+
+  // For very small font sizes, skip the slot animation — just render plain text
+  if (fontSize < 16) {
+    return <Text style={style}>{value}</Text>;
+  }
+
+  const chars = value.split("");
+  const scale = fontSize / 20;
   let digitIndex = 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { transform: [{ scale }], transformOrigin: "center center" }]}>
       {chars.map((char, i) => {
         const isDigit = /\d/.test(char);
         const delay = isDigit ? digitIndex * 50 : 0;
@@ -80,8 +79,7 @@ export function SlotNumber({ value, style, duration = 800 }: SlotNumberProps) {
             char={char}
             delay={delay}
             duration={duration}
-            style={style}
-            cellHeight={cellHeight}
+            color={style?.color as string}
           />
         );
       })}
@@ -94,13 +92,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
   },
-  digitContainer: {
-    overflow: "hidden",
-  },
-  char: {
-    textAlign: "center",
-  },
-  digitCell: {
+  cell: {
+    fontSize: 20,
+    fontWeight: "800",
     textAlign: "center",
   },
 });

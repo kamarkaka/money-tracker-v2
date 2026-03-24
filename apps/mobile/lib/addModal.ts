@@ -33,9 +33,3 @@ export function useTransactionModal() {
   return useContext(ModalContext);
 }
 
-// Keep backward compat
-export const AddModalContext = ModalContext;
-export function useAddModal() {
-  const ctx = useContext(ModalContext);
-  return { open: ctx.isModalOpen, setOpen: (v: boolean) => v ? ctx.openAdd() : ctx.closeModal() };
-}
