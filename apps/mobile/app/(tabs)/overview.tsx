@@ -429,10 +429,15 @@ export default function OverviewScreen() {
 
             const bucketCards = budgets.map((bucket, idx) => {
               const bTx = bucketTxMap.get(bucket.id) || [];
-              const spent = bTx.reduce((s, t) => s + Math.abs(getAmt(t) < 0 ? getAmt(t) : 0), 0);
+              const netTotal = bTx.reduce((s, t) => s + getAmt(t), 0);
+              const expenses = bTx.reduce((s, t) => s + (getAmt(t) < 0 ? Math.abs(getAmt(t)) : 0), 0);
               const budgetAmt = typeof bucket.amount === "string" ? parseFloat(bucket.amount as string) : bucket.amount;
-              const pct = budgetAmt > 0 ? Math.min(spent / budgetAmt, 1) : 0;
-              const remaining = budgetAmt - spent;
+              const isNetIncome = netTotal > 0;
+              // For expense buckets: track spending against budget
+              // For income buckets: track earnings against budget
+              const trackingAmount = isNetIncome ? netTotal : expenses;
+              const pct = budgetAmt > 0 ? Math.min(trackingAmount / budgetAmt, 1) : 0;
+              const remaining = budgetAmt - trackingAmount;
               const isExpanded = expandedBucket === bucket.id;
               const color = RING_COLORS[idx % RING_COLORS.length];
               const bucketIcon = bucket.icon ? getEmojiIcon(bucket.icon) : null;
@@ -454,18 +459,22 @@ export default function OverviewScreen() {
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                         <Text style={[styles.bucketName, { color: theme.text }]}>{bucket.name}</Text>
-                        <Text style={{ fontSize: 15, fontWeight: "700", color: theme.expense }}>
-                          {formatCurrency(spent, "USD", true)}
-                        </Text>
+                        <View style={{ alignItems: "flex-end" }}>
+                          <Text style={{ fontSize: 15, fontWeight: "700", color: isNetIncome ? theme.income : theme.expense }}>
+                            {formatCurrency(Math.abs(netTotal), "USD", true)}
+                          </Text>
+                          {budgetAmt > 0 && (
+                            <Text style={{ fontSize: 12, color: remaining >= 0 ? theme.income : theme.expense, marginTop: 1 }}>
+                              {formatCurrency(Math.abs(remaining), "USD", true)} {remaining >= 0 ? i18n("overview.left").replace("{amount}", "") : i18n("overview.over").replace("{amount}", "")}
+                            </Text>
+                          )}
+                        </View>
                       </View>
                       {budgetAmt > 0 && (
                         <View style={{ marginTop: 6 }}>
-                          <View style={[styles.progressTrack, { backgroundColor: theme.cardBorder }]}>
-                            <View style={[styles.progressFill, { width: `${pct * 100}%`, backgroundColor: remaining >= 0 ? theme.income : theme.expense }]} />
+                          <View style={[styles.progressTrack, { backgroundColor: color + "20" }]}>
+                            <View style={[styles.progressFill, { width: `${pct * 100}%`, backgroundColor: color }]} />
                           </View>
-                          <Text style={{ fontSize: 12, color: remaining >= 0 ? theme.income : theme.expense, marginTop: 3 }}>
-                            {formatCurrency(Math.abs(remaining), "USD", true)} {remaining >= 0 ? i18n("overview.left").replace("{amount}", "") : i18n("overview.over").replace("{amount}", "")}
-                          </Text>
                         </View>
                       )}
                     </View>
@@ -515,9 +524,14 @@ export default function OverviewScreen() {
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                       <Text style={[styles.bucketName, { color: theme.text }]}>{i18n("overview.others")}</Text>
-                      <Text style={{ fontSize: 15, fontWeight: "700", color: theme.expense }}>
-                        {formatCurrency(otherTx.reduce((s, t) => s + Math.abs(getAmt(t) < 0 ? getAmt(t) : 0), 0), "USD", true)}
-                      </Text>
+                      {(() => {
+                        const net = otherTx.reduce((s, t) => s + getAmt(t), 0);
+                        return (
+                          <Text style={{ fontSize: 15, fontWeight: "700", color: net > 0 ? theme.income : theme.expense }}>
+                            {net > 0 ? "+" : "-"}{formatCurrency(Math.abs(net), "USD", true)}
+                          </Text>
+                        );
+                      })()}
                     </View>
                   </View>
                   <Ionicons name={expandedBucket === "others" ? "chevron-up" : "chevron-down"} size={18} color={theme.textSecondary} style={{ marginLeft: 8 }} />
@@ -553,9 +567,14 @@ export default function OverviewScreen() {
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                       <Text style={[styles.bucketName, { color: theme.text }]}>{i18n("overview.uncategorized")}</Text>
-                      <Text style={{ fontSize: 15, fontWeight: "700", color: theme.expense }}>
-                        {formatCurrency(uncategorized.reduce((s, t) => s + Math.abs(getAmt(t) < 0 ? getAmt(t) : 0), 0), "USD", true)}
-                      </Text>
+                      {(() => {
+                        const net = uncategorized.reduce((s, t) => s + getAmt(t), 0);
+                        return (
+                          <Text style={{ fontSize: 15, fontWeight: "700", color: net > 0 ? theme.income : theme.expense }}>
+                            {net > 0 ? "+" : "-"}{formatCurrency(Math.abs(net), "USD", true)}
+                          </Text>
+                        );
+                      })()}
                     </View>
                   </View>
                   <Ionicons name={expandedBucket === "uncat" ? "chevron-up" : "chevron-down"} size={18} color={theme.textSecondary} style={{ marginLeft: 8 }} />
