@@ -50,3 +50,13 @@ export const colors = {
 };
 
 export type ThemeColors = typeof colors.light;
+
+export function getThemeWithBrand(isDark: boolean, isPro: boolean): ThemeColors {
+  const base = colors[isDark ? "dark" : "light"];
+  if (!isPro) return base;
+  return {
+    ...base,
+    brand: isDark ? "#3b82f6" : "#2563eb",
+    gradientStart: isDark ? "#1e3a5f" : "#eff6ff",
+  };
+}

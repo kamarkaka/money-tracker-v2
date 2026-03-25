@@ -1,12 +1,18 @@
-import { NativeModules, Platform } from "react-native";
+import { Platform } from "react-native";
 
 export const PRODUCT_IDS = [
   "com.moneytracker.pro.monthly",
   "com.moneytracker.pro.yearly",
 ];
 
-// Check if native IAP module is available (dev build vs Expo Go)
-const HAS_IAP = Platform.OS === "ios" && !!NativeModules.RNIapIos;
+// Check if NitroModules is available (dev build with native modules vs Expo Go)
+let HAS_IAP = false;
+try {
+  const nitro = require("react-native-nitro-modules");
+  HAS_IAP = Platform.OS === "ios" && !!nitro?.NitroModules;
+} catch {
+  HAS_IAP = false;
+}
 
 // Only import when native module exists — guarded by HAS_IAP before every call
 let iap: any = null;
@@ -19,14 +25,25 @@ if (HAS_IAP) {
 }
 
 export async function initStore(): Promise<void> {
+  console.log("[IAP] HAS_IAP:", HAS_IAP, "iap loaded:", !!iap);
   if (!iap) return;
   await iap.initConnection();
+  console.log("[IAP] Connection initialized");
 }
 
 export async function getProducts(): Promise<any[]> {
-  if (!iap) return [];
-  const result = await iap.fetchProducts({ skus: PRODUCT_IDS, type: "subs" });
-  return result ?? [];
+  if (!iap) {
+    console.log("[IAP] No IAP module, returning empty products");
+    return [];
+  }
+  try {
+    const result = await iap.fetchProducts({ skus: PRODUCT_IDS, type: "subs" });
+    console.log("[IAP] Products fetched:", result?.length ?? 0, JSON.stringify(result));
+    return result ?? [];
+  } catch (e) {
+    console.log("[IAP] fetchProducts error:", e);
+    return [];
+  }
 }
 
 export async function purchaseSubscription(productId: string): Promise<void> {

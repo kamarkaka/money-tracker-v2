@@ -10,7 +10,7 @@ import { ModalContext } from "@/lib/addModal";
 import { TransactionModal } from "@/components/TransactionModal";
 
 export default function TabLayout() {
-  const { theme } = useAppTheme();
+  const { theme, isPro } = useAppTheme();
   const { i18n } = useI18n();
   const insets = useSafeAreaInsets();
 
@@ -90,7 +90,17 @@ export default function TabLayout() {
               title: i18n("nav.overview"),
               headerShown: false,
               tabBarIcon: ({ color, focused }) => (
-                <Ionicons name={focused ? "pie-chart" : "pie-chart-outline"} size={28} color={color} />
+                <Ionicons name={focused ? "pie-chart" : "pie-chart-outline"} size={26} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="accounts"
+            options={{
+              title: i18n("nav.account"),
+              href: isPro ? undefined : null,
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? "business" : "business-outline"} size={26} color={color} />
               ),
             }}
           />
@@ -102,11 +112,21 @@ export default function TabLayout() {
             }}
           />
           <Tabs.Screen
+            name="transactions"
+            options={{
+              title: i18n("nav.transaction"),
+              href: isPro ? undefined : null,
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? "list" : "list-outline"} size={26} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
             name="more"
             options={{
               title: i18n("nav.more"),
               tabBarIcon: ({ color, focused }) => (
-                <Ionicons name={focused ? "menu" : "menu-outline"} size={28} color={color} />
+                <Ionicons name={focused ? "menu" : "menu-outline"} size={26} color={color} />
               ),
             }}
           />

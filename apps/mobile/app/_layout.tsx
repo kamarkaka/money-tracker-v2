@@ -6,7 +6,7 @@ import { ApiClientContext } from "@money-tracker/hooks";
 import { createSettingsApi } from "@money-tracker/api-client";
 import { apiClient } from "@/lib/api";
 import { ThemeContext, type ThemeSetting } from "@/lib/themeContext";
-import { colors } from "@/lib/theme";
+import { getThemeWithBrand } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
 import { getDatabase } from "@/lib/db";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -17,11 +17,12 @@ export default function RootLayout() {
   const [loading, setLoading] = useState(true);
   const [themeSetting, setThemeSettingState] = useState<ThemeSetting>("system");
   const [locale, setLocale] = useState("en");
+  const [isPro, setIsPro] = useState(false);
 
   const isDark =
     themeSetting === "dark" ||
     (themeSetting === "system" && systemScheme === "dark");
-  const theme = colors[isDark ? "dark" : "light"];
+  const theme = getThemeWithBrand(isDark, isPro);
 
   // Initialize local DB and load settings
   useEffect(() => {
@@ -44,6 +45,9 @@ export default function RootLayout() {
           if (settings.language) {
             setLocale(settings.language);
           }
+          if (settings.mode === "pro") {
+            setIsPro(true);
+          }
         } catch {
           // ignore
         }
@@ -64,8 +68,8 @@ export default function RootLayout() {
   }, []);
 
   const themeContextValue = useMemo(
-    () => ({ theme, themeSetting, isDark, setThemeSetting }),
-    [theme, themeSetting, isDark, setThemeSetting],
+    () => ({ theme, themeSetting, isDark, isPro, setThemeSetting, setIsPro }),
+    [theme, themeSetting, isDark, isPro, setThemeSetting, setIsPro],
   );
 
   if (loading) {

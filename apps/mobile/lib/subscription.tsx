@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useMemo, t
 import { Alert } from "react-native";
 import { initStore, endStore, getProducts, checkActiveSubscription, purchaseSubscription, restorePurchases, setupListeners, PRODUCT_IDS } from "./store";
 import { getDatabase } from "./db";
+import { useAppTheme } from "./themeContext";
 
 export interface StoreProduct {
   id?: string | null;
@@ -30,9 +31,15 @@ export function useSubscription() {
 }
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
-  const [isPro, setIsPro] = useState(false);
+  const [isPro, setIsProState] = useState(false);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<StoreProduct[]>([]);
+  const { setIsPro: setThemeIsPro } = useAppTheme();
+
+  const setIsPro = useCallback((value: boolean) => {
+    setIsProState(value);
+    setThemeIsPro(value);
+  }, [setThemeIsPro]);
 
   const persistIsPro = useCallback(async (value: boolean) => {
     try {

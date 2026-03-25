@@ -63,13 +63,19 @@ export class LocalClient extends ApiClient {
     // Accounts
     if (method === "GET" && path === "/api/account")
       return this.listAccounts() as T;
+    if (method === "POST" && path === "/api/account")
+      return this.createAccount(body) as T;
     match = matchPath(path, "/api/account/:id");
-    if (match && method === "PUT")
-      return this.updateAccount(match.id, body) as T;
+    if (match) {
+      if (method === "PUT") return this.updateAccount(match.id, body) as T;
+      if (method === "DELETE") return this.deleteAccount(match.id) as T;
+    }
 
     // Institutions
     if (method === "GET" && path === "/api/institution")
       return this.listInstitutions() as T;
+    if (method === "POST" && path === "/api/institution")
+      return this.createInstitution(body) as T;
     match = matchPath(path, "/api/institution/:id");
     if (match && method === "DELETE")
       return this.deleteInstitution(match.id) as T;
@@ -580,6 +586,81 @@ export class LocalClient extends ApiClient {
     }));
   }
 
+  private async createAccount(body: Record<string, unknown>) {
+    const db = await getDatabase();
+    const id = uuid();
+
+    // If institutionName is provided, find or create institution
+    let institutionId = (body.institutionId as string) || null;
+    if (!institutionId && body.institutionName) {
+      const existing = await db.getFirstAsync<{ id: string }>(
+        "SELECT id FROM institutions WHERE name = ?",
+        [body.institutionName as string],
+      );
+      if (existing) {
+        institutionId = existing.id;
+      } else {
+        institutionId = uuid();
+        await db.runAsync(
+          "INSERT INTO institutions (id, name, is_manual) VALUES (?, ?, 1)",
+          [institutionId, body.institutionName as string],
+        );
+      }
+    }
+
+    if (!institutionId) {
+      // Use first institution as fallback
+      const first = await db.getFirstAsync<{ id: string }>("SELECT id FROM institutions LIMIT 1");
+      institutionId = first?.id || uuid();
+    }
+
+    await db.runAsync(
+      `INSERT INTO accounts (id, institution_id, name, type, subtype, balance, currency, is_manual)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+      [
+        id,
+        institutionId,
+        (body.name as string) || "Account",
+        (body.type as string) || "checking",
+        (body.subtype as string) || null,
+        (body.balance as number) || 0,
+        (body.currency as string) || "USD",
+      ],
+    );
+
+    return this.getAccountById(id);
+  }
+
+  private async getAccountById(id: string) {
+    const db = await getDatabase();
+    const r = await db.getFirstAsync<Record<string, unknown>>(
+      `SELECT a.*, i.id as inst_id, i.name as inst_name
+       FROM accounts a
+       LEFT JOIN institutions i ON a.institution_id = i.id
+       WHERE a.id = ?`,
+      [id],
+    );
+    if (!r) throw new Error("Account not found");
+    return {
+      id: r.id as string,
+      name: r.name as string,
+      type: r.type as string,
+      subtype: (r.subtype as string) || null,
+      balance: r.balance as number,
+      currency: r.currency as string,
+      isHidden: !!(r.is_hidden as number),
+      isManual: !!(r.is_manual as number),
+      institution: r.inst_id
+        ? { id: r.inst_id as string, name: r.inst_name as string }
+        : undefined,
+    };
+  }
+
+  private async deleteAccount(id: string) {
+    const db = await getDatabase();
+    await db.runAsync("DELETE FROM accounts WHERE id = ?", [id]);
+  }
+
   private async updateAccount(id: string, body: Record<string, unknown>) {
     const db = await getDatabase();
     const sets: string[] = [];
@@ -657,6 +738,21 @@ export class LocalClient extends ApiClient {
           institution: { id: inst.id as string, name: inst.name as string },
         })),
     }));
+  }
+
+  private async createInstitution(body: Record<string, unknown>) {
+    const db = await getDatabase();
+    const id = uuid();
+    await db.runAsync(
+      "INSERT INTO institutions (id, name, is_manual) VALUES (?, ?, 1)",
+      [id, (body.name as string) || "Institution"],
+    );
+    return {
+      id,
+      name: body.name,
+      isManual: true,
+      accounts: [],
+    };
   }
 
   private async deleteInstitution(id: string) {
