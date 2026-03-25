@@ -15,8 +15,8 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
-import { createTransactionApi, createAccountApi } from "@money-tracker/api-client";
-import type { Account, Transaction } from "@money-tracker/shared";
+import { createTransactionApi, createAccountApi, createCategoryApi, createInstitutionApi } from "@money-tracker/api-client";
+import type { Account, Transaction, Category, Institution } from "@money-tracker/shared";
 import { parseAmount } from "@money-tracker/shared";
 import { apiClient } from "@/lib/api";
 import { getDatabase } from "@/lib/db";
@@ -27,6 +27,19 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const txApi = createTransactionApi(apiClient);
 const accApi = createAccountApi(apiClient);
+const catApi = createCategoryApi(apiClient);
+const instApi = createInstitutionApi(apiClient);
+
+function flattenCategories(cats: Category[]): { id: string; name: string; emoji?: string | null; parentName?: string }[] {
+  const result: { id: string; name: string; emoji?: string | null; parentName?: string }[] = [];
+  for (const cat of cats) {
+    result.push({ id: cat.id, name: cat.name, emoji: cat.emoji });
+    for (const child of cat.children || []) {
+      result.push({ id: child.id, name: child.name, emoji: child.emoji, parentName: cat.name });
+    }
+  }
+  return result;
+}
 
 const ICONS_ROW_1 = DEFAULT_CATEGORY_ICONS.slice(0, Math.ceil(DEFAULT_CATEGORY_ICONS.length / 2));
 const ICONS_ROW_2 = DEFAULT_CATEGORY_ICONS.slice(Math.ceil(DEFAULT_CATEGORY_ICONS.length / 2));
@@ -40,7 +53,7 @@ interface Props {
 
 export function TransactionModal({ open, onClose, onComplete, editTransaction }: Props) {
   const isEdit = !!editTransaction;
-  const { theme, isDark } = useAppTheme();
+  const { theme, isDark, isPro } = useAppTheme();
   const { i18n, locale } = useI18n();
   const insets = useSafeAreaInsets();
   const { height: screenHeight } = useWindowDimensions();
@@ -53,7 +66,12 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
   const dismissedAddRef = useRef(false);
 
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [accountId, setAccountId] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [showAccountPicker, setShowAccountPicker] = useState(false);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [description, setDescription] = useState("");
   const [rawCents, setRawCents] = useState("");
 
@@ -89,6 +107,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
         setDescription(editTransaction.description || "");
         setDate(new Date(editTransaction.date));
         setSelectedEmoji(editTransaction.category?.emoji || null);
+        setSelectedCategoryId(editTransaction.categoryId || null);
         setAccountId(editTransaction.account?.id || "");
         dismissedAddRef.current = false;
       } else if (!dismissedAddRef.current) {
@@ -97,16 +116,24 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
         setDescription("");
         setDate(new Date());
         setSelectedEmoji(null);
+        setSelectedCategoryId(null);
         setIsExpense(true);
       }
       // else: resuming a dismissed add — keep existing state
 
+      // Load accounts
       accApi.list().then((accs) => {
         setAccounts(accs);
         if (accs.length > 0 && !editTransaction?.account?.id && !accountId) {
           setAccountId(accs[0].id);
         }
       });
+
+      // Pro: load categories and institutions
+      if (isPro) {
+        catApi.list().then(setCategories);
+        instApi.list().then(setInstitutions);
+      }
 
       Animated.parallel([
         Animated.timing(slideAnim, { toValue: 0, duration: 350, useNativeDriver: true }),
@@ -201,24 +228,32 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
     try {
       const finalAmount = isExpense ? -Math.abs(parsed) : Math.abs(parsed);
       if (isEdit && editTransaction) {
-        // Resolve emoji to categoryId if changed
         let categoryId: string | null | undefined;
-        if (selectedEmoji !== (editTransaction.category?.emoji || null)) {
-          if (selectedEmoji) {
-            const db = await getDatabase();
-            const cat = await db.getFirstAsync<{ id: string }>(
-              "SELECT id FROM categories WHERE emoji = ?",
-              [selectedEmoji],
-            );
-            categoryId = cat?.id || null;
-          } else {
-            categoryId = null;
+        if (isPro) {
+          // Pro: use directly selected categoryId
+          if (selectedCategoryId !== (editTransaction.categoryId || null)) {
+            categoryId = selectedCategoryId;
+          }
+        } else {
+          // Free: resolve emoji to categoryId
+          if (selectedEmoji !== (editTransaction.category?.emoji || null)) {
+            if (selectedEmoji) {
+              const db = await getDatabase();
+              const cat = await db.getFirstAsync<{ id: string }>(
+                "SELECT id FROM categories WHERE emoji = ?",
+                [selectedEmoji],
+              );
+              categoryId = cat?.id || null;
+            } else {
+              categoryId = null;
+            }
           }
         }
         await txApi.update(editTransaction.id, {
           description: description.trim() || "Transaction",
           amount: finalAmount,
           date: date.toISOString().split("T")[0],
+          accountId,
           ...(categoryId !== undefined ? { categoryId } : {}),
         });
       } else {
@@ -227,7 +262,8 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
           description: description.trim() || "Transaction",
           amount: finalAmount,
           date: date.toISOString().split("T")[0],
-          emoji: selectedEmoji || undefined,
+          ...(isPro && selectedCategoryId ? { categoryId: selectedCategoryId } : {}),
+          ...(!isPro && selectedEmoji ? { emoji: selectedEmoji } : {}),
         });
       }
       dismissedAddRef.current = false;
@@ -294,7 +330,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
     <>
       <Animated.View
         pointerEvents={open ? "auto" : "none"}
-        style={[StyleSheet.absoluteFill, { backgroundColor: theme.backdrop, opacity: backdropAnim, zIndex: 90 }]}
+        style={[StyleSheet.absoluteFill, { backgroundColor: theme.backdrop, opacity: backdropAnim, zIndex: 200 }]}
       >
         <TouchableWithoutFeedback onPress={handleBackdropTap}>
           <View style={StyleSheet.absoluteFill} />
@@ -303,10 +339,10 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
 
       <Animated.View style={[
         styles.modal,
-        { backgroundColor: theme.card, shadowColor: theme.shadow, transform: [{ translateY: slideAnim }, { translateY: keyboardOffset }], zIndex: 100 },
+        { backgroundColor: theme.card, shadowColor: theme.shadow, transform: [{ translateY: slideAnim }, { translateY: keyboardOffset }], zIndex: 201 },
       ]}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={[styles.content, { paddingBottom: insets.bottom + 80 }]}>
+        <View style={[styles.content, { paddingBottom: insets.bottom + 16 }]}>
           {/* Date */}
           <View style={styles.dateRow}>
             <Text style={[styles.dateText, { color: theme.text }]}>{dateLabel}</Text>
@@ -366,19 +402,116 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
             caretHidden
           />
 
-          {/* Category */}
-          <ScrollView ref={categoryScrollRef} horizontal showsHorizontalScrollIndicator={false} style={styles.categorySection}>
-            {ICONS_ROW_1.map((item, i) => (
-              <View key={item.emoji} style={styles.categoryCol}>
-                {renderCategoryBtn(item)}
-                {ICONS_ROW_2[i] && renderCategoryBtn(ICONS_ROW_2[i])}
-              </View>
-            ))}
-          </ScrollView>
-          {selectedEmoji && (
-            <Text style={{ textAlign: "center", fontSize: 15, fontWeight: "600", color: theme.textSecondary, marginBottom: 12 }}>
-              {i18n(getEmojiIcon(selectedEmoji).i18nKey)}
-            </Text>
+          {/* Category — Pro: dropdown, Free: icon grid */}
+          {isPro ? (
+            <>
+              <TouchableOpacity
+                style={[styles.dropdownBtn, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder }]}
+                onPress={() => { setShowCategoryPicker(!showCategoryPicker); setShowAccountPicker(false); }}
+                activeOpacity={0.7}
+              >
+                {selectedCategoryId ? (
+                  <View style={{ flexDirection: "row", alignItems: "center", flex: 1, gap: 8 }}>
+                    <Ionicons name={getEmojiIcon(flattenCategories(categories).find((c) => c.id === selectedCategoryId)?.emoji).icon} size={20} color={getEmojiIcon(flattenCategories(categories).find((c) => c.id === selectedCategoryId)?.emoji).color} />
+                    <Text style={{ color: theme.text, fontSize: 16, flex: 1 }} numberOfLines={1}>
+                      {(() => { const cat = flattenCategories(categories).find((c) => c.id === selectedCategoryId); return cat?.parentName ? `${cat.parentName} > ${cat.name}` : cat?.name || ""; })()}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={{ color: theme.textSecondary, fontSize: 16, flex: 1 }}>{i18n("transaction.assignCategory")}</Text>
+                )}
+                <Ionicons name={showCategoryPicker ? "chevron-up" : "chevron-down"} size={18} color={theme.textSecondary} />
+              </TouchableOpacity>
+              {showCategoryPicker && (
+                <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+                  <TouchableOpacity
+                    style={[styles.dropdownOption, { borderBottomColor: theme.cardBorder }]}
+                    onPress={() => { setSelectedCategoryId(null); setShowCategoryPicker(false); }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 15, color: !selectedCategoryId ? theme.accent : theme.textSecondary, fontStyle: "italic" }}>{i18n("transaction.none")}</Text>
+                  </TouchableOpacity>
+                  {flattenCategories(categories).map((cat) => {
+                    const icon = getEmojiIcon(cat.emoji);
+                    const isSelected = selectedCategoryId === cat.id;
+                    return (
+                      <TouchableOpacity
+                        key={cat.id}
+                        style={[styles.dropdownOption, { borderBottomColor: theme.cardBorder }]}
+                        onPress={() => { setSelectedCategoryId(cat.id); setShowCategoryPicker(false); }}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name={icon.icon} size={20} color={icon.color} style={{ marginRight: 10 }} />
+                        <Text style={{ fontSize: 15, color: isSelected ? theme.accent : theme.text, fontWeight: isSelected ? "600" : "400", flex: 1 }} numberOfLines={1}>
+                          {cat.parentName ? `${cat.parentName} > ${cat.name}` : cat.name}
+                        </Text>
+                        {isSelected && <Ionicons name="checkmark" size={20} color={theme.accent} />}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              )}
+            </>
+          ) : (
+            <>
+              <ScrollView ref={categoryScrollRef} horizontal showsHorizontalScrollIndicator={false} style={styles.categorySection}>
+                {ICONS_ROW_1.map((item, i) => (
+                  <View key={item.emoji} style={styles.categoryCol}>
+                    {renderCategoryBtn(item)}
+                    {ICONS_ROW_2[i] && renderCategoryBtn(ICONS_ROW_2[i])}
+                  </View>
+                ))}
+              </ScrollView>
+              {selectedEmoji && (
+                <Text style={{ textAlign: "center", fontSize: 15, fontWeight: "600", color: theme.textSecondary, marginBottom: 12 }}>
+                  {i18n(getEmojiIcon(selectedEmoji).i18nKey)}
+                </Text>
+              )}
+            </>
+          )}
+
+          {/* Account — Pro only: dropdown */}
+          {isPro && (
+            <>
+              <TouchableOpacity
+                style={[styles.dropdownBtn, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder }]}
+                onPress={() => { setShowAccountPicker(!showAccountPicker); setShowCategoryPicker(false); }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ color: accountId ? theme.text : theme.textSecondary, fontSize: 16, flex: 1 }} numberOfLines={1}>
+                  {accountId
+                    ? (() => {
+                        const acct = accounts.find((a) => a.id === accountId);
+                        const inst = institutions.find((i) => i.accounts.some((a) => a.id === accountId));
+                        return inst ? `${inst.name} · ${acct?.name}` : acct?.name || "";
+                      })()
+                    : i18n("transaction.selectAccount")}
+                </Text>
+                <Ionicons name={showAccountPicker ? "chevron-up" : "chevron-down"} size={18} color={theme.textSecondary} />
+              </TouchableOpacity>
+              {showAccountPicker && (
+                <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+                  {institutions.map((inst) =>
+                    inst.accounts.map((acct) => {
+                      const isSelected = accountId === acct.id;
+                      return (
+                        <TouchableOpacity
+                          key={acct.id}
+                          style={[styles.dropdownOption, { borderBottomColor: theme.cardBorder }]}
+                          onPress={() => { setAccountId(acct.id); setShowAccountPicker(false); }}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={{ fontSize: 15, color: isSelected ? theme.accent : theme.text, fontWeight: isSelected ? "600" : "400", flex: 1 }} numberOfLines={1}>
+                            {inst.name} · {acct.name}
+                          </Text>
+                          {isSelected && <Ionicons name="checkmark" size={20} color={theme.accent} />}
+                        </TouchableOpacity>
+                      );
+                    }),
+                  )}
+                </ScrollView>
+              )}
+            </>
           )}
 
           {/* Description */}
@@ -416,6 +549,17 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Cancel button */}
+          <TouchableOpacity
+            style={styles.cancelBtn}
+            onPress={handleClose}
+            activeOpacity={0.7}
+          >
+            <Text style={{ color: theme.textSecondary, fontSize: 15, fontWeight: "600" }}>
+              {i18n("common.cancel")}
+            </Text>
+          </TouchableOpacity>
         </View>
         </TouchableWithoutFeedback>
       </Animated.View>
@@ -477,6 +621,30 @@ const styles = StyleSheet.create({
   amountCurrency: { fontSize: 44, fontWeight: "800", marginRight: 2 },
   amountDisplay: { fontSize: 44, fontWeight: "800" },
   amountHiddenInput: { position: "absolute", width: 1, height: 1, opacity: 0 },
+  dropdownBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 12,
+  },
+  dropdownList: {
+    maxHeight: 200,
+    borderWidth: 1,
+    borderRadius: 12,
+    borderColor: "rgba(0,0,0,0.1)",
+    marginBottom: 12,
+    marginTop: -4,
+  },
+  dropdownOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
   categorySection: { marginBottom: 16 },
   categoryCol: { gap: 8, marginRight: 8 },
   categoryBtn: {
@@ -514,4 +682,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   saveButtonText: { fontSize: 17, fontWeight: "700" },
+  cancelBtn: {
+    alignItems: "center",
+    paddingVertical: 8,
+    marginTop: 2,
+  },
 });

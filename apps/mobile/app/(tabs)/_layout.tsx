@@ -9,8 +9,20 @@ import { useI18n } from "@/lib/i18n";
 import { ModalContext } from "@/lib/addModal";
 import { TransactionModal } from "@/components/TransactionModal";
 
+const TAB_META: Record<string, { titleKey: string; icon: string; iconFocused: string; headerShown?: boolean }> = {
+  overview:     { titleKey: "nav.overview",    icon: "pie-chart-outline",  iconFocused: "pie-chart",  headerShown: false },
+  transactions: { titleKey: "nav.transaction", icon: "list-outline",       iconFocused: "list" },
+  accounts:     { titleKey: "nav.account",     icon: "business-outline",   iconFocused: "business" },
+  budgets:      { titleKey: "nav.budget",      icon: "wallet-outline",     iconFocused: "wallet" },
+  categories:   { titleKey: "nav.category",    icon: "bookmark-outline",   iconFocused: "bookmark" },
+  rules:        { titleKey: "nav.rule",        icon: "funnel-outline",     iconFocused: "funnel" },
+  tags:         { titleKey: "nav.tag",         icon: "pricetag-outline",   iconFocused: "pricetag" },
+};
+
+const ALL_TAB_NAMES = ["overview", "transactions", "accounts", "budgets", "categories", "rules", "tags"];
+
 export default function TabLayout() {
-  const { theme, isPro } = useAppTheme();
+  const { theme, isPro, tabConfig } = useAppTheme();
   const { i18n } = useI18n();
   const insets = useSafeAreaInsets();
 
@@ -32,36 +44,20 @@ export default function TabLayout() {
     outputRange: ["0deg", "135deg"],
   });
 
-  const openAdd = useCallback(() => {
-    setEditTx(null);
-    setModalOpen(true);
-  }, []);
+  const openAdd = useCallback(() => { setEditTx(null); setModalOpen(true); }, []);
+  const openEdit = useCallback((tx: Transaction) => { setEditTx(tx); setModalOpen(true); }, []);
+  const closeModal = useCallback(() => { setModalOpen(false); setEditTx(null); }, []);
+  const toggle = useCallback(() => { if (modalOpen) closeModal(); else openAdd(); }, [modalOpen, closeModal, openAdd]);
 
-  const openEdit = useCallback((tx: Transaction) => {
-    setEditTx(tx);
-    setModalOpen(true);
-  }, []);
-
-  const closeModal = useCallback(() => {
-    setModalOpen(false);
-    setEditTx(null);
-  }, []);
-
-  const toggle = useCallback(() => {
-    if (modalOpen) closeModal();
-    else openAdd();
-  }, [modalOpen, closeModal, openAdd]);
+  // Build ordered tab list: user's picks first, then hidden ones, then "add" and "more"
+  const visibleTabs = isPro ? tabConfig : ["overview"];
+  const hiddenTabs = ALL_TAB_NAMES.filter((t) => !visibleTabs.includes(t));
+  const orderedTabs = [...visibleTabs, ...hiddenTabs];
 
   return (
     <ModalContext.Provider value={useMemo(() => ({
-      isModalOpen: modalOpen,
-      openAdd,
-      openEdit,
-      closeModal,
-      toggle,
-      editTransaction: editTx,
-      onComplete,
-      setOnComplete,
+      isModalOpen: modalOpen, openAdd, openEdit, closeModal, toggle,
+      editTransaction: editTx, onComplete, setOnComplete,
     }), [modalOpen, openAdd, openEdit, closeModal, toggle, editTx, onComplete, setOnComplete])}>
       <View style={{ flex: 1 }}>
         <Tabs
@@ -75,73 +71,41 @@ export default function TabLayout() {
               paddingBottom: insets.bottom,
               paddingTop: 8,
             },
-            tabBarLabelStyle: {
-              fontSize: 12,
-              fontWeight: "600",
-            },
+            tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
             headerStyle: { backgroundColor: theme.card },
             headerTintColor: theme.text,
             headerShadowVisible: false,
           }}
         >
-          <Tabs.Screen
-            name="overview"
-            options={{
-              title: i18n("nav.overview"),
-              headerShown: false,
-              tabBarIcon: ({ color, focused }) => (
-                <Ionicons name={focused ? "pie-chart" : "pie-chart-outline"} size={26} color={color} />
-              ),
-            }}
-          />
-          <Tabs.Screen
-            name="accounts"
-            options={{
-              title: i18n("nav.account"),
-              href: isPro ? undefined : null,
-              tabBarIcon: ({ color, focused }) => (
-                <Ionicons name={focused ? "business" : "business-outline"} size={26} color={color} />
-              ),
-            }}
-          />
-          <Tabs.Screen
-            name="add"
-            options={{
-              title: "",
-              tabBarButton: () => <View style={styles.addSpacer} />,
-            }}
-          />
-          <Tabs.Screen
-            name="transactions"
-            options={{
-              title: i18n("nav.transaction"),
-              href: isPro ? undefined : null,
-              tabBarIcon: ({ color, focused }) => (
-                <Ionicons name={focused ? "list" : "list-outline"} size={26} color={color} />
-              ),
-            }}
-          />
-          <Tabs.Screen
-            name="more"
-            options={{
-              title: i18n("nav.more"),
-              tabBarIcon: ({ color, focused }) => (
-                <Ionicons name={focused ? "menu" : "menu-outline"} size={26} color={color} />
-              ),
-            }}
-          />
+          {orderedTabs.map((name) => {
+            const meta = TAB_META[name];
+            const isVisible = visibleTabs.includes(name);
+            return (
+              <Tabs.Screen
+                key={name}
+                name={name}
+                options={{
+                  title: i18n(meta.titleKey),
+                  headerShown: meta.headerShown ?? true,
+                  href: isVisible ? undefined : null,
+                  tabBarIcon: ({ color, focused }) => (
+                    <Ionicons name={(focused ? meta.iconFocused : meta.icon) as any} size={26} color={color} />
+                  ),
+                }}
+              />
+            );
+          })}
+          <Tabs.Screen name="add" options={{ title: "", href: null }} />
+          <Tabs.Screen name="more" options={{
+            title: i18n("nav.more"),
+            tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? "menu" : "menu-outline"} size={26} color={color} />,
+          }} />
         </Tabs>
 
-        <TransactionModal
-          open={modalOpen}
-          onClose={closeModal}
-          onComplete={onComplete}
-          editTransaction={editTx}
-        />
+        <TransactionModal open={modalOpen} onClose={closeModal} onComplete={onComplete} editTransaction={editTx} />
 
-        {/* Floating + / x button */}
         <TouchableOpacity
-          style={[styles.fab, { bottom: insets.bottom + 2, backgroundColor: theme.brand, shadowColor: theme.shadow }]}
+          style={[styles.fab, isPro ? styles.fabRight : styles.fabCenter, { bottom: isPro ? insets.bottom + 56 : insets.bottom + 2, backgroundColor: theme.brand, shadowColor: theme.shadow }]}
           onPress={toggle}
           activeOpacity={0.8}
         >
@@ -155,13 +119,9 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  addSpacer: {
-    flex: 1,
-  },
   fab: {
     position: "absolute",
     bottom: 0,
-    alignSelf: "center",
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -172,5 +132,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 10,
+  },
+  fabCenter: {
+    alignSelf: "center",
+  },
+  fabRight: {
+    right: 16,
   },
 });

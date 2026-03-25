@@ -277,9 +277,9 @@ export default function CategoriesPage() {
                 dangerColor={theme.danger}
               >
                 <TouchableOpacity
-                  style={styles.categoryHeader}
+                  style={[styles.categoryHeader, { backgroundColor: theme.card }]}
                   onPress={() => hasChildren && setExpandedParentId(isExpanded ? null : parent.id)}
-                  activeOpacity={hasChildren ? 0.7 : 1}
+                  activeOpacity={1}
                 >
                   <View style={styles.categoryInfo}>
                     {hasChildren && (
@@ -320,7 +320,7 @@ export default function CategoriesPage() {
                         onDelete={() => handleDeleteCategory(child)}
                         dangerColor={theme.danger}
                       >
-                        <View style={[styles.childRow, { borderColor: theme.cardBorder }]}>
+                        <View style={[styles.childRow, { borderColor: theme.cardBorder, backgroundColor: theme.card }]}>
                           <View style={styles.childInfo}>
                             <Ionicons
                               name={childIcon.icon}

@@ -135,6 +135,13 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase) {
     CREATE INDEX IF NOT EXISTS idx_categories_parent ON categories(parent_id);
   `);
 
+  // Migrations for existing databases
+  try {
+    await database.runAsync("ALTER TABLE settings ADD COLUMN tab_config TEXT DEFAULT 'overview,transactions,budgets,accounts'");
+  } catch {
+    // Column already exists
+  }
+
   // Seed defaults if empty
   await database.runAsync(
     `INSERT OR IGNORE INTO settings (id) VALUES ('default')`,

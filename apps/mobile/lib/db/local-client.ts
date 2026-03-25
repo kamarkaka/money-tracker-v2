@@ -159,12 +159,24 @@ export class LocalClient extends ApiClient {
       args.push(endDate);
     }
     if (accountId) {
-      conditions.push("t.account_id = ?");
-      args.push(accountId);
+      const ids = accountId.split(",");
+      if (ids.length === 1) {
+        conditions.push("t.account_id = ?");
+        args.push(ids[0]);
+      } else {
+        conditions.push(`t.account_id IN (${ids.map(() => "?").join(",")})`);
+        args.push(...ids);
+      }
     }
     if (categoryId) {
-      conditions.push("t.category_id = ?");
-      args.push(categoryId);
+      const ids = categoryId.split(",");
+      if (ids.length === 1) {
+        conditions.push("t.category_id = ?");
+        args.push(ids[0]);
+      } else {
+        conditions.push(`t.category_id IN (${ids.map(() => "?").join(",")})`);
+        args.push(...ids);
+      }
     }
     if (search) {
       conditions.push("t.description LIKE ?");
@@ -364,6 +376,22 @@ export class LocalClient extends ApiClient {
           "INSERT INTO categories (id, name, emoji) VALUES (?, ?, ?)",
           [categoryId, name, body.emoji as string],
         );
+      }
+    }
+
+    // If still no category, try to match against rules based on description
+    if (!categoryId) {
+      const description = ((body.description as string) || "").toLowerCase().trim();
+      if (description) {
+        const rules = await db.getAllAsync<{ category_id: string; match: string }>(
+          "SELECT category_id, match FROM category_rules ORDER BY sequence",
+        );
+        for (const rule of rules) {
+          if (description.includes(rule.match.toLowerCase())) {
+            categoryId = rule.category_id;
+            break;
+          }
+        }
       }
     }
 
@@ -959,6 +987,7 @@ export class LocalClient extends ApiClient {
       theme: (row?.theme as string) || "system",
       language: (row?.language as string) || "en",
       mode: (row?.mode as string) || "casual",
+      tabConfig: (row?.tab_config as string) || "overview,transactions,budgets,accounts",
     };
   }
 
@@ -978,6 +1007,10 @@ export class LocalClient extends ApiClient {
     if (body.mode !== undefined) {
       sets.push("mode = ?");
       args.push(body.mode as string);
+    }
+    if (body.tabConfig !== undefined) {
+      sets.push("tab_config = ?");
+      args.push(body.tabConfig as string);
     }
 
     if (sets.length > 0) {

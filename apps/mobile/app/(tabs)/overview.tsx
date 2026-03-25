@@ -17,9 +17,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Circle } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { createTransactionApi, createCategoryApi } from "@money-tracker/api-client";
+import { createTransactionApi, createCategoryApi, createBudgetApi } from "@money-tracker/api-client";
 import { formatCurrency, parseAmount } from "@money-tracker/shared";
-import type { Transaction, Category } from "@money-tracker/shared";
+import type { Transaction, Category, BudgetBucket } from "@money-tracker/shared";
 import { apiClient } from "@/lib/api";
 import { useAppTheme } from "@/lib/themeContext";
 import { FALLBACK_EMOJI, getEmojiIcon } from "@/lib/emoji";
@@ -30,6 +30,7 @@ import { RING_COLORS } from "@/lib/colors";
 
 const txApi = createTransactionApi(apiClient);
 const catApi = createCategoryApi(apiClient);
+const budgetApi = createBudgetApi(apiClient);
 
 interface EmojiGroup {
   emoji: string;
@@ -89,7 +90,7 @@ const ProgressRing = memo(function ProgressRing({ size, strokeWidth, pct, ringCo
 });
 
 export default function OverviewScreen() {
-  const { theme } = useAppTheme();
+  const { theme, isPro } = useAppTheme();
   const { i18n, locale } = useI18n();
   const insets = useSafeAreaInsets();
   const [initialLoad, setInitialLoad] = useState(true);
@@ -97,6 +98,8 @@ export default function OverviewScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [expandedEmoji, setExpandedEmoji] = useState<string | null>(null);
+  const [expandedBucket, setExpandedBucket] = useState<string | null>(null);
+  const [budgets, setBudgets] = useState<BudgetBucket[]>([]);
   const [showScrollBar, setShowScrollBar] = useState(true);
   const { openEdit, setOnComplete } = useTransactionModal();
   const [earliestDate, setEarliestDate] = useState<{ y: number; m: number } | null>(null);
@@ -174,8 +177,13 @@ export default function OverviewScreen() {
 
     setTransactions(txData.transactions);
     setCategories(catData);
+
+    if (isPro) {
+      const b = await budgetApi.list();
+      setBudgets(b);
+    }
     refreshEarliestDate();
-  }, [year, month, refreshEarliestDate]);
+  }, [year, month, isPro, refreshEarliestDate]);
 
   useEffect(() => {
     fetchData().finally(() => {
@@ -387,13 +395,193 @@ export default function OverviewScreen() {
         </LinearGradient>
       </View>
 
-      {/* Category grid */}
-      {groups.length === 0 ? (
+      {/* Pro: Budget cards / Free: Category grid */}
+      {transactions.length === 0 ? (
         <Text style={{ color: theme.textSecondary, textAlign: "center", marginTop: 40, fontSize: 14 }}>
           {i18n("overview.noTransactions")}
         </Text>
+      ) : isPro ? (
+        <View>
+          {(() => {
+            // Group transactions by budget bucket
+            const catToBucket = new Map<string, string>();
+            for (const b of budgets) {
+              for (const bc of b.categories) {
+                catToBucket.set(bc.category.id, b.id);
+              }
+            }
+
+            const bucketTxMap = new Map<string, Transaction[]>();
+            const uncategorized: Transaction[] = [];
+            const otherTx: Transaction[] = [];
+
+            for (const t of transactions) {
+              if (!t.categoryId) {
+                uncategorized.push(t);
+              } else if (catToBucket.has(t.categoryId)) {
+                const bId = catToBucket.get(t.categoryId)!;
+                if (!bucketTxMap.has(bId)) bucketTxMap.set(bId, []);
+                bucketTxMap.get(bId)!.push(t);
+              } else {
+                otherTx.push(t);
+              }
+            }
+
+            const bucketCards = budgets.map((bucket, idx) => {
+              const bTx = bucketTxMap.get(bucket.id) || [];
+              const spent = bTx.reduce((s, t) => s + Math.abs(getAmt(t) < 0 ? getAmt(t) : 0), 0);
+              const budgetAmt = typeof bucket.amount === "string" ? parseFloat(bucket.amount as string) : bucket.amount;
+              const pct = budgetAmt > 0 ? Math.min(spent / budgetAmt, 1) : 0;
+              const remaining = budgetAmt - spent;
+              const isExpanded = expandedBucket === bucket.id;
+              const color = RING_COLORS[idx % RING_COLORS.length];
+              const bucketIcon = bucket.icon ? getEmojiIcon(bucket.icon) : null;
+
+              return (
+                <View key={bucket.id} style={[styles.bucketCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+                  <TouchableOpacity
+                    style={styles.bucketHeader}
+                    onPress={() => setExpandedBucket(isExpanded ? null : bucket.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.bucketIcon, { backgroundColor: color + "15" }]}>
+                      {bucketIcon ? (
+                        <Ionicons name={bucketIcon.icon} size={22} color={color} />
+                      ) : (
+                        <Ionicons name="wallet-outline" size={22} color={color} />
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                        <Text style={[styles.bucketName, { color: theme.text }]}>{bucket.name}</Text>
+                        <Text style={{ fontSize: 15, fontWeight: "700", color: theme.expense }}>
+                          {formatCurrency(spent, "USD", true)}
+                        </Text>
+                      </View>
+                      {budgetAmt > 0 && (
+                        <View style={{ marginTop: 6 }}>
+                          <View style={[styles.progressTrack, { backgroundColor: theme.cardBorder }]}>
+                            <View style={[styles.progressFill, { width: `${pct * 100}%`, backgroundColor: remaining >= 0 ? theme.income : theme.expense }]} />
+                          </View>
+                          <Text style={{ fontSize: 12, color: remaining >= 0 ? theme.income : theme.expense, marginTop: 3 }}>
+                            {formatCurrency(Math.abs(remaining), "USD", true)} {remaining >= 0 ? i18n("overview.left").replace("{amount}", "") : i18n("overview.over").replace("{amount}", "")}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={18} color={theme.textSecondary} style={{ marginLeft: 8 }} />
+                  </TouchableOpacity>
+
+                  {isExpanded && bTx.length > 0 && (
+                    <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.cardBorder }}>
+                      {bTx.map((t, i) => {
+                        const amt = getAmt(t);
+                        return (
+                          <TouchableOpacity
+                            key={t.id}
+                            style={[styles.expandedTxRow, i < bTx.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.cardBorder }]}
+                            onPress={() => openEdit(t)}
+                            activeOpacity={0.6}
+                          >
+                            <Text style={{ width: 54, fontSize: 13, color: theme.textSecondary }}>
+                              {new Date(t.date).toLocaleDateString(locale, { month: "short", day: "numeric" })}
+                            </Text>
+                            <Text style={{ flex: 1, fontSize: 15, fontWeight: "500", color: theme.text }} numberOfLines={1}>
+                              {t.description}
+                            </Text>
+                            <Text style={{ fontSize: 15, fontWeight: "600", color: amt < 0 ? theme.expense : theme.income }}>
+                              {formatCurrency(Math.abs(amt))}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  )}
+                </View>
+              );
+            });
+
+            // "Others" bucket for categorized but non-budgeted
+            const othersCard = otherTx.length > 0 ? (
+              <View key="others" style={[styles.bucketCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+                <TouchableOpacity
+                  style={styles.bucketHeader}
+                  onPress={() => setExpandedBucket(expandedBucket === "others" ? null : "others")}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.bucketIcon, { backgroundColor: theme.textSecondary + "15" }]}>
+                    <Ionicons name="cube-outline" size={22} color={theme.textSecondary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                      <Text style={[styles.bucketName, { color: theme.text }]}>{i18n("overview.others")}</Text>
+                      <Text style={{ fontSize: 15, fontWeight: "700", color: theme.expense }}>
+                        {formatCurrency(otherTx.reduce((s, t) => s + Math.abs(getAmt(t) < 0 ? getAmt(t) : 0), 0), "USD", true)}
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons name={expandedBucket === "others" ? "chevron-up" : "chevron-down"} size={18} color={theme.textSecondary} style={{ marginLeft: 8 }} />
+                </TouchableOpacity>
+                {expandedBucket === "others" && (
+                  <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.cardBorder }}>
+                    {otherTx.map((t, i) => {
+                      const amt = getAmt(t);
+                      return (
+                        <TouchableOpacity key={t.id} style={[styles.expandedTxRow, i < otherTx.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.cardBorder }]} onPress={() => openEdit(t)} activeOpacity={0.6}>
+                          <Text style={{ width: 54, fontSize: 13, color: theme.textSecondary }}>{new Date(t.date).toLocaleDateString(locale, { month: "short", day: "numeric" })}</Text>
+                          <Text style={{ flex: 1, fontSize: 15, fontWeight: "500", color: theme.text }} numberOfLines={1}>{t.description}</Text>
+                          <Text style={{ fontSize: 15, fontWeight: "600", color: amt < 0 ? theme.expense : theme.income }}>{formatCurrency(Math.abs(amt))}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+            ) : null;
+
+            // Uncategorized
+            const uncatCard = uncategorized.length > 0 ? (
+              <View key="uncat" style={[styles.bucketCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+                <TouchableOpacity
+                  style={styles.bucketHeader}
+                  onPress={() => setExpandedBucket(expandedBucket === "uncat" ? null : "uncat")}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.bucketIcon, { backgroundColor: theme.danger + "15" }]}>
+                    <Ionicons name="help-outline" size={22} color={theme.danger} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                      <Text style={[styles.bucketName, { color: theme.text }]}>{i18n("overview.uncategorized")}</Text>
+                      <Text style={{ fontSize: 15, fontWeight: "700", color: theme.expense }}>
+                        {formatCurrency(uncategorized.reduce((s, t) => s + Math.abs(getAmt(t) < 0 ? getAmt(t) : 0), 0), "USD", true)}
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons name={expandedBucket === "uncat" ? "chevron-up" : "chevron-down"} size={18} color={theme.textSecondary} style={{ marginLeft: 8 }} />
+                </TouchableOpacity>
+                {expandedBucket === "uncat" && (
+                  <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.cardBorder }}>
+                    {uncategorized.map((t, i) => {
+                      const amt = getAmt(t);
+                      return (
+                        <TouchableOpacity key={t.id} style={[styles.expandedTxRow, i < uncategorized.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.cardBorder }]} onPress={() => openEdit(t)} activeOpacity={0.6}>
+                          <Text style={{ width: 54, fontSize: 13, color: theme.textSecondary }}>{new Date(t.date).toLocaleDateString(locale, { month: "short", day: "numeric" })}</Text>
+                          <Text style={{ flex: 1, fontSize: 15, fontWeight: "500", color: theme.text }} numberOfLines={1}>{t.description}</Text>
+                          <Text style={{ fontSize: 15, fontWeight: "600", color: amt < 0 ? theme.expense : theme.income }}>{formatCurrency(Math.abs(amt))}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+            ) : null;
+
+            return <>{bucketCards}{othersCard}{uncatCard}</>;
+          })()}
+        </View>
       ) : (
-        <View style={{ marginTop: 8 }}>
+        <View>
           {Array.from({ length: Math.ceil(groups.length / 4) }).map((_, rowIdx) => {
             const rowGroups = groups.slice(rowIdx * 4, rowIdx * 4 + 4);
             const expandedInRow = rowGroups.find((g) => g.emoji === expandedEmoji);
@@ -412,7 +600,6 @@ export default function OverviewScreen() {
                     const iconInfo = getEmojiIcon(group.emoji);
 
                     return (
-                      // #4 — Category chip cards with tinted background
                       <TouchableOpacity
                         key={group.emoji}
                         style={[
@@ -446,19 +633,15 @@ export default function OverviewScreen() {
                   ))}
                 </View>
 
-                {/* #8 — Expanded transaction list with color dots */}
                 {expandedInRow && (
                   <View style={[styles.expandedCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                     {expandedInRow.transactions.map((t, i) => {
                       const dotColor = RING_COLORS[groups.indexOf(expandedInRow) % RING_COLORS.length];
-                      const amt = parseAmount(t.amount);
+                      const amt = getAmt(t);
                       return (
                         <TouchableOpacity
                           key={t.id}
-                          style={[
-                            styles.expandedTxRow,
-                            i < expandedInRow.transactions.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.cardBorder },
-                          ]}
+                          style={[styles.expandedTxRow, i < expandedInRow.transactions.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.cardBorder }]}
                           onPress={() => openEdit(t)}
                           activeOpacity={0.6}
                         >
@@ -519,7 +702,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 12,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -541,6 +724,37 @@ const styles = StyleSheet.create({
   },
   summaryAccent: { width: 4 },
   summaryContent: { flex: 1, padding: 14 },
+  // Pro budget cards
+  bucketCard: {
+    borderWidth: 1,
+    borderRadius: 14,
+    overflow: "hidden",
+    marginBottom: 12,
+  },
+  bucketHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    gap: 12,
+  },
+  bucketIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  bucketName: { fontSize: 16, fontWeight: "700" },
+  progressTrack: {
+    height: 6,
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: 6,
+    borderRadius: 3,
+  },
+  // Free emoji grid
   emojiRow: { flexDirection: "row", marginBottom: 8 },
   emojiCell: {
     flex: 1,

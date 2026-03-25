@@ -112,7 +112,7 @@
   },
   "category": {
     "title": "Categories",
-    "addCategory": "Create A New Category",
+    "addCategory": "Add Your Category",
     "editCategory": "Edit Category",
     "categoryName": "Category Name",
     "parentOptional": "Parent (optional)",
@@ -124,7 +124,7 @@
   },
   "budget": {
     "title": "Budgets",
-    "createBudget": "Create A New Budget",
+    "createBudget": "Add Your Budget",
     "pickIcon": "Pick an icon for your budget",
     "budgetName": "Budget Name",
     "namePlaceholder": "e.g. Essentials, Entertainment, Savings",
@@ -206,7 +206,9 @@
     "toDate": "To Date",
     "minAmount": "Min Amount",
     "maxAmount": "Max Amount",
-    "clearFilters": "Clear Filters"
+    "clearFilters": "Clear Filters",
+    "transactionSingular": "transaction found",
+    "transactionPlural": "transactions found"
   },
   "csv": {
     "title": "Import CSV",
@@ -265,13 +267,17 @@
     "systemDesc": "Follow your browser setting",
     "language": "Language",
     "languageDesc": "Choose your preferred display language.",
+    "bottomBar": "Bottom Bar",
+    "bottomBarDesc": "Long-press and drag to reorder. Tap + to add, x to remove.",
+    "selectedTabs": "Selected",
+    "availableTabs": "Available",
     "switchToPro": "Unlock Pro Mode",
     "switchToProDesc": "Unlock bank sync, budgets, rules, tags, and full category management.",
     "switchToProConfirm": "Switch to Pro Mode? This will unlock all features. Your existing data will be preserved. This change cannot be undone."
   },
   "tag": {
     "title": "Tags",
-    "addTag": "Create A New Tag",
+    "addTag": "Add Your Tag",
     "editTag": "Edit Tag",
     "deleteTag": "Delete Tag",
     "tagName": "Tag Name",
@@ -286,7 +292,7 @@
   },
   "rule": {
     "title": "Rules",
-    "addRule": "Create A New Rule",
+    "addRule": "Add Your Rule",
     "editRule": "Edit Rule",
     "deleteRule": "Delete Rule",
     "matchString": "Match String",

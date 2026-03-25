@@ -5,7 +5,7 @@ import { ThemeProvider, DarkTheme, DefaultTheme } from "@react-navigation/native
 import { ApiClientContext } from "@money-tracker/hooks";
 import { createSettingsApi } from "@money-tracker/api-client";
 import { apiClient } from "@/lib/api";
-import { ThemeContext, type ThemeSetting } from "@/lib/themeContext";
+import { ThemeContext, type ThemeSetting, DEFAULT_TAB_CONFIG } from "@/lib/themeContext";
 import { getThemeWithBrand } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
 import { getDatabase } from "@/lib/db";
@@ -17,7 +17,11 @@ export default function RootLayout() {
   const [loading, setLoading] = useState(true);
   const [themeSetting, setThemeSettingState] = useState<ThemeSetting>("system");
   const [locale, setLocale] = useState("en");
-  const [isPro, setIsPro] = useState(false);
+  const [subIsPro, setSubIsPro] = useState(false);
+  const [devMode, setDevMode] = useState(false);
+  const [devIsPro, setDevIsPro] = useState(false);
+  const isPro = devMode ? devIsPro : subIsPro;
+  const [tabConfig, setTabConfigState] = useState<string[]>(DEFAULT_TAB_CONFIG);
 
   const isDark =
     themeSetting === "dark" ||
@@ -46,7 +50,11 @@ export default function RootLayout() {
             setLocale(settings.language);
           }
           if (settings.mode === "pro") {
-            setIsPro(true);
+            setSubIsPro(true);
+          }
+          if ((settings as any).tabConfig) {
+            const tabs = (settings as any).tabConfig.split(",").filter(Boolean);
+            if (tabs.length >= 1 && tabs.length <= 4) setTabConfigState(tabs);
           }
         } catch {
           // ignore
@@ -55,6 +63,16 @@ export default function RootLayout() {
         setLoading(false);
       }
     })();
+  }, []);
+
+  const setTabConfig = useCallback(async (tabs: string[]) => {
+    setTabConfigState(tabs);
+    try {
+      const settingsApi = createSettingsApi(apiClient);
+      await settingsApi.update({ tabConfig: tabs.join(",") } as any);
+    } catch {
+      // ignore
+    }
   }, []);
 
   const setThemeSetting = useCallback(async (setting: ThemeSetting) => {
@@ -68,8 +86,8 @@ export default function RootLayout() {
   }, []);
 
   const themeContextValue = useMemo(
-    () => ({ theme, themeSetting, isDark, isPro, setThemeSetting, setIsPro }),
-    [theme, themeSetting, isDark, isPro, setThemeSetting, setIsPro],
+    () => ({ theme, themeSetting, isDark, isPro, devMode, tabConfig, setThemeSetting, setIsPro: setSubIsPro, setDevMode, setDevIsPro, setTabConfig }),
+    [theme, themeSetting, isDark, isPro, devMode, tabConfig, setThemeSetting, setSubIsPro, setDevMode, setDevIsPro, setTabConfig],
   );
 
   if (loading) {

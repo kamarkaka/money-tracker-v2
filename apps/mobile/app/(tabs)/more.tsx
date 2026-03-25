@@ -33,6 +33,7 @@ export default function MoreScreen() {
   ];
 
   const proItems: MenuItem[] = [
+    { label: i18n("nav.overview"), icon: "pie-chart-outline", iconColor: MENU_COLORS.budgets, route: "/(tabs)/overview" },
     { label: i18n("nav.account"), icon: "business-outline", iconColor: MENU_COLORS.accounts, route: "/pages/accounts" },
     { label: i18n("nav.transaction"), icon: "list-outline", iconColor: MENU_COLORS.transactions, route: "/pages/transactions" },
     { label: i18n("nav.category"), icon: "bookmark-outline", iconColor: MENU_COLORS.categories, route: "/pages/categories" },
