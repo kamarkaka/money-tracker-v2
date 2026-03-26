@@ -20,7 +20,7 @@ import { createSettingsApi } from "@money-tracker/api-client";
 import { apiClient } from "@/lib/api";
 import { useAppTheme, type ThemeSetting } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
-import { exportToFile, pickAndImport, getDatabase, uuid } from "@/lib/db";
+import { exportToFile, pickAndImport } from "@/lib/db";
 import { MENU_COLORS } from "@/lib/colors";
 import { useSubscription } from "@/lib/subscription";
 
@@ -47,7 +47,7 @@ const LANGUAGE_OPTIONS = [
 ];
 
 export default function SettingsPage() {
-  const { theme, themeSetting, setThemeSetting, isPro: isProTheme, devMode, tabConfig, setTabConfig, setDevMode, setDevIsPro, fireworksEnabled, setFireworksEnabled } = useAppTheme();
+  const { theme, themeSetting, setThemeSetting, isPro: isProTheme, tabConfig, setTabConfig, fireworksEnabled, setFireworksEnabled } = useAppTheme();
   const { i18n, locale, setLocale } = useI18n();
   const api = useRef(createSettingsApi(apiClient)).current;
 
@@ -56,15 +56,7 @@ export default function SettingsPage() {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [restoring, setRestoring] = useState(false);
-  const [seeding, setSeeding] = useState(false);
   const { restore } = useSubscription();
-
-  const persistIsPro = async (value: boolean) => {
-    try {
-      const db = await getDatabase();
-      await db.runAsync("UPDATE settings SET mode = ? WHERE id = 'default'", [value ? "pro" : "casual"]);
-    } catch { /* ignore */ }
-  };
 
   useEffect(() => {
     api.get().then((s) => {
@@ -138,55 +130,6 @@ export default function SettingsPage() {
     );
   };
 
-  const handleSeedData = async () => {
-    setSeeding(true);
-    try {
-      const db = await getDatabase();
-      const accounts = await db.getAllAsync<{ id: string }>("SELECT id FROM accounts");
-      const categories = await db.getAllAsync<{ id: string }>("SELECT id FROM categories");
-
-      if (accounts.length === 0 || categories.length === 0) {
-        Alert.alert(i18n("common.error"), "Please create at least one account and category first.");
-        setSeeding(false);
-        return;
-      }
-
-      const descriptions = [
-        "Grocery Store", "Coffee Shop", "Gas Station", "Restaurant", "Uber Ride",
-        "Netflix", "Spotify", "Amazon Purchase", "Electric Bill", "Water Bill",
-        "Gym Membership", "Doctor Visit", "Pharmacy", "Pet Food", "Daycare",
-        "Haircut", "Birthday Gift", "Flight Ticket", "Hotel Stay", "Parking",
-        "Lunch", "Dinner", "Breakfast", "Snacks", "Internet Bill",
-        "Phone Bill", "Insurance", "Rent Payment", "Car Payment", "Loan Payment",
-        "Salary", "Freelance Income", "Refund", "Bonus", "Interest",
-      ];
-
-      const now = new Date();
-      for (let i = 0; i < 100; i++) {
-        const acct = accounts[i % accounts.length];
-        const cat = categories[i % categories.length];
-        const desc = descriptions[i % descriptions.length];
-        const isIncome = desc === "Salary" || desc === "Freelance Income" || desc === "Refund" || desc === "Bonus" || desc === "Interest";
-        const amount = isIncome
-          ? (Math.floor(Math.random() * 500000) + 50000) / 100
-          : -(Math.floor(Math.random() * 30000) + 100) / 100;
-        const daysAgo = Math.floor(Math.random() * 180);
-        const date = new Date(now.getTime() - daysAgo * 86400000);
-        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-
-        await db.runAsync(
-          "INSERT INTO transactions (id, account_id, category_id, description, amount, date, is_manual) VALUES (?, ?, ?, ?, ?, ?, 1)",
-          [uuid(), acct.id, cat.id, desc, amount, dateStr],
-        );
-      }
-
-      Alert.alert(i18n("common.success"), "Generated 100 random transactions across all accounts and categories.");
-    } catch (e) {
-      Alert.alert(i18n("common.error"), e instanceof Error ? e.message : "Failed to generate data");
-    } finally {
-      setSeeding(false);
-    }
-  };
 
   const handleRestore = async () => {
     setRestoring(true);
@@ -455,66 +398,6 @@ export default function SettingsPage() {
         </TouchableOpacity>
       </View>
 
-      {/* DEV Tools */}
-      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.dangerBg }]}>
-        <Text style={[styles.cardTitle, { color: theme.danger }]}>Dev Tools</Text>
-        <TouchableOpacity
-          style={[styles.dataBtn, { borderColor: theme.cardBorder }]}
-          onPress={handleSeedData}
-          disabled={seeding}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="flask-outline" size={20} color={theme.danger} />
-          <Text style={{ fontSize: 15, fontWeight: "600", color: theme.text, flex: 1 }}>
-            Generate 100 Transactions
-          </Text>
-          {seeding ? (
-            <ActivityIndicator size="small" color={theme.danger} />
-          ) : (
-            <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
-          )}
-        </TouchableOpacity>
-
-        {/* Dev Mode Toggle */}
-        <TouchableOpacity
-          style={[styles.dataBtn, { borderColor: theme.cardBorder }]}
-          onPress={() => setDevMode(!devMode)}
-          activeOpacity={0.7}
-        >
-          <Ionicons name={devMode ? "toggle" : "toggle-outline"} size={22} color={devMode ? theme.brand : theme.textSecondary} />
-          <Text style={{ fontSize: 15, fontWeight: "600", color: theme.text, flex: 1 }}>
-            Dev Mode
-          </Text>
-          <View style={[styles.devBadge, { backgroundColor: devMode ? theme.brand + "20" : theme.cardBorder + "40" }]}>
-            <Text style={{ fontSize: 12, fontWeight: "700", color: devMode ? theme.brand : theme.textSecondary }}>
-              {devMode ? "ON" : "OFF"}
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* Pro/Free Switch — only when dev mode is on */}
-        {devMode && (
-          <TouchableOpacity
-            style={[styles.dataBtn, { borderColor: theme.cardBorder }]}
-            onPress={() => {
-              const newValue = !isProTheme;
-              setDevIsPro(newValue);
-              persistIsPro(newValue);
-            }}
-            activeOpacity={0.7}
-          >
-            <Ionicons name={isProTheme ? "star" : "star-outline"} size={20} color={isProTheme ? theme.brand : theme.danger} />
-            <Text style={{ fontSize: 15, fontWeight: "600", color: theme.text, flex: 1 }}>
-              {isProTheme ? "Switch to Free" : "Switch to Pro"}
-            </Text>
-            <View style={[styles.devBadge, { backgroundColor: isProTheme ? theme.brand + "20" : theme.danger + "20" }]}>
-              <Text style={{ fontSize: 12, fontWeight: "700", color: isProTheme ? theme.brand : theme.danger }}>
-                {isProTheme ? "PRO" : "FREE"}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        )}
-      </View>
     </ScrollView>
   );
 }
@@ -563,11 +446,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 8,
     borderStyle: "dashed",
-  },
-  devBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
   },
   fireworksRow: {
     flexDirection: "row",
