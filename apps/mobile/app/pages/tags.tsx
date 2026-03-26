@@ -15,9 +15,10 @@ import { createTagApi } from "@money-tracker/api-client";
 import { apiClient } from "@/lib/api";
 import { useAppTheme } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
-import { randomTagColor } from "@money-tracker/shared";
+import { randomTagColor, formatCurrency, parseAmount } from "@money-tracker/shared";
 import { SwipeableRow, SwipeableProvider } from "@/components/SwipeableRow";
-import type { Tag } from "@money-tracker/shared";
+import { getDatabase } from "@/lib/db";
+import type { Tag, Transaction } from "@money-tracker/shared";
 
 const tagApi = createTagApi(apiClient);
 
@@ -33,6 +34,8 @@ export default function TagsPage() {
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [expandedTagId, setExpandedTagId] = useState<string | null>(null);
+  const [tagTransactions, setTagTransactions] = useState<Record<string, Transaction[]>>({});
 
   useEffect(() => { loadTags(); }, []);
 
@@ -82,11 +85,55 @@ export default function TagsPage() {
       {
         text: i18n("common.delete"), style: "destructive",
         onPress: async () => {
-          try { await tagApi.remove(tag.id); setTags(tags.filter((t) => t.id !== tag.id)); }
-          catch { Alert.alert(i18n("common.error"), "Failed to delete tag"); }
+          try {
+            await tagApi.remove(tag.id);
+            setTags(tags.filter((t) => t.id !== tag.id));
+            if (expandedTagId === tag.id) setExpandedTagId(null);
+          } catch {
+            Alert.alert(i18n("common.error"), "Failed to delete tag");
+          }
         },
       },
     ]);
+  };
+
+  const toggleExpand = async (tagId: string) => {
+    if (expandedTagId === tagId) {
+      setExpandedTagId(null);
+      return;
+    }
+    setExpandedTagId(tagId);
+    // Fetch transactions for this tag if not cached
+    if (!tagTransactions[tagId]) {
+      try {
+        const db = await getDatabase();
+        const rows = await db.getAllAsync<Record<string, unknown>>(
+          `SELECT t.id, t.description, t.amount, t.date, t.category_id,
+                  c.name as cat_name, c.emoji as cat_emoji
+           FROM transaction_tags tt
+           JOIN transactions t ON tt.transaction_id = t.id
+           LEFT JOIN categories c ON t.category_id = c.id
+           WHERE tt.tag_id = ?
+           ORDER BY t.date DESC
+           LIMIT 50`,
+          [tagId],
+        );
+        const txs: Transaction[] = rows.map((r) => ({
+          id: r.id as string,
+          description: r.description as string,
+          amount: r.amount as number,
+          date: r.date as string,
+          categoryId: (r.category_id as string) || null,
+          isHidden: false,
+          isManual: true,
+          account: { id: "", name: "" },
+          category: r.cat_name ? { id: (r.category_id as string) || "", name: r.cat_name as string, emoji: (r.cat_emoji as string) || null } : null,
+        }));
+        setTagTransactions((prev) => ({ ...prev, [tagId]: txs }));
+      } catch {
+        // ignore
+      }
+    }
   };
 
   if (loading) {
@@ -104,7 +151,7 @@ export default function TagsPage() {
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.accent} />}
     >
-      {/* Add Tag Button */}
+      {/* Add Tag */}
       <View style={[styles.card, showAddForm ? { backgroundColor: theme.brand + "10", borderColor: theme.brand + "40" } : { backgroundColor: theme.brand, borderColor: theme.brand }]}>
         <TouchableOpacity
           style={styles.cardHeader}
@@ -115,7 +162,6 @@ export default function TagsPage() {
             {i18n("tag.addTag")}
           </Text>
         </TouchableOpacity>
-
         {showAddForm && (
           <View style={styles.formContent}>
             <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n("tag.tagName")}</Text>
@@ -155,40 +201,85 @@ export default function TagsPage() {
       ) : (
         tags.map((tag) => {
           const isEditing = editingId === tag.id;
+          const isExpanded = expandedTagId === tag.id;
+          const txs = tagTransactions[tag.id] || [];
+
           return (
             <View key={tag.id} style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
               <SwipeableRow id={tag.id} onDelete={() => handleDeleteTag(tag)} dangerColor={theme.danger}>
                 <TouchableOpacity
                   style={[styles.tagRow, { backgroundColor: theme.card }]}
-                  onPress={() => { setEditingId(tag.id); setEditingName(tag.name); }}
+                  onPress={() => toggleExpand(tag.id)}
                   activeOpacity={1}
                 >
                   <View style={[styles.colorBar, { backgroundColor: tag.color }]} />
-                  {isEditing ? (
-                    <View style={styles.editRow}>
-                      <TextInput
-                        style={[styles.editInput, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder, color: theme.text }]}
-                        value={editingName}
-                        onChangeText={setEditingName}
-                        autoFocus
-                        onSubmitEditing={() => handleSaveEdit(tag.id)}
-                        returnKeyType="done"
-                      />
-                      <TouchableOpacity onPress={() => handleSaveEdit(tag.id)} style={styles.editBtn}>
-                        <Ionicons name="checkmark" size={22} color={theme.brand} />
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => setEditingId(null)} style={styles.editBtn}>
-                        <Ionicons name="close" size={22} color={theme.textSecondary} />
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <View style={styles.tagInfo}>
-                      <Text style={[styles.tagName, { color: theme.text }]}>{tag.name}</Text>
-                      <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
-                    </View>
-                  )}
+                  <View style={styles.tagInfo}>
+                    {isEditing ? (
+                      <View style={styles.editRow}>
+                        <TextInput
+                          style={[styles.editInput, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder, color: theme.text }]}
+                          value={editingName}
+                          onChangeText={setEditingName}
+                          autoFocus
+                          onSubmitEditing={() => handleSaveEdit(tag.id)}
+                          returnKeyType="done"
+                        />
+                        <TouchableOpacity onPress={() => handleSaveEdit(tag.id)} style={styles.editBtn}>
+                          <Ionicons name="checkmark" size={22} color={theme.brand} />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setEditingId(null)} style={styles.editBtn}>
+                          <Ionicons name="close" size={22} color={theme.textSecondary} />
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <>
+                        <TouchableOpacity
+                          onPress={() => { setEditingId(tag.id); setEditingName(tag.name); }}
+                          activeOpacity={0.7}
+                          style={{ flex: 1 }}
+                        >
+                          <Text style={[styles.tagName, { color: theme.text }]}>{tag.name}</Text>
+                        </TouchableOpacity>
+                        <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={18} color={theme.textSecondary} />
+                      </>
+                    )}
+                  </View>
                 </TouchableOpacity>
               </SwipeableRow>
+
+              {/* Expanded transaction list */}
+              {isExpanded && (
+                <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.cardBorder }}>
+                  {txs.length === 0 ? (
+                    <Text style={{ color: theme.textSecondary, fontSize: 14, padding: 14, textAlign: "center" }}>
+                      No transactions with this tag
+                    </Text>
+                  ) : (
+                    txs.map((t, i) => {
+                      const amt = parseAmount(t.amount);
+                      return (
+                        <View
+                          key={t.id}
+                          style={[
+                            styles.txRow,
+                            i < txs.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.cardBorder },
+                          ]}
+                        >
+                          <Text style={{ width: 54, fontSize: 13, color: theme.textSecondary }}>
+                            {new Date(t.date).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}
+                          </Text>
+                          <Text style={{ flex: 1, fontSize: 15, fontWeight: "500", color: theme.text }} numberOfLines={1}>
+                            {t.description || t.category?.name || ""}
+                          </Text>
+                          <Text style={{ fontSize: 15, fontWeight: "600", color: amt < 0 ? theme.expense : theme.income }}>
+                            {formatCurrency(Math.abs(amt))}
+                          </Text>
+                        </View>
+                      );
+                    })
+                  )}
+                </View>
+              )}
             </View>
           );
         })
@@ -255,7 +346,6 @@ const styles = StyleSheet.create({
   tagName: {
     fontSize: 17,
     fontWeight: "600",
-    flex: 1,
   },
   editRow: {
     flexDirection: "row",
@@ -273,5 +363,12 @@ const styles = StyleSheet.create({
   },
   editBtn: {
     padding: 4,
+  },
+  txRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
 });

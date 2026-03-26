@@ -464,6 +464,18 @@ export class LocalClient extends ApiClient {
       );
     }
 
+    // Update tags if provided
+    if (body.tagIds !== undefined) {
+      await db.runAsync("DELETE FROM transaction_tags WHERE transaction_id = ?", [id]);
+      const tagIds = body.tagIds as string[];
+      for (const tagId of tagIds) {
+        await db.runAsync(
+          "INSERT OR IGNORE INTO transaction_tags (id, transaction_id, tag_id) VALUES (?, ?, ?)",
+          [uuid(), id, tagId],
+        );
+      }
+    }
+
     return this.getTransactionById(id);
   }
 

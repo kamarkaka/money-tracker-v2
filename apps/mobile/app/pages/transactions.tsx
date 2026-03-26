@@ -209,9 +209,18 @@ export default function TransactionsPage() {
           <Ionicons name={emojiIcon.icon} size={20} color={emojiIcon.color} />
         </View>
         <View style={styles.transactionLeft}>
-          <Text style={[styles.transactionDescription, { color: theme.text }]} numberOfLines={1}>
-            {item.description || categoryName}
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <Text style={[styles.transactionDescription, { color: theme.text, flexShrink: 1 }]} numberOfLines={1}>
+              {item.description || categoryName}
+            </Text>
+            {item.transactionTags && item.transactionTags.length > 0 && (
+              <View style={{ flexDirection: "row", gap: 3 }}>
+                {item.transactionTags.map((tt) => (
+                  <View key={tt.tag.id} style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: tt.tag.color }} />
+                ))}
+              </View>
+            )}
+          </View>
           <Text style={[styles.transactionMeta, { color: theme.textSecondary }]} numberOfLines={1}>
             {formatShortDate(item.date)} · {categoryName}
           </Text>

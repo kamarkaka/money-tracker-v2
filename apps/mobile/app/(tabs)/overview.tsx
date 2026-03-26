@@ -311,6 +311,22 @@ export default function OverviewScreen() {
     }
   }, [initialLoad, netSavings]);
 
+  // Render transaction description with tag dots
+  const renderTxDescription = (t: Transaction) => (
+    <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 4 }}>
+      <Text style={{ fontSize: 15, fontWeight: "500", color: theme.text, flexShrink: 1 }} numberOfLines={1}>
+        {t.description}
+      </Text>
+      {isPro && t.transactionTags && t.transactionTags.length > 0 && (
+        <View style={{ flexDirection: "row", gap: 3, marginLeft: 2 }}>
+          {t.transactionTags.map((tt) => (
+            <View key={tt.tag.id} style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: tt.tag.color }} />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+
   if (initialLoad) {
     return (
       <View style={[styles.center, { backgroundColor: theme.background, paddingTop: insets.top }]}>
@@ -545,9 +561,7 @@ export default function OverviewScreen() {
                             <Text style={{ width: 54, fontSize: 13, color: theme.textSecondary }}>
                               {new Date(t.date).toLocaleDateString(locale, { month: "short", day: "numeric" })}
                             </Text>
-                            <Text style={{ flex: 1, fontSize: 15, fontWeight: "500", color: theme.text }} numberOfLines={1}>
-                              {t.description}
-                            </Text>
+                            {renderTxDescription(t)}
                             <Text style={{ fontSize: 15, fontWeight: "600", color: amt < 0 ? theme.expense : theme.income }}>
                               {formatCurrency(Math.abs(amt))}
                             </Text>
@@ -593,7 +607,7 @@ export default function OverviewScreen() {
                       return (
                         <TouchableOpacity key={t.id} style={[styles.expandedTxRow, i < otherTx.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.cardBorder }]} onPress={() => openEdit(t)} activeOpacity={0.6}>
                           <Text style={{ width: 54, fontSize: 13, color: theme.textSecondary }}>{new Date(t.date).toLocaleDateString(locale, { month: "short", day: "numeric" })}</Text>
-                          <Text style={{ flex: 1, fontSize: 15, fontWeight: "500", color: theme.text }} numberOfLines={1}>{t.description}</Text>
+                          {renderTxDescription(t)}
                           <Text style={{ fontSize: 15, fontWeight: "600", color: amt < 0 ? theme.expense : theme.income }}>{formatCurrency(Math.abs(amt))}</Text>
                         </TouchableOpacity>
                       );
@@ -636,7 +650,7 @@ export default function OverviewScreen() {
                       return (
                         <TouchableOpacity key={t.id} style={[styles.expandedTxRow, i < uncategorized.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.cardBorder }]} onPress={() => openEdit(t)} activeOpacity={0.6}>
                           <Text style={{ width: 54, fontSize: 13, color: theme.textSecondary }}>{new Date(t.date).toLocaleDateString(locale, { month: "short", day: "numeric" })}</Text>
-                          <Text style={{ flex: 1, fontSize: 15, fontWeight: "500", color: theme.text }} numberOfLines={1}>{t.description}</Text>
+                          {renderTxDescription(t)}
                           <Text style={{ fontSize: 15, fontWeight: "600", color: amt < 0 ? theme.expense : theme.income }}>{formatCurrency(Math.abs(amt))}</Text>
                         </TouchableOpacity>
                       );
@@ -718,9 +732,7 @@ export default function OverviewScreen() {
                           <Text style={{ width: 54, fontSize: 13, color: theme.textSecondary }}>
                             {new Date(t.date).toLocaleDateString(locale, { month: "short", day: "numeric" })}
                           </Text>
-                          <Text style={{ flex: 1, fontSize: 15, fontWeight: "500", color: theme.text }} numberOfLines={1}>
-                            {t.description}
-                          </Text>
+                          {renderTxDescription(t)}
                           <Text style={{ fontSize: 15, fontWeight: "600", color: amt < 0 ? theme.expense : theme.income }}>
                             {formatCurrency(Math.abs(amt))}
                           </Text>

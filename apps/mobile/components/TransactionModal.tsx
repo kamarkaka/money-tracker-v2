@@ -16,8 +16,8 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { createTransactionApi, createAccountApi, createCategoryApi, createInstitutionApi } from "@money-tracker/api-client";
-import type { Account, Transaction, Category, Institution } from "@money-tracker/shared";
+import { createTransactionApi, createAccountApi, createCategoryApi, createInstitutionApi, createTagApi } from "@money-tracker/api-client";
+import type { Account, Transaction, Category, Institution, Tag } from "@money-tracker/shared";
 import { parseAmount } from "@money-tracker/shared";
 import { apiClient } from "@/lib/api";
 import { getDatabase } from "@/lib/db";
@@ -30,6 +30,7 @@ const txApi = createTransactionApi(apiClient);
 const accApi = createAccountApi(apiClient);
 const catApi = createCategoryApi(apiClient);
 const instApi = createInstitutionApi(apiClient);
+const tagApi = createTagApi(apiClient);
 
 function flattenCategories(cats: Category[]): { id: string; name: string; emoji?: string | null; parentName?: string }[] {
   const result: { id: string; name: string; emoji?: string | null; parentName?: string }[] = [];
@@ -73,6 +74,8 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [showAccountPicker, setShowAccountPicker] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [description, setDescription] = useState("");
   const [rawCents, setRawCents] = useState("");
 
@@ -110,6 +113,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
         setSelectedEmoji(editTransaction.category?.emoji || null);
         setSelectedCategoryId(editTransaction.categoryId || null);
         setAccountId(editTransaction.account?.id || "");
+        setSelectedTagIds(editTransaction.transactionTags?.map((tt) => tt.tag.id) || []);
         dismissedAddRef.current = false;
       } else if (!dismissedAddRef.current) {
         // Fresh add — reset all fields
@@ -118,6 +122,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
         setDate(new Date());
         setSelectedEmoji(null);
         setSelectedCategoryId(null);
+        setSelectedTagIds([]);
         setIsExpense(true);
       }
       // else: resuming a dismissed add — keep existing state
@@ -129,6 +134,9 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
           setAccountId(accs[0].id);
         }
       });
+
+      // Load tags
+      tagApi.list().then(setAllTags);
 
       // Pro: load categories and institutions
       if (isPro) {
@@ -256,7 +264,8 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
           date: date.toISOString().split("T")[0],
           accountId,
           ...(categoryId !== undefined ? { categoryId } : {}),
-        });
+          tagIds: selectedTagIds,
+        } as any);
       } else {
         await txApi.create({
           accountId,
@@ -265,6 +274,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
           date: date.toISOString().split("T")[0],
           ...(isPro && selectedCategoryId ? { categoryId: selectedCategoryId } : {}),
           ...(!isPro && selectedEmoji ? { emoji: selectedEmoji } : {}),
+          ...(selectedTagIds.length > 0 ? { tagIds: selectedTagIds } : {}),
         });
       }
       dismissedAddRef.current = false;
@@ -529,6 +539,46 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
             textAlignVertical="top"
           />
 
+          {/* Tags */}
+          {isPro && allTags.length > 0 && (
+            <View style={styles.tagSection}>
+              <View style={styles.tagPillWrap}>
+                {allTags.map((tag) => {
+                  const isSelected = selectedTagIds.includes(tag.id);
+                  return (
+                    <TouchableOpacity
+                      key={tag.id}
+                      style={[
+                        styles.tagPill,
+                        { borderColor: isSelected ? tag.color : theme.cardBorder },
+                        isSelected && { backgroundColor: tag.color + "20" },
+                      ]}
+                      onPress={() => {
+                        setSelectedTagIds((prev) =>
+                          isSelected ? prev.filter((id) => id !== tag.id) : [...prev, tag.id],
+                        );
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.tagDot, { backgroundColor: tag.color }]} />
+                      <Text style={{ fontSize: 13, fontWeight: isSelected ? "600" : "500", color: isSelected ? tag.color : theme.text }}>
+                        {tag.name}
+                      </Text>
+                      {isSelected && (
+                        <TouchableOpacity
+                          onPress={() => setSelectedTagIds((prev) => prev.filter((id) => id !== tag.id))}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Ionicons name="close-circle" size={16} color={tag.color} />
+                        </TouchableOpacity>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
           {/* Action buttons */}
           <View style={styles.actionRow}>
             {isEdit && (
@@ -668,14 +718,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   textArea: {
-    height: 64,
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 14,
     fontSize: 16,
     marginBottom: 16,
   },
+  tagSection: { marginBottom: 16 },
+  tagPillWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  tagPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  tagDot: { width: 8, height: 8, borderRadius: 4 },
   actionRow: {
     flexDirection: "row",
     gap: 12,
