@@ -15,7 +15,7 @@ import { createAccountApi, createInstitutionApi } from "@money-tracker/api-clien
 import { apiClient } from "@/lib/api";
 import { useAppTheme } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
-import { SwipeableRow, SwipeableProvider } from "@/components/SwipeableRow";
+import { SwipeableRow, SwipeableProvider, SwipeableScrollView } from "@/components/SwipeableRow";
 import { formatCurrency } from "@money-tracker/shared";
 import type { Account, Institution } from "@money-tracker/shared";
 
@@ -160,7 +160,7 @@ export default function AccountsPage() {
 
   return (
     <SwipeableProvider>
-    <ScrollView
+    <SwipeableScrollView
       style={{ backgroundColor: theme.background }}
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.accent} />}
@@ -308,7 +308,7 @@ export default function AccountsPage() {
           </View>
         ))
       )}
-    </ScrollView>
+    </SwipeableScrollView>
     </SwipeableProvider>
   );
 }

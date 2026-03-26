@@ -16,7 +16,7 @@ import { apiClient } from "@/lib/api";
 import { useAppTheme } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
 import { randomTagColor, formatCurrency, parseAmount } from "@money-tracker/shared";
-import { SwipeableRow, SwipeableProvider } from "@/components/SwipeableRow";
+import { SwipeableRow, SwipeableProvider, SwipeableScrollView } from "@/components/SwipeableRow";
 import { getDatabase } from "@/lib/db";
 import type { Tag, Transaction } from "@money-tracker/shared";
 
@@ -146,7 +146,7 @@ export default function TagsPage() {
 
   return (
     <SwipeableProvider>
-    <ScrollView
+    <SwipeableScrollView
       style={{ backgroundColor: theme.background }}
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.accent} />}
@@ -284,7 +284,7 @@ export default function TagsPage() {
           );
         })
       )}
-    </ScrollView>
+    </SwipeableScrollView>
     </SwipeableProvider>
   );
 }

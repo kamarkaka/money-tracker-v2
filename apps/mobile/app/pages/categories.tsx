@@ -17,7 +17,7 @@ import { useAppTheme } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
 import { getEmojiIcon, DEFAULT_CATEGORY_ICONS, ALL_CATEGORY_ICONS } from "@/lib/emoji";
 import { useSubscription } from "@/lib/subscription";
-import { SwipeableRow, SwipeableProvider } from "@/components/SwipeableRow";
+import { SwipeableRow, SwipeableProvider, SwipeableScrollView } from "@/components/SwipeableRow";
 import type { Category } from "@money-tracker/shared";
 
 const categoryApi = createCategoryApi(apiClient);
@@ -128,7 +128,7 @@ export default function CategoriesPage() {
 
   return (
     <SwipeableProvider>
-    <ScrollView
+    <SwipeableScrollView
       style={{ backgroundColor: theme.background }}
       contentContainerStyle={styles.content}
       refreshControl={
@@ -342,7 +342,7 @@ export default function CategoriesPage() {
           );
         })
       )}
-    </ScrollView>
+    </SwipeableScrollView>
     </SwipeableProvider>
   );
 }

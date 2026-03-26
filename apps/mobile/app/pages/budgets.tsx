@@ -18,7 +18,7 @@ import { useI18n } from "@/lib/i18n";
 import { useSubscription } from "@/lib/subscription";
 import { formatCurrency } from "@money-tracker/shared";
 import { getEmojiIcon, DEFAULT_CATEGORY_ICONS, ALL_CATEGORY_ICONS } from "@/lib/emoji";
-import { SwipeableRow, SwipeableProvider } from "@/components/SwipeableRow";
+import { SwipeableRow, SwipeableProvider, SwipeableScrollView } from "@/components/SwipeableRow";
 import type { BudgetBucket, Category } from "@money-tracker/shared";
 
 const budgetApi = createBudgetApi(apiClient);
@@ -260,7 +260,7 @@ export default function BudgetsPage() {
 
   return (
     <SwipeableProvider>
-    <ScrollView
+    <SwipeableScrollView
       style={{ backgroundColor: theme.background }}
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.accent} />}
@@ -376,7 +376,7 @@ export default function BudgetsPage() {
           );
         })
       )}
-    </ScrollView>
+    </SwipeableScrollView>
     </SwipeableProvider>
   );
 }

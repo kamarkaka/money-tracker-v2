@@ -1,30 +1,43 @@
 import { useRef, useEffect, useCallback } from "react";
-import { View, TouchableOpacity, Animated, PanResponder, StyleSheet } from "react-native";
+import { View, TouchableOpacity, Animated, PanResponder, StyleSheet, ScrollView, type ScrollViewProps } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 
 const DELETE_WIDTH = 80;
 
-// Context to coordinate swipeable rows — only one open at a time
-const SwipeableContext = React.createContext<{
+// Separate contexts to avoid cascade re-renders:
+// - RowContext changes when a row opens/closes → only rows re-render
+// - ScrollContext changes during swipe → only the ScrollView re-renders
+const RowContext = React.createContext<{
   openId: string | null;
   setOpenId: (id: string | null) => void;
-}>({ openId: null, setOpenId: () => {} });
+  setScrollEnabled: (enabled: boolean) => void;
+}>({ openId: null, setOpenId: () => {}, setScrollEnabled: () => {} });
+
+const ScrollContext = React.createContext<boolean>(true);
 
 export function SwipeableProvider({ children }: { children: React.ReactNode }) {
   const [openId, setOpenId] = React.useState<string | null>(null);
-  const value = React.useMemo(() => ({ openId, setOpenId }), [openId]);
+  const [scrollEnabled, setScrollEnabled] = React.useState(true);
+  const rowValue = React.useMemo(() => ({ openId, setOpenId, setScrollEnabled }), [openId]);
   return (
-    <SwipeableContext.Provider value={value}>
-      {children}
-    </SwipeableContext.Provider>
+    <RowContext.Provider value={rowValue}>
+      <ScrollContext.Provider value={scrollEnabled}>
+        {children}
+      </ScrollContext.Provider>
+    </RowContext.Provider>
   );
 }
 
 export function useCloseSwipeable() {
-  const { setOpenId } = React.useContext(SwipeableContext);
+  const { setOpenId } = React.useContext(RowContext);
   return () => setOpenId(null);
 }
+
+export const SwipeableScrollView = React.forwardRef<ScrollView, ScrollViewProps>((props, ref) => {
+  const scrollEnabled = React.useContext(ScrollContext);
+  return <ScrollView ref={ref} {...props} scrollEnabled={scrollEnabled && (props.scrollEnabled ?? true)} />;
+});
 
 interface Props {
   children: React.ReactNode;
@@ -36,7 +49,7 @@ interface Props {
 export function SwipeableRow({ children, onDelete, dangerColor = "#ef4444", id }: Props) {
   const translateX = useRef(new Animated.Value(0)).current;
   const rowId = useRef(id || Math.random().toString(36)).current;
-  const { openId, setOpenId } = React.useContext(SwipeableContext);
+  const { openId, setOpenId, setScrollEnabled } = React.useContext(RowContext);
   const isOpen = openId === rowId;
 
   // Close this row when another row opens
@@ -60,16 +73,26 @@ export function SwipeableRow({ children, onDelete, dangerColor = "#ef4444", id }
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gs) =>
         Math.abs(gs.dx) > 10 && Math.abs(gs.dx) > Math.abs(gs.dy),
+      onPanResponderGrant: () => {
+        setScrollEnabled(false);
+      },
       onPanResponderMove: (_, gs) => {
         if (gs.dx < 0) translateX.setValue(Math.max(gs.dx, -DELETE_WIDTH));
         else if (gs.dx > 0) translateX.setValue(Math.min(gs.dx, 0));
       },
       onPanResponderRelease: (_, gs) => {
+        setScrollEnabled(true);
         if (gs.dx < -DELETE_WIDTH / 2) {
           open();
         } else {
           close();
         }
+      },
+      onPanResponderTerminate: () => {
+        setScrollEnabled(true);
+      },
+      onPanResponderReject: () => {
+        setScrollEnabled(true);
       },
     }),
   ).current;
