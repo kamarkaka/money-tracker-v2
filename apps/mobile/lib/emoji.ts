@@ -103,12 +103,13 @@ export function getEmojiIcon(emoji: string | null | undefined): EmojiIcon {
 
 export const FALLBACK_EMOJI = e(0x1F4E6);
 
-// Ordered list of default category icons (for the add-transaction picker)
+// Ordered list of default category icons (for free-tier add-transaction picker)
+// 18 icons — Coffee and Gas are pro-only
 export const DEFAULT_CATEGORY_ICONS: { emoji: string; icon: EmojiIcon }[] = [
-  e(0x1F354), e(0x1F6D2), e(0x2615), e(0x1F697), e(0x26FD), e(0x1F3E0),
-  e(0x1F48A), e(0x1F3AE), e(0x1F455), e(0x1F4F1), e2(0x2708, 0xFE0F), e(0x1F393),
-  e(0x1F4B0), e(0x1F4B3), e(0x1F43E), e(0x1F476), e(0x1F487), e(0x1F381),
-  e2(0x1F3CB, 0xFE0F), e(0x1F4E6),
+  e(0x1F354), e(0x1F6D2), e(0x1F697), e(0x1F3E0), e(0x1F48A), e(0x1F3AE),
+  e(0x1F455), e(0x1F4F1), e2(0x2708, 0xFE0F), e(0x1F393), e(0x1F4B0), e(0x1F4B3),
+  e(0x1F43E), e(0x1F476), e(0x1F487), e(0x1F381), e2(0x1F3CB, 0xFE0F), e(0x1F4E6),
+  e(0x1F3B5), e(0x1F4BB), e(0x1F37A), e(0x26BD), e(0x2764), e(0x1F4B5),
 ].map((emoji) => ({ emoji, icon: getEmojiIcon(emoji) }));
 
 // Extended icon list (for category management page)

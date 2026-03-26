@@ -12,11 +12,13 @@ interface ThemeContextValue {
   isPro: boolean;
   devMode: boolean;
   tabConfig: string[];
+  fireworksEnabled: boolean;
   setThemeSetting: (setting: ThemeSetting) => void;
   setIsPro: (isPro: boolean) => void;
   setDevMode: (on: boolean) => void;
   setDevIsPro: (isPro: boolean) => void;
   setTabConfig: (tabs: string[]) => void;
+  setFireworksEnabled: (on: boolean) => void;
 }
 
 export const ThemeContext = createContext<ThemeContextValue>({
@@ -26,11 +28,13 @@ export const ThemeContext = createContext<ThemeContextValue>({
   isPro: false,
   devMode: false,
   tabConfig: DEFAULT_TAB_CONFIG,
+  fireworksEnabled: true,
   setThemeSetting: () => {},
   setIsPro: () => {},
   setDevMode: () => {},
   setDevIsPro: () => {},
   setTabConfig: () => {},
+  setFireworksEnabled: () => {},
 });
 
 export function useAppTheme() {

@@ -27,6 +27,7 @@ import { useTransactionModal } from "@/lib/addModal";
 import { SlotNumber } from "@/components/SlotNumber";
 import { useI18n } from "@/lib/i18n";
 import { RING_COLORS } from "@/lib/colors";
+import { Fireworks } from "@/components/Fireworks";
 
 const txApi = createTransactionApi(apiClient);
 const catApi = createCategoryApi(apiClient);
@@ -90,7 +91,7 @@ const ProgressRing = memo(function ProgressRing({ size, strokeWidth, pct, ringCo
 });
 
 export default function OverviewScreen() {
-  const { theme, isPro } = useAppTheme();
+  const { theme, isPro, fireworksEnabled } = useAppTheme();
   const { i18n, locale } = useI18n();
   const insets = useSafeAreaInsets();
   const [initialLoad, setInitialLoad] = useState(true);
@@ -100,6 +101,10 @@ export default function OverviewScreen() {
   const [expandedEmoji, setExpandedEmoji] = useState<string | null>(null);
   const [expandedBucket, setExpandedBucket] = useState<string | null>(null);
   const [budgets, setBudgets] = useState<BudgetBucket[]>([]);
+  const [prevIncome, setPrevIncome] = useState(0);
+  const [prevExpenses, setPrevExpenses] = useState(0);
+  const [showFireworks, setShowFireworks] = useState(false);
+  const fireworksShownRef = useRef(false);
   const [showScrollBar, setShowScrollBar] = useState(true);
   const { openEdit, setOnComplete } = useTransactionModal();
   const [earliestDate, setEarliestDate] = useState<{ y: number; m: number } | null>(null);
@@ -170,13 +175,24 @@ export default function OverviewScreen() {
     const startDate = new Date(year, month, 1).toISOString().split("T")[0];
     const endDate = new Date(year, month + 1, 0).toISOString().split("T")[0];
 
-    const [txData, catData] = await Promise.all([
+    // Also fetch previous month for trend arrows
+    const prev = addMonths(year, month, -1);
+    const prevStartDate = new Date(prev.y, prev.m, 1).toISOString().split("T")[0];
+    const prevEndDate = new Date(prev.y, prev.m + 1, 0).toISOString().split("T")[0];
+
+    const [txData, catData, prevTxData] = await Promise.all([
       txApi.list({ startDate, endDate, pageSize: 0 }),
       catApi.list(),
+      txApi.list({ startDate: prevStartDate, endDate: prevEndDate, pageSize: 0 }),
     ]);
 
     setTransactions(txData.transactions);
     setCategories(catData);
+
+    // Calculate previous month totals
+    const prevNonTransfer = prevTxData.transactions;
+    setPrevIncome(prevNonTransfer.filter((t: Transaction) => parseAmount(t.amount) > 0).reduce((s: number, t: Transaction) => s + parseAmount(t.amount), 0));
+    setPrevExpenses(prevNonTransfer.filter((t: Transaction) => parseAmount(t.amount) < 0).reduce((s: number, t: Transaction) => s + parseAmount(t.amount), 0));
 
     if (isPro) {
       const b = await budgetApi.list();
@@ -280,6 +296,20 @@ export default function OverviewScreen() {
   const allExpenses = transactions.filter((t) => getAmt(t) < 0).reduce((s, t) => s + getAmt(t), 0);
 
   const savingsColor = netSavings >= 0 ? theme.income : theme.expense;
+  const prevNetSavings = prevIncome + prevExpenses;
+
+  // Trend: compare with previous month
+  const incomeTrend = totalIncome > prevIncome ? "up" : totalIncome < prevIncome ? "down" : "flat";
+  const expenseTrend = Math.abs(totalExpenses) > Math.abs(prevExpenses) ? "up" : Math.abs(totalExpenses) < Math.abs(prevExpenses) ? "down" : "flat";
+  const savingsTrend = netSavings > prevNetSavings ? "up" : netSavings < prevNetSavings ? "down" : "flat";
+
+  // Show fireworks on initial load if net savings positive (pro only)
+  useEffect(() => {
+    if (!initialLoad && isPro && fireworksEnabled && netSavings > 0 && !fireworksShownRef.current) {
+      fireworksShownRef.current = true;
+      setShowFireworks(true);
+    }
+  }, [initialLoad, netSavings]);
 
   if (initialLoad) {
     return (
@@ -355,10 +385,20 @@ export default function OverviewScreen() {
         <Text style={[styles.savingsLabel, { color: theme.textSecondary }]}>
           {i18n("overview.netSavings")}
         </Text>
-        <SlotNumber
-          value={formatCurrency(netSavings, "USD", true)}
-          style={{ ...styles.savingsAmount, color: savingsColor }}
-        />
+        <View style={styles.trendRow}>
+          {savingsTrend !== "flat" && (
+            <Ionicons
+              name={savingsTrend === "up" ? "caret-up" : "caret-down"}
+              size={18}
+              color={savingsColor}
+              style={{ marginRight: 8 }}
+            />
+          )}
+          <SlotNumber
+            value={formatCurrency(netSavings, "USD", true)}
+            style={{ ...styles.savingsAmount, color: savingsColor }}
+          />
+        </View>
       </LinearGradient>
 
       {/* Income + Expenses */}
@@ -372,10 +412,15 @@ export default function OverviewScreen() {
           <View style={[styles.summaryAccent, { backgroundColor: theme.income }]} />
           <View style={styles.summaryContent}>
             <Text style={{ fontSize: 12, fontWeight: "600", color: theme.textSecondary }}>{i18n("overview.totalIncome")}</Text>
-            <SlotNumber
-              value={formatCurrency(totalIncome, "USD", true)}
-              style={{ fontSize: 20, fontWeight: "800", color: theme.income, marginTop: 2 }}
-            />
+            <View style={styles.trendRow}>
+              {incomeTrend !== "flat" && (
+                <Ionicons name={incomeTrend === "up" ? "caret-up" : "caret-down"} size={14} color={theme.income} />
+              )}
+              <SlotNumber
+                value={formatCurrency(totalIncome, "USD", true)}
+                style={{ fontSize: 20, fontWeight: "800", color: theme.income, marginTop: 2 }}
+              />
+            </View>
           </View>
         </LinearGradient>
         <LinearGradient
@@ -387,10 +432,15 @@ export default function OverviewScreen() {
           <View style={[styles.summaryAccent, { backgroundColor: theme.expense }]} />
           <View style={styles.summaryContent}>
             <Text style={{ fontSize: 12, fontWeight: "600", color: theme.textSecondary }}>{i18n("overview.totalExpenses")}</Text>
-            <SlotNumber
-              value={formatCurrency(Math.abs(totalExpenses), "USD", true)}
-              style={{ fontSize: 20, fontWeight: "800", color: theme.expense, marginTop: 2 }}
-            />
+            <View style={styles.trendRow}>
+              {expenseTrend !== "flat" && (
+                <Ionicons name={expenseTrend === "up" ? "caret-up" : "caret-down"} size={14} color={theme.expense} />
+              )}
+              <SlotNumber
+                value={formatCurrency(Math.abs(totalExpenses), "USD", true)}
+                style={{ fontSize: 20, fontWeight: "800", color: theme.expense, marginTop: 2 }}
+              />
+            </View>
           </View>
         </LinearGradient>
       </View>
@@ -528,7 +578,7 @@ export default function OverviewScreen() {
                         const net = otherTx.reduce((s, t) => s + getAmt(t), 0);
                         return (
                           <Text style={{ fontSize: 15, fontWeight: "700", color: net > 0 ? theme.income : theme.expense }}>
-                            {net > 0 ? "+" : "-"}{formatCurrency(Math.abs(net), "USD", true)}
+                            {formatCurrency(Math.abs(net), "USD", true)}
                           </Text>
                         );
                       })()}
@@ -571,7 +621,7 @@ export default function OverviewScreen() {
                         const net = uncategorized.reduce((s, t) => s + getAmt(t), 0);
                         return (
                           <Text style={{ fontSize: 15, fontWeight: "700", color: net > 0 ? theme.income : theme.expense }}>
-                            {net > 0 ? "+" : "-"}{formatCurrency(Math.abs(net), "USD", true)}
+                            {formatCurrency(Math.abs(net), "USD", true)}
                           </Text>
                         );
                       })()}
@@ -686,6 +736,9 @@ export default function OverviewScreen() {
       )}
 
     </ScrollView>
+    {showFireworks && (
+      <Fireworks duration={2500} onDone={() => setShowFireworks(false)} />
+    )}
     </View>
     </GestureDetector>
   );
@@ -727,6 +780,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  trendRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 2 },
   savingsLabel: { fontSize: 13, fontWeight: "600", textTransform: "uppercase", letterSpacing: 1 },
   savingsAmount: { fontSize: 24, fontWeight: "800" },
   summaryRow: { flexDirection: "row", gap: 10, marginBottom: 12 },

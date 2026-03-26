@@ -402,7 +402,7 @@ export class LocalClient extends ApiClient {
         id,
         body.accountId as string,
         categoryId,
-        (body.description as string) || "Transaction",
+        (body.description as string) || "",
         body.amount as number,
         body.date as string,
       ],
@@ -988,6 +988,7 @@ export class LocalClient extends ApiClient {
       language: (row?.language as string) || "en",
       mode: (row?.mode as string) || "casual",
       tabConfig: (row?.tab_config as string) || "overview,transactions,budgets,accounts",
+      fireworks: row?.fireworks !== undefined ? !!(row.fireworks as number) : true,
     };
   }
 
@@ -1011,6 +1012,10 @@ export class LocalClient extends ApiClient {
     if (body.tabConfig !== undefined) {
       sets.push("tab_config = ?");
       args.push(body.tabConfig as string);
+    }
+    if (body.fireworks !== undefined) {
+      sets.push("fireworks = ?");
+      args.push(body.fireworks ? 1 : 0);
     }
 
     if (sets.length > 0) {

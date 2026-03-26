@@ -14,6 +14,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { createTransactionApi, createAccountApi, createCategoryApi, createInstitutionApi } from "@money-tracker/api-client";
 import type { Account, Transaction, Category, Institution } from "@money-tracker/shared";
@@ -250,7 +251,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
           }
         }
         await txApi.update(editTransaction.id, {
-          description: description.trim() || "Transaction",
+          description: description.trim(),
           amount: finalAmount,
           date: date.toISOString().split("T")[0],
           accountId,
@@ -259,7 +260,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
       } else {
         await txApi.create({
           accountId,
-          description: description.trim() || "Transaction",
+          description: description.trim(),
           amount: finalAmount,
           date: date.toISOString().split("T")[0],
           ...(isPro && selectedCategoryId ? { categoryId: selectedCategoryId } : {}),
@@ -454,19 +455,21 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
             </>
           ) : (
             <>
-              <ScrollView ref={categoryScrollRef} horizontal showsHorizontalScrollIndicator={false} style={styles.categorySection}>
-                {ICONS_ROW_1.map((item, i) => (
-                  <View key={item.emoji} style={styles.categoryCol}>
-                    {renderCategoryBtn(item)}
-                    {ICONS_ROW_2[i] && renderCategoryBtn(ICONS_ROW_2[i])}
+              <Text style={{ textAlign: "center", fontSize: 15, fontWeight: "600", color: theme.textSecondary, marginBottom: 8 }}>
+                {selectedEmoji ? i18n(getEmojiIcon(selectedEmoji).i18nKey) : i18n("overview.uncategorized")}
+              </Text>
+              <View style={{ position: "relative", marginBottom: 12 }}>
+                <ScrollView style={styles.categoryGrid} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+                  <View style={styles.categoryGridInner}>
+                    {DEFAULT_CATEGORY_ICONS.map((item) => renderCategoryBtn(item))}
                   </View>
-                ))}
-              </ScrollView>
-              {selectedEmoji && (
-                <Text style={{ textAlign: "center", fontSize: 15, fontWeight: "600", color: theme.textSecondary, marginBottom: 12 }}>
-                  {i18n(getEmojiIcon(selectedEmoji).i18nKey)}
-                </Text>
-              )}
+                </ScrollView>
+                <LinearGradient
+                  colors={[theme.card + "00", theme.card]}
+                  style={styles.categoryFade}
+                  pointerEvents="none"
+                />
+              </View>
             </>
           )}
 
@@ -490,7 +493,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
                 <Ionicons name={showAccountPicker ? "chevron-up" : "chevron-down"} size={18} color={theme.textSecondary} />
               </TouchableOpacity>
               {showAccountPicker && (
-                <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+                <ScrollView style={[styles.dropdownList, { maxHeight: 192 }]} nestedScrollEnabled>
                   {institutions.map((inst) =>
                     inst.accounts.map((acct) => {
                       const isSelected = accountId === acct.id;
@@ -645,11 +648,20 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
+  categoryGrid: { maxHeight: 150 },
+  categoryFade: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 30,
+  },
+  categoryGridInner: { flexDirection: "row", flexWrap: "wrap", gap: 8, justifyContent: "center" },
   categorySection: { marginBottom: 16 },
   categoryCol: { gap: 8, marginRight: 8 },
   categoryBtn: {
-    width: 56,
-    height: 56,
+    width: 52,
+    height: 52,
     borderRadius: 14,
     borderWidth: 1.5,
     justifyContent: "center",

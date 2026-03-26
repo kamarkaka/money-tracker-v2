@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Switch,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
@@ -29,22 +30,24 @@ const TAB_OPTIONS: { value: string; icon: keyof typeof Ionicons.glyphMap; labelK
 ];
 
 const THEME_OPTIONS: { value: ThemeSetting; icon: keyof typeof Ionicons.glyphMap; labelKey: string }[] = [
+  { value: "system", icon: "phone-portrait-outline", labelKey: "setting.system" },
   { value: "light", icon: "sunny-outline", labelKey: "setting.light" },
   { value: "dark", icon: "moon-outline", labelKey: "setting.dark" },
-  { value: "system", icon: "phone-portrait-outline", labelKey: "setting.system" },
 ];
 
 const LANGUAGE_OPTIONS = [
+  { code: "auto", labelKey: "setting.system" },
   { code: "en", native: "English" },
   { code: "zh", native: "简体中文" },
 ];
 
 export default function SettingsPage() {
-  const { theme, themeSetting, setThemeSetting, isPro: isProTheme, devMode, tabConfig, setTabConfig, setDevMode, setDevIsPro } = useAppTheme();
+  const { theme, themeSetting, setThemeSetting, isPro: isProTheme, devMode, tabConfig, setTabConfig, setDevMode, setDevIsPro, fireworksEnabled, setFireworksEnabled } = useAppTheme();
   const { i18n, locale, setLocale } = useI18n();
   const api = useRef(createSettingsApi(apiClient)).current;
 
   const [loading, setLoading] = useState(true);
+  const [langSetting, setLangSetting] = useState("auto");
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -59,7 +62,8 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    api.get().then(() => {
+    api.get().then((s) => {
+      if (s.language) setLangSetting(s.language === "auto" ? "auto" : s.language);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -69,7 +73,19 @@ export default function SettingsPage() {
   };
 
   const handleLangChange = (code: string) => {
-    setLocale(code);
+    if (code === "auto") {
+      // Save "auto" to DB, but resolve to system language for display
+      const { getLocales } = require("expo-localization");
+      const systemLang = getLocales()[0]?.languageCode || "en";
+      const resolved = systemLang === "zh" ? "zh" : "en";
+      setLocale(resolved);
+      // Save "auto" to DB so it persists
+      const settingsApi = createSettingsApi(apiClient);
+      settingsApi.update({ language: "auto" });
+    } else {
+      setLocale(code);
+    }
+    setLangSetting(code);
   };
 
   const handleExport = async () => {
@@ -205,8 +221,8 @@ export default function SettingsPage() {
                 key={opt.value}
                 style={[
                   styles.optionCard,
-                  { borderColor: selected ? theme.accent : theme.cardBorder },
-                  selected && { backgroundColor: theme.accent + "15" },
+                  { borderColor: selected ? theme.brand : theme.cardBorder },
+                  selected && { backgroundColor: theme.brand + "15" },
                 ]}
                 onPress={() => handleThemeChange(opt.value)}
                 activeOpacity={0.7}
@@ -214,12 +230,12 @@ export default function SettingsPage() {
                 <Ionicons
                   name={opt.icon}
                   size={24}
-                  color={selected ? theme.accent : theme.textSecondary}
+                  color={selected ? theme.brand : theme.textSecondary}
                 />
                 <Text style={{
                   fontSize: 14,
                   fontWeight: selected ? "700" : "500",
-                  color: selected ? theme.accent : theme.text,
+                  color: selected ? theme.brand : theme.text,
                   marginTop: 6,
                 }}>
                   {i18n(opt.labelKey)}
@@ -237,14 +253,14 @@ export default function SettingsPage() {
 
         <View style={styles.langGrid}>
           {LANGUAGE_OPTIONS.map((lang) => {
-            const selected = locale === lang.code;
+            const selected = langSetting === lang.code;
             return (
               <TouchableOpacity
                 key={lang.code}
                 style={[
                   styles.langCard,
-                  { borderColor: selected ? theme.accent : theme.cardBorder },
-                  selected && { backgroundColor: theme.accent + "15" },
+                  { borderColor: selected ? theme.brand : theme.cardBorder },
+                  selected && { backgroundColor: theme.brand + "15" },
                 ]}
                 onPress={() => handleLangChange(lang.code)}
                 activeOpacity={0.7}
@@ -252,9 +268,9 @@ export default function SettingsPage() {
                 <Text style={{
                   fontSize: 16,
                   fontWeight: selected ? "700" : "500",
-                  color: selected ? theme.accent : theme.text,
+                  color: selected ? theme.brand : theme.text,
                 }}>
-                  {lang.native}
+                  {"labelKey" in lang ? i18n(lang.labelKey as string) : lang.native}
                 </Text>
               </TouchableOpacity>
             );
@@ -337,6 +353,24 @@ export default function SettingsPage() {
               ))}
             </>
           )}
+        </View>
+      )}
+
+      {/* Fireworks — Pro only */}
+      {isProTheme && (
+        <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+          <View style={styles.fireworksRow}>
+            <Ionicons name="sparkles-outline" size={22} color={fireworksEnabled ? theme.brand : theme.textSecondary} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16, fontWeight: "600", color: theme.text }}>{i18n("setting.fireworks")}</Text>
+              <Text style={{ fontSize: 13, color: theme.textSecondary }}>{i18n("setting.fireworksDesc")}</Text>
+            </View>
+            <Switch
+              value={fireworksEnabled}
+              onValueChange={setFireworksEnabled}
+              trackColor={{ false: theme.cardBorder, true: theme.brand }}
+            />
+          </View>
         </View>
       )}
 
@@ -510,6 +544,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
+  },
+  fireworksRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
   langGrid: { flexDirection: "row", gap: 10 },
   langCard: {

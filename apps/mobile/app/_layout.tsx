@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useColorScheme, ActivityIndicator, View } from "react-native";
+import { getLocales } from "expo-localization";
 import { Stack } from "expo-router";
 import { ThemeProvider, DarkTheme, DefaultTheme } from "@react-navigation/native";
 import { ApiClientContext } from "@money-tracker/hooks";
@@ -7,7 +8,7 @@ import { createSettingsApi } from "@money-tracker/api-client";
 import { apiClient } from "@/lib/api";
 import { ThemeContext, type ThemeSetting, DEFAULT_TAB_CONFIG } from "@/lib/themeContext";
 import { getThemeWithBrand } from "@/lib/theme";
-import { I18nProvider } from "@/lib/i18n";
+import { I18nProvider, t } from "@/lib/i18n";
 import { getDatabase } from "@/lib/db";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SubscriptionProvider } from "@/lib/subscription";
@@ -16,12 +17,16 @@ export default function RootLayout() {
   const systemScheme = useColorScheme();
   const [loading, setLoading] = useState(true);
   const [themeSetting, setThemeSettingState] = useState<ThemeSetting>("system");
-  const [locale, setLocale] = useState("en");
+  const [locale, setLocale] = useState(() => {
+    const systemLang = getLocales()[0]?.languageCode || "en";
+    return systemLang === "zh" ? "zh" : "en";
+  });
   const [subIsPro, setSubIsPro] = useState(false);
   const [devMode, setDevMode] = useState(false);
   const [devIsPro, setDevIsPro] = useState(false);
   const isPro = devMode ? devIsPro : subIsPro;
   const [tabConfig, setTabConfigState] = useState<string[]>(DEFAULT_TAB_CONFIG);
+  const [fireworksEnabled, setFireworksEnabledState] = useState(true);
 
   const isDark =
     themeSetting === "dark" ||
@@ -46,11 +51,14 @@ export default function RootLayout() {
           ) {
             setThemeSettingState(settings.theme);
           }
-          if (settings.language) {
+          if (settings.language && settings.language !== "auto") {
             setLocale(settings.language);
           }
           if (settings.mode === "pro") {
             setSubIsPro(true);
+          }
+          if ((settings as any).fireworks !== undefined) {
+            setFireworksEnabledState(!!(settings as any).fireworks);
           }
           if ((settings as any).tabConfig) {
             const tabs = (settings as any).tabConfig.split(",").filter(Boolean);
@@ -63,6 +71,14 @@ export default function RootLayout() {
         setLoading(false);
       }
     })();
+  }, []);
+
+  const setFireworksEnabled = useCallback(async (on: boolean) => {
+    setFireworksEnabledState(on);
+    try {
+      const settingsApi = createSettingsApi(apiClient);
+      await settingsApi.update({ fireworks: on } as any);
+    } catch { /* ignore */ }
   }, []);
 
   const setTabConfig = useCallback(async (tabs: string[]) => {
@@ -86,8 +102,8 @@ export default function RootLayout() {
   }, []);
 
   const themeContextValue = useMemo(
-    () => ({ theme, themeSetting, isDark, isPro, devMode, tabConfig, setThemeSetting, setIsPro: setSubIsPro, setDevMode, setDevIsPro, setTabConfig }),
-    [theme, themeSetting, isDark, isPro, devMode, tabConfig, setThemeSetting, setSubIsPro, setDevMode, setDevIsPro, setTabConfig],
+    () => ({ theme, themeSetting, isDark, isPro, devMode, tabConfig, fireworksEnabled, setThemeSetting, setIsPro: setSubIsPro, setDevMode, setDevIsPro, setTabConfig, setFireworksEnabled }),
+    [theme, themeSetting, isDark, isPro, devMode, tabConfig, fireworksEnabled, setThemeSetting, setSubIsPro, setDevMode, setDevIsPro, setTabConfig, setFireworksEnabled],
   );
 
   if (loading) {
@@ -134,31 +150,31 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen
               name="pages/settings"
-              options={{ title: "Settings", headerBackTitle: "Back" }}
+              options={{ title: t(locale, "nav.setting"), headerBackTitle: t(locale, "common.back") }}
             />
             <Stack.Screen
               name="pages/accounts"
-              options={{ title: "Accounts", headerBackTitle: "Back" }}
+              options={{ title: t(locale, "nav.account"), headerBackTitle: t(locale, "common.back") }}
             />
             <Stack.Screen
               name="pages/categories"
-              options={{ title: "Categories", headerBackTitle: "Back" }}
+              options={{ title: t(locale, "nav.category"), headerBackTitle: t(locale, "common.back") }}
             />
             <Stack.Screen
               name="pages/budgets"
-              options={{ title: "Budgets", headerBackTitle: "Back" }}
+              options={{ title: t(locale, "nav.budget"), headerBackTitle: t(locale, "common.back") }}
             />
             <Stack.Screen
               name="pages/rules"
-              options={{ title: "Rules", headerBackTitle: "Back" }}
+              options={{ title: t(locale, "nav.rule"), headerBackTitle: t(locale, "common.back") }}
             />
             <Stack.Screen
               name="pages/tags"
-              options={{ title: "Tags", headerBackTitle: "Back" }}
+              options={{ title: t(locale, "nav.tag"), headerBackTitle: t(locale, "common.back") }}
             />
             <Stack.Screen
               name="pages/transactions"
-              options={{ title: "Transactions", headerBackTitle: "Back" }}
+              options={{ title: t(locale, "nav.transaction"), headerBackTitle: t(locale, "common.back") }}
             />
             <Stack.Screen name="index" options={{ headerShown: false }} />
           </Stack>

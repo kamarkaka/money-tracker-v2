@@ -271,6 +271,8 @@
     "bottomBarDesc": "长按拖动排序，点 + 添加，x 移除。",
     "selectedTabs": "已选择",
     "availableTabs": "可添加",
+    "fireworks": "庆祝动画",
+    "fireworksDesc": "当净储蓄为正时显示烟花效果。",
     "switchToPro": "解锁专业模式",
     "switchToProDesc": "解锁银行同步、预算、规则、标签和完整分类管理。",
     "switchToProConfirm": "切换到专业模式？这将解锁所有功能。您的现有数据将被保留。此更改无法撤销。"

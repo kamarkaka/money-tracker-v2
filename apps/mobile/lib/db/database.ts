@@ -118,7 +118,7 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase) {
     CREATE TABLE IF NOT EXISTS settings (
       id TEXT PRIMARY KEY DEFAULT 'default',
       theme TEXT NOT NULL DEFAULT 'system',
-      language TEXT NOT NULL DEFAULT 'en',
+      language TEXT NOT NULL DEFAULT 'auto',
       mode TEXT NOT NULL DEFAULT 'casual'
     );
 
@@ -138,6 +138,7 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase) {
   // Migrations for existing databases
   try {
     await database.runAsync("ALTER TABLE settings ADD COLUMN tab_config TEXT DEFAULT 'overview,transactions,budgets,accounts'");
+    await database.runAsync("ALTER TABLE settings ADD COLUMN fireworks INTEGER DEFAULT 1");
   } catch {
     // Column already exists
   }

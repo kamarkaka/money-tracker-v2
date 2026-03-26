@@ -271,6 +271,8 @@
     "bottomBarDesc": "Long-press and drag to reorder. Tap + to add, x to remove.",
     "selectedTabs": "Selected",
     "availableTabs": "Available",
+    "fireworks": "Celebrations",
+    "fireworksDesc": "Show fireworks when you have positive net savings.",
     "switchToPro": "Unlock Pro Mode",
     "switchToProDesc": "Unlock bank sync, budgets, rules, tags, and full category management.",
     "switchToProConfirm": "Switch to Pro Mode? This will unlock all features. Your existing data will be preserved. This change cannot be undone."

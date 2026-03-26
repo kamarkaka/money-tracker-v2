@@ -36,6 +36,12 @@ export function useI18n() {
   return useContext(I18nContext);
 }
 
+// Standalone translation function (for use outside provider)
+export function t(locale: string, key: string): string {
+  const msgs = MESSAGES[locale] || MESSAGES.en;
+  return getNestedValue(msgs as Messages, key);
+}
+
 export function I18nProvider({ children, initialLocale = "en" }: { children: ReactNode; initialLocale?: string }) {
   const [locale, setLocaleState] = useState(initialLocale);
 
