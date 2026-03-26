@@ -73,6 +73,11 @@ export default function TransactionsPage() {
 
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Clean up search timeout on unmount
+  useEffect(() => {
+    return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
+  }, []);
+
   // Load filter options
   useEffect(() => {
     Promise.all([accApi.list(), catApi.list(), instApi.list()]).then(([a, c, i]) => {
@@ -522,7 +527,7 @@ export default function TransactionsPage() {
       </View>
 
       {/* Filter Pills */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterRow}>
         <FilterPill
           label={i18n("transaction.account")}
           active={accountIds.length > 0}
@@ -559,15 +564,6 @@ export default function TransactionsPage() {
         )}
       </ScrollView>
 
-      {/* Count */}
-      {!loading && (
-        <View style={styles.countContainer}>
-          <Text style={[styles.countText, { color: theme.textSecondary }]}>
-            {total} {total === 1 ? i18n("transaction.transactionSingular") : i18n("transaction.transactionPlural")}
-          </Text>
-        </View>
-      )}
-
       {/* List */}
       {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
@@ -578,7 +574,15 @@ export default function TransactionsPage() {
           data={transactions}
           renderItem={renderTransaction}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
+          style={styles.flatList}
+          contentContainerStyle={styles.listContentNoGrow}
+          ListHeaderComponent={!loading ? (
+            <View style={styles.countContainer}>
+              <Text style={[styles.countText, { color: theme.textSecondary }]}>
+                {total} {total === 1 ? i18n("transaction.transactionSingular") : i18n("transaction.transactionPlural")}
+              </Text>
+            </View>
+          ) : null}
           ListEmptyComponent={!loading ? (
             <View style={styles.emptyContainer}>
               <Ionicons name="receipt-outline" size={64} color={theme.textSecondary} />
@@ -601,6 +605,9 @@ export default function TransactionsPage() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  filterScroll: { flexGrow: 0 },
+  flatList: { flex: 1 },
+  listContentNoGrow: { paddingHorizontal: 16, paddingBottom: 20, flexGrow: 0 },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
