@@ -110,11 +110,21 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       },
     );
     return () => listener.remove();
-  }, []);
+  }, [setIsPro, persistIsPro]);
 
   const purchase = useCallback(async (productId: string) => {
     await purchaseSubscription(productId);
-  }, []);
+    // Fallback: verify subscription status in case listener didn't fire
+    try {
+      const active = await checkActiveSubscription();
+      if (active) {
+        setIsPro(true);
+        persistIsPro(true);
+      }
+    } catch {
+      // ignore — listener may have already handled it
+    }
+  }, [setIsPro, persistIsPro]);
 
   const restore = useCallback(async (): Promise<boolean> => {
     try {

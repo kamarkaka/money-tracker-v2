@@ -81,11 +81,11 @@ export function setupListeners(
   if (!iap) return { remove: () => {} };
 
   const purchaseSub = iap.purchaseUpdatedListener(async (purchase: any) => {
+    onPurchase(purchase);
     try {
       await iap.finishTransaction({ purchase, isConsumable: false });
-      onPurchase(purchase);
     } catch {
-      // ignore
+      // ignore — purchase already granted
     }
   });
 
