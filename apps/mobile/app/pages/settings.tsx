@@ -10,7 +10,12 @@ import {
   Switch,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
+let DraggableFlatList: any = null;
+try {
+  DraggableFlatList = require("react-native-draggable-flatlist").default;
+} catch {
+  // Not available (Expo Go)
+}
 import { createSettingsApi } from "@money-tracker/api-client";
 import { apiClient } from "@/lib/api";
 import { useAppTheme, type ThemeSetting } from "@/lib/themeContext";
@@ -288,48 +293,67 @@ export default function SettingsPage() {
           <Text style={[styles.tabSectionLabel, { color: theme.textSecondary }]}>
             {i18n("setting.selectedTabs")}
           </Text>
-          <DraggableFlatList
-            data={tabConfig.map((v) => TAB_OPTIONS.find((t) => t.value === v)!).filter(Boolean)}
-            keyExtractor={(item) => item.value}
-            scrollEnabled={false}
-            containerStyle={{ marginBottom: 4 }}
-            onDragEnd={({ data }) => setTabConfig(data.map((d) => d.value))}
-            renderItem={({ item, drag, isActive }: RenderItemParams<typeof TAB_OPTIONS[number]>) => (
-              <TouchableOpacity
-                onLongPress={drag}
-                delayLongPress={150}
-                activeOpacity={1}
-                style={[
-                  styles.dragItem,
-                  {
-                    opacity: 1,
-                    backgroundColor: isActive ? theme.card : theme.card,
-                    elevation: isActive ? 5 : 0,
-                    shadowColor: isActive ? theme.shadow : "transparent",
-                    shadowOpacity: isActive ? 0.15 : 0,
-                    shadowRadius: isActive ? 8 : 0,
-                    shadowOffset: { width: 0, height: isActive ? 2 : 0 },
-                    borderColor: isActive ? theme.accent : theme.accent + "60",
-                  },
-                ]}
-              >
-                <Ionicons name="reorder-three" size={24} color={theme.textSecondary} />
-                <Ionicons name={item.icon} size={20} color={theme.accent} />
-                <Text style={{ fontSize: 15, fontWeight: "600", color: theme.accent, flex: 1 }}>
-                  {i18n(item.labelKey)}
-                </Text>
+          {DraggableFlatList ? (
+            <DraggableFlatList
+              data={tabConfig.map((v: string) => TAB_OPTIONS.find((t) => t.value === v)!).filter(Boolean)}
+              keyExtractor={(item: any) => item.value}
+              scrollEnabled={false}
+              containerStyle={{ marginBottom: 4 }}
+              onDragEnd={({ data }: any) => setTabConfig(data.map((d: any) => d.value))}
+              renderItem={({ item, drag, isActive }: any) => (
                 <TouchableOpacity
-                  onPress={() => {
-                    if (tabConfig.length <= 1) return;
-                    setTabConfig(tabConfig.filter((t) => t !== item.value));
-                  }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  onLongPress={drag}
+                  delayLongPress={150}
+                  activeOpacity={1}
+                  style={[
+                    styles.dragItem,
+                    {
+                      opacity: 1,
+                      backgroundColor: theme.card,
+                      borderColor: isActive ? theme.accent : theme.accent + "60",
+                    },
+                  ]}
                 >
-                  <Ionicons name="close-circle" size={20} color={theme.textSecondary} />
+                  <Ionicons name="reorder-three" size={24} color={theme.textSecondary} />
+                  <Ionicons name={item.icon} size={20} color={theme.accent} />
+                  <Text style={{ fontSize: 15, fontWeight: "600", color: theme.accent, flex: 1 }}>
+                    {i18n(item.labelKey)}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (tabConfig.length <= 1) return;
+                      setTabConfig(tabConfig.filter((t: string) => t !== item.value));
+                    }}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons name="close-circle" size={20} color={theme.textSecondary} />
+                  </TouchableOpacity>
                 </TouchableOpacity>
-              </TouchableOpacity>
-            )}
-          />
+              )}
+            />
+          ) : (
+            tabConfig.map((value: string) => {
+              const tab = TAB_OPTIONS.find((t) => t.value === value);
+              if (!tab) return null;
+              return (
+                <View key={value} style={[styles.dragItem, { borderColor: theme.accent + "60" }]}>
+                  <Ionicons name={tab.icon} size={20} color={theme.accent} />
+                  <Text style={{ fontSize: 15, fontWeight: "600", color: theme.accent, flex: 1 }}>
+                    {i18n(tab.labelKey)}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (tabConfig.length <= 1) return;
+                      setTabConfig(tabConfig.filter((t: string) => t !== value));
+                    }}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons name="close-circle" size={20} color={theme.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+              );
+            })
+          )}
 
           {/* Available tabs */}
           {tabConfig.length < 4 && (

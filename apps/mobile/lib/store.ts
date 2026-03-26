@@ -1,8 +1,8 @@
 import { Platform } from "react-native";
 
 export const PRODUCT_IDS = [
-  "com.moneytracker.pro.monthly",
-  "com.moneytracker.pro.yearly",
+  "money.tracker.2.pro.subscription.monthly",
+  "money.tracker.2.pro.subscription.annual",
 ];
 
 // Check if NitroModules is available (dev build with native modules vs Expo Go)

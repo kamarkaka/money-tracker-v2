@@ -78,7 +78,7 @@ export function ProPaywall({ visible, onClose }: Props) {
   };
 
   const monthly = products.find((p: StoreProduct) => p.id?.includes("monthly"));
-  const yearly = products.find((p: StoreProduct) => p.id?.includes("yearly"));
+  const yearly = products.find((p: StoreProduct) => p.id?.includes("annual"));
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
