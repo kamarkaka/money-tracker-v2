@@ -253,10 +253,10 @@ export default function CategoriesPage() {
 
       {/* Category Tree */}
       {topLevelCategories.length === 0 ? (
-        <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-            No categories yet. Create your first category above.
-          </Text>
+        <View style={[styles.emptyState, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+          <Ionicons name="bookmark-outline" size={48} color={theme.textSecondary} />
+          <Text style={{ fontSize: 18, fontWeight: "700", color: theme.text, marginTop: 16 }}>{i18n("category.noCategories")}</Text>
+          <Text style={{ fontSize: 14, color: theme.textSecondary, textAlign: "center", marginTop: 8 }}>{i18n("category.noCategoriesDesc")}</Text>
         </View>
       ) : (
         topLevelCategories.map((parent) => {
@@ -420,7 +420,12 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   addButtonText: { fontSize: 16, fontWeight: "600" },
-  emptyText: { fontSize: 14, textAlign: "center", padding: 20 },
+  emptyState: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 40,
+    alignItems: "center",
+  },
   categoryHeader: {
     flexDirection: "row",
     alignItems: "center",

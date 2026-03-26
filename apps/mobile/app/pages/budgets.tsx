@@ -449,6 +449,15 @@ const styles = StyleSheet.create({
     padding: 40,
     alignItems: "center",
   },
+  emptyAction: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+  },
   budgetContent: {
     padding: 16,
   },

@@ -143,6 +143,13 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase) {
     // Column already exists
   }
 
+  try {
+    await database.runAsync("ALTER TABLE settings ADD COLUMN checklist_dismissed INTEGER DEFAULT 0");
+  } catch {
+    // Column already exists
+  }
+
+
   // Seed defaults if empty
   await database.runAsync(
     `INSERT OR IGNORE INTO settings (id) VALUES ('default')`,

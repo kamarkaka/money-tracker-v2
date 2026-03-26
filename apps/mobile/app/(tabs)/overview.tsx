@@ -17,7 +17,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Circle } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { createTransactionApi, createCategoryApi, createBudgetApi } from "@money-tracker/api-client";
+import { createTransactionApi, createCategoryApi, createBudgetApi, createSettingsApi } from "@money-tracker/api-client";
 import { formatCurrency, parseAmount } from "@money-tracker/shared";
 import type { Transaction, Category, BudgetBucket } from "@money-tracker/shared";
 import { apiClient } from "@/lib/api";
@@ -28,10 +28,12 @@ import { SlotNumber } from "@/components/SlotNumber";
 import { useI18n } from "@/lib/i18n";
 import { RING_COLORS } from "@/lib/colors";
 import { Fireworks } from "@/components/Fireworks";
+import { SetupChecklist } from "@/components/SetupChecklist";
 
 const txApi = createTransactionApi(apiClient);
 const catApi = createCategoryApi(apiClient);
 const budgetApi = createBudgetApi(apiClient);
+const settingsApi = createSettingsApi(apiClient);
 
 interface EmojiGroup {
   emoji: string;
@@ -108,6 +110,7 @@ export default function OverviewScreen() {
   const [showScrollBar, setShowScrollBar] = useState(true);
   const { openEdit, setOnComplete } = useTransactionModal();
   const [earliestDate, setEarliestDate] = useState<{ y: number; m: number } | null>(null);
+  const [showChecklist, setShowChecklist] = useState(false);
 
   const nowRef = useRef(new Date());
   const now = nowRef.current;
@@ -168,6 +171,15 @@ export default function OverviewScreen() {
   useEffect(() => {
     refreshEarliestDate();
   }, [refreshEarliestDate]);
+
+  // Load checklist visibility for pro users
+  useEffect(() => {
+    if (isPro) {
+      settingsApi.get().then((s) => {
+        if (!s.checklistDismissed) setShowChecklist(true);
+      });
+    }
+  }, [isPro]);
 
   const shortMonths = useMemo(() => getShortMonths(locale), [locale]);
 
@@ -390,6 +402,19 @@ export default function OverviewScreen() {
           <View style={[styles.monthScrollBar, { backgroundColor: theme.scrollIndicator }]} pointerEvents="none" />
         )}
       </View>
+
+      {/* Setup Checklist (Pro only) */}
+      {isPro && showChecklist && (
+        <SetupChecklist
+          onDismiss={() => {
+            setShowChecklist(false);
+            settingsApi.update({ checklistDismissed: true });
+          }}
+          onAllComplete={() => {
+            setShowChecklist(false);
+          }}
+        />
+      )}
 
       {/* Net Savings */}
       <LinearGradient

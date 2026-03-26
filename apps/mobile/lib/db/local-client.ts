@@ -1001,6 +1001,7 @@ export class LocalClient extends ApiClient {
       mode: (row?.mode as string) || "casual",
       tabConfig: (row?.tab_config as string) || "overview,transactions,budgets,accounts",
       fireworks: row?.fireworks !== undefined ? !!(row.fireworks as number) : true,
+      checklistDismissed: !!(row?.checklist_dismissed as number),
     };
   }
 
@@ -1028,6 +1029,10 @@ export class LocalClient extends ApiClient {
     if (body.fireworks !== undefined) {
       sets.push("fireworks = ?");
       args.push(body.fireworks ? 1 : 0);
+    }
+    if (body.checklistDismissed !== undefined) {
+      sets.push("checklist_dismissed = ?");
+      args.push(body.checklistDismissed ? 1 : 0);
     }
 
     if (sets.length > 0) {

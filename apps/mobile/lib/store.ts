@@ -5,27 +5,18 @@ export const PRODUCT_IDS = [
   "money.tracker.2.pro.subscription.annual",
 ];
 
-// Check if NitroModules is available (dev build with native modules vs Expo Go)
-let HAS_IAP = false;
-try {
-  const nitro = require("react-native-nitro-modules");
-  HAS_IAP = Platform.OS === "ios" && !!nitro?.NitroModules;
-} catch {
-  HAS_IAP = false;
-}
-
-// Only import when native module exists — guarded by HAS_IAP before every call
+// Import react-native-iap directly — it will throw at call time if native module is missing (e.g., Expo Go)
 let iap: any = null;
-if (HAS_IAP) {
+if (Platform.OS === "ios") {
   try {
     iap = require("react-native-iap");
-  } catch {
-    // ignore
+  } catch (e) {
+    console.log("[IAP] require error:", e);
   }
 }
 
 export async function initStore(): Promise<void> {
-  console.log("[IAP] HAS_IAP:", HAS_IAP, "iap loaded:", !!iap);
+  console.log("[IAP] iap loaded:", !!iap);
   if (!iap) return;
   await iap.initConnection();
   console.log("[IAP] Connection initialized");

@@ -120,7 +120,9 @@
     "noneTopLevel": "无（顶级分类）",
     "deleteCategory": "删除分类",
     "deleteWarning": "确定要删除此分类吗？已分配的交易将变为未分类。",
-    "duplicateError": "已存在同名分类"
+    "duplicateError": "已存在同名分类",
+    "noCategories": "还没有分类",
+    "noCategoriesDesc": "在上方创建您的第一个分类，开始整理交易记录。"
   },
   "budget": {
     "title": "预算",
@@ -134,6 +136,7 @@
     "perMonth": "{amount}/月",
     "noBudgets": "还没有预算",
     "noBudgetsDesc": "在上方创建您的第一个预算，开始对分类进行分组。",
+    "noBudgetsAction": "创建预算",
     "deleteBudget": "删除预算",
     "deleteWarning": "确定要删除此预算吗？分类将被取消分配但不会被删除。",
     "spentThisMonth": "本月已支出 {amount}",
@@ -152,6 +155,7 @@
     "removeWarning": "确定要移除此机构吗？所有关联的账户和交易都将被删除。",
     "noInstitutions": "没有关联的机构",
     "noInstitutionsDesc": "添加一个金融机构以开始同步您的账户。",
+    "noInstitutionsAction": "添加账户",
     "addInstitution": "添加机构",
     "manual": "手动",
     "institutionName": "机构名称",
@@ -374,6 +378,19 @@
     "importWarning": "这将用导入的文件替换所有现有数据。此操作无法撤销。是否继续？",
     "dataManagement": "数据",
     "dataManagementDesc": "导出或导入您的财务数据。"
+  },
+  "checklist": {
+    "title": "开始使用",
+    "subtitle": "完成以下步骤，充分利用 Money Tracker 2",
+    "addAccount": "添加银行账户",
+    "addAccountDesc": "跟踪各账户的支出",
+    "customizeCategories": "自定义分类",
+    "customizeCategoriesDesc": "添加子分类来整理支出 — 专业版专属功能",
+    "setBudget": "设置月度预算",
+    "setBudgetDesc": "通过预算限额控制支出",
+    "addTransaction": "添加第一笔交易",
+    "addTransactionDesc": "开始记录您的收支",
+    "dismiss": "关闭"
   },
   "guide": {
     "casualOverview": {

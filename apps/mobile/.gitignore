@@ -42,3 +42,6 @@ yarn-error.*
 
 # build/publish info
 /eas.json
+
+# generated binary assets
+/*.ipa

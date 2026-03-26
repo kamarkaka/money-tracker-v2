@@ -66,6 +66,7 @@ export interface UserSetting {
   theme: "light" | "dark" | "system";
   language: string;
   mode: "pro" | "casual";
+  checklistDismissed?: boolean;
 }
 
 export interface UserProfile {
