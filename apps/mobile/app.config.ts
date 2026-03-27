@@ -4,7 +4,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: "Money Tracker 2",
   slug: "money-tracker-2",
-  version: "2.0.1",
+  version: "2.1.0",
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "automatic",
@@ -12,7 +12,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: "xyz.mengcao.money-tracker-2",
-    buildNumber: "1",
+    buildNumber: "202603262006",
     infoPlist: {
       NSPhotoLibraryUsageDescription: "Used to export financial data files.",
     },
