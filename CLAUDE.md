@@ -65,7 +65,13 @@ lib/api.ts            — Exports LocalClient instance as `apiClient`
 
 ## Web App Architecture
 
-Next.js App Router at `apps/web/app/`. API routes at `app/api/`. Prisma schema at `prisma/schema.prisma`. Auth via NextAuth with JWT for mobile clients (`app/lib/auth-mobile.ts`).
+Next.js App Router at `apps/web/app/`. API routes at `app/api/`. Prisma schema at `apps/web/prisma/schema.prisma`. Auth via NextAuth with JWT for mobile clients (`app/lib/auth-mobile.ts`).
+
+**i18n:** Uses `next-intl` for internationalization on the web side.
+
+**Financial data:** Sophtron API integration (`app/lib/sophtron/`) for bank account linking and transaction sync.
+
+**Deployment:** Dockerfile at `apps/web/Dockerfile` (multi-stage build). GitHub Actions workflow (`.github/workflows/docker-publish.yml`) auto-builds Docker images daily if there are new commits.
 
 ## Shared Types
 
@@ -91,7 +97,7 @@ Constants (emoji mappings, tag colors) are in `packages/shared/src/constants/ind
 - One task per subagent for focused execution
 
 ### 3. Self-Improvement Loop
-- After ANY correction from the user: update `tasks/lessons.md` with the pattern
+- After ANY correction from the user: update `plan/lessons.md` with the pattern
 - Write rules for yourself that prevent the same mistake
 - Ruthlessly iterate on these lessions until mistake rate drops
 - Review lessions at session start for relevant project
@@ -115,12 +121,12 @@ Constants (emoji mappings, tag colors) are in `packages/shared/src/constants/ind
 - Go fix failing CI tests without being told how
 
 ## Task Management
-1. Plan First: Write plan to `tasks/todo.md` with checkable items
+1. Plan First: Write plan to `plan/todo.md` with checkable items
 2. Verify Plan: Check in before starting implementation
 3. Track Progress: Mark items complete as you go
 4. Explain Changes: High-level summary at each step
-5. Document Results: Add review section to `tasks/todo.md`
-6. Capture Lessons: Update `tasks/lessons.md` after corrections
+5. Document Results: Add review section to `plan/todo.md`
+6. Capture Lessons: Update `plan/lessons.md` after corrections
 
 ## Core Principles
 - Simplicity First: Make every change as simple as possible. Impact minimal code.
