@@ -149,8 +149,6 @@
     "totalLiabilities": "总负债",
     "linkBank": "关联银行账户",
     "addManual": "添加您的账户",
-    "backfill": "从 Sophtron 回填",
-    "backfilling": "回填中...",
     "removeInstitution": "移除机构",
     "removeWarning": "确定要移除此机构吗？所有关联的账户和交易都将被删除。",
     "noInstitutions": "没有关联的机构",

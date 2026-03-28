@@ -149,8 +149,6 @@
     "totalLiabilities": "Total Liabilities",
     "linkBank": "Link Bank Account",
     "addManual": "Add Your Account",
-    "backfill": "Backfill from Sophtron",
-    "backfilling": "Backfilling...",
     "removeInstitution": "Remove Institution",
     "removeWarning": "Are you sure you want to remove this institution? All associated accounts and transactions will be deleted.",
     "noInstitutions": "No institutions linked",
