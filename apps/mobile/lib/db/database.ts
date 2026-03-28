@@ -149,6 +149,24 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase) {
     // Column already exists
   }
 
+  // Plaid integration columns
+  const plaidMigrations = [
+    "ALTER TABLE institutions ADD COLUMN plaid_item_id TEXT",
+    "ALTER TABLE institutions ADD COLUMN plaid_institution_id TEXT",
+    "ALTER TABLE institutions ADD COLUMN plaid_sync_cursor TEXT",
+    "ALTER TABLE accounts ADD COLUMN plaid_account_id TEXT",
+    "ALTER TABLE transactions ADD COLUMN plaid_transaction_id TEXT",
+  ];
+  for (const sql of plaidMigrations) {
+    try { await database.runAsync(sql); } catch { /* Column already exists */ }
+  }
+
+  await database.execAsync(`
+    CREATE INDEX IF NOT EXISTS idx_institutions_plaid_item ON institutions(plaid_item_id);
+    CREATE INDEX IF NOT EXISTS idx_accounts_plaid_id ON accounts(plaid_account_id);
+    CREATE INDEX IF NOT EXISTS idx_transactions_plaid_id ON transactions(plaid_transaction_id);
+  `);
+
 
   // Seed defaults if empty
   await database.runAsync(
