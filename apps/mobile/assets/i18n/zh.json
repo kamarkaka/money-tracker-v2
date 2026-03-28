@@ -162,6 +162,12 @@
     "currentBalance": "当前余额",
     "hide": "隐藏",
     "unhide": "取消隐藏",
+    "linked": "已关联",
+    "unlink": "取消关联",
+    "syncing": "同步中...",
+    "syncFailed": "同步失败，点击重试。",
+    "unlinkConfirm": "取消关联此机构？您的数据将保留，但不再自动更新。",
+    "linkSuccess": "账户关联成功",
     "bankCredentialsSafe": "您的银行凭证由我们的银行合作伙伴安全处理，绝不会存储在我们的服务器上。我们只接收您的账户余额和交易数据。"
   },
   "transaction": {

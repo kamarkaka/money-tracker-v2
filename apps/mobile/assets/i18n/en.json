@@ -162,6 +162,12 @@
     "currentBalance": "Current Balance",
     "hide": "Hide",
     "unhide": "Unhide",
+    "linked": "Linked",
+    "unlink": "Unlink",
+    "syncing": "Syncing...",
+    "syncFailed": "Sync failed. Tap to retry.",
+    "unlinkConfirm": "Unlink this institution? Your data will be kept but no longer auto-updated.",
+    "linkSuccess": "Account linked successfully",
     "bankCredentialsSafe": "Your bank credentials are securely handled by our banking partner and are never stored on our servers. We only receive your account balances and transaction data."
   },
   "transaction": {
