@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from "react-native";
 import {
+  create as createPlaidLink,
   open as openPlaidLink,
   LinkSuccess,
   LinkExit,
@@ -36,8 +37,11 @@ export function PlaidLinkButton({ onSuccess, onDismiss }: PlaidLinkProps) {
       const clientUserId = await getOrCreateClientUserId();
       const linkToken = await createLinkToken(clientUserId);
 
+      // Step 1: Create the Plaid Link session
+      createPlaidLink({ token: linkToken });
+
+      // Step 2: Open Plaid Link UI
       openPlaidLink({
-        tokenConfig: { token: linkToken, noLoadingState: false },
         onSuccess: async (success: LinkSuccess) => {
           setSyncing(true);
           try {

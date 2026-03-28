@@ -1,6 +1,7 @@
 import { ApiClient } from "@money-tracker/api-client";
 import { EMOJI_TO_NAME } from "@money-tracker/shared";
 import { getDatabase, uuid } from "./database";
+import { refreshPlaidItem } from "@/lib/plaid/sync";
 
 function parsePath(fullPath: string): { path: string; params: URLSearchParams } {
   const [path, qs] = fullPath.split("?");
@@ -80,7 +81,7 @@ export class LocalClient extends ApiClient {
     if (match && method === "DELETE")
       return this.deleteInstitution(match.id) as T;
     match = matchPath(path, "/api/institution/:id/refresh");
-    if (match && method === "POST") return undefined as T; // no-op
+    if (match && method === "POST") return this.refreshInstitution(match.id) as T;
 
     // Budgets
     if (method === "GET" && path === "/api/budget-buckets")
@@ -764,6 +765,8 @@ export class LocalClient extends ApiClient {
       id: inst.id as string,
       name: inst.name as string,
       isManual: !!(inst.is_manual as number),
+      plaidItemId: (inst.plaid_item_id as string) || null,
+      updatedAt: (inst.updated_at as string) || null,
       accounts: acctRows
         .filter((a) => a.institution_id === inst.id)
         .map((a) => ({
@@ -798,6 +801,17 @@ export class LocalClient extends ApiClient {
   private async deleteInstitution(id: string) {
     const db = await getDatabase();
     await db.runAsync("DELETE FROM institutions WHERE id = ?", [id]);
+  }
+
+  private async refreshInstitution(id: string) {
+    const db = await getDatabase();
+    const inst = await db.getFirstAsync<{ plaid_item_id: string | null }>(
+      "SELECT plaid_item_id FROM institutions WHERE id = ?",
+      [id],
+    );
+    if (inst?.plaid_item_id) {
+      await refreshPlaidItem(db, id);
+    }
   }
 
   // ── Budgets ───────────────────────────────────────────────

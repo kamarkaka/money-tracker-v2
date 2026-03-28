@@ -16,8 +16,11 @@ import { apiClient } from "@/lib/api";
 import { useAppTheme } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
 import { SwipeableRow, SwipeableProvider, SwipeableScrollView } from "@/components/SwipeableRow";
+import { PlaidLinkButton } from "@/components/PlaidLink";
 import { formatCurrency } from "@money-tracker/shared";
 import type { Account, Institution } from "@money-tracker/shared";
+import { getDatabase } from "@/lib/db";
+import { refreshPlaidItem, unlinkPlaidItem } from "@/lib/plaid/sync";
 
 const accApi = createAccountApi(apiClient);
 const instApi = createInstitutionApi(apiClient);
@@ -38,19 +41,25 @@ const TYPE_COLORS: Record<string, string> = {
   loan: "#dc2626",
 };
 
+type InstitutionWithPlaid = Institution & {
+  plaidItemId?: string | null;
+  updatedAt?: string | null;
+};
+
 export default function AccountsPage() {
   const { theme } = useAppTheme();
   const { i18n } = useI18n();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [institutions, setInstitutions] = useState<InstitutionWithPlaid[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [institutionName, setInstitutionName] = useState("");
   const [accountName, setAccountName] = useState("");
   const [accountType, setAccountType] = useState("checking");
   const [balance, setBalance] = useState("");
+  const [refreshingInstId, setRefreshingInstId] = useState<string | null>(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -150,6 +159,41 @@ export default function AccountsPage() {
     );
   };
 
+  const handleRefreshInstitution = async (institution: InstitutionWithPlaid) => {
+    setRefreshingInstId(institution.id);
+    try {
+      const db = await getDatabase();
+      await refreshPlaidItem(db, institution.id);
+      await loadData();
+    } catch {
+      Alert.alert(i18n("common.error"), i18n("account.syncFailed"));
+    } finally {
+      setRefreshingInstId(null);
+    }
+  };
+
+  const handleUnlinkInstitution = (institution: InstitutionWithPlaid) => {
+    Alert.alert(
+      i18n("account.unlink"),
+      i18n("account.unlinkConfirm"),
+      [
+        { text: i18n("common.cancel"), style: "cancel" },
+        {
+          text: i18n("account.unlink"), style: "destructive",
+          onPress: async () => {
+            try {
+              const db = await getDatabase();
+              await unlinkPlaidItem(db, institution.id);
+              await loadData();
+            } catch {
+              Alert.alert(i18n("common.error"), "Failed to unlink institution");
+            }
+          },
+        },
+      ],
+    );
+  };
+
   if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: theme.background }]}>
@@ -165,6 +209,9 @@ export default function AccountsPage() {
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.accent} />}
     >
+      {/* Link Bank Account via Plaid */}
+      <PlaidLinkButton onSuccess={loadData} />
+
       {/* Add Account */}
       <View style={[styles.card, showAddForm ? { backgroundColor: theme.brand + "10", borderColor: theme.brand + "40" } : { backgroundColor: theme.brand, borderColor: theme.brand }]}>
         <TouchableOpacity
@@ -255,10 +302,13 @@ export default function AccountsPage() {
           <Text style={{ fontSize: 14, color: theme.textSecondary, textAlign: "center", marginTop: 8 }}>{i18n("account.noInstitutionsDesc")}</Text>
         </View>
       ) : (
-        institutions.map((institution) => (
+        institutions.map((institution) => {
+          const isLinked = !!institution.plaidItemId;
+          const isRefreshingThis = refreshingInstId === institution.id;
+          return (
           <View key={institution.id} style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-            {/* Institution header — swipe to delete only when no accounts */}
-            {institution.accounts.length === 0 ? (
+            {/* Institution header */}
+            {!isLinked && institution.accounts.length === 0 ? (
               <SwipeableRow id={institution.id} onDelete={() => handleDeleteInstitution(institution)} dangerColor={theme.danger}>
                 <View style={[styles.instHeader, { backgroundColor: theme.card }]}>
                   <Ionicons name="business-outline" size={22} color={theme.accent} />
@@ -267,8 +317,29 @@ export default function AccountsPage() {
               </SwipeableRow>
             ) : (
               <View style={styles.instHeader}>
-                <Ionicons name="business-outline" size={22} color={theme.accent} />
+                <Ionicons name={isLinked ? "link" : "business-outline"} size={22} color={theme.accent} />
                 <Text style={[styles.instName, { color: theme.text }]}>{institution.name}</Text>
+                {isLinked && (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <TouchableOpacity
+                      onPress={() => handleRefreshInstitution(institution)}
+                      disabled={isRefreshingThis}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      {isRefreshingThis ? (
+                        <ActivityIndicator size="small" color={theme.accent} />
+                      ) : (
+                        <Ionicons name="refresh" size={20} color={theme.accent} />
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleUnlinkInstitution(institution)}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Ionicons name="unlink" size={20} color={theme.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             )}
 
@@ -306,7 +377,7 @@ export default function AccountsPage() {
               );
             })}
           </View>
-        ))
+        );})
       )}
     </SwipeableScrollView>
     </SwipeableProvider>
