@@ -29,6 +29,7 @@
     "react-native-draggable-flatlist": "^4.0.3",
     "react-native-gesture-handler": "^2.30.0",
     "react-native-iap": "^14.7.17",
+    "react-native-plaid-link-sdk": "^12.8.0",
     "react-native-reanimated": "^4.2.3",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.24.0",
