@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import {
+  View,
   TouchableOpacity,
   Text,
   ActivityIndicator,
@@ -95,43 +96,55 @@ export function PlaidLinkButton({ onSuccess, onDismiss }: PlaidLinkProps) {
     : i18n("account.linkBank");
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.button,
-        {
-          backgroundColor: theme.accent,
-          opacity: isDisabled ? 0.6 : 1,
-        },
-      ]}
-      onPress={handlePress}
-      disabled={isDisabled}
-      activeOpacity={0.7}
-    >
-      {isDisabled ? (
-        <ActivityIndicator size="small" color={theme.accentText} />
-      ) : (
-        <Ionicons name="link-outline" size={20} color={theme.accentText} />
-      )}
-      <Text style={[styles.label, { color: theme.accentText }]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
+    <View style={[styles.card, { backgroundColor: theme.accent, borderColor: theme.accent, opacity: isDisabled ? 0.6 : 1 }]}>
+      <TouchableOpacity
+        style={styles.cardInner}
+        onPress={handlePress}
+        disabled={isDisabled}
+        activeOpacity={0.7}
+      >
+        <View style={styles.cardHeader}>
+          {isDisabled ? (
+            <ActivityIndicator size="small" color={theme.accentText} />
+          ) : (
+            <Ionicons name="business-outline" size={20} color={theme.accentText} />
+          )}
+          <Text style={[styles.label, { color: theme.accentText }]}>
+            {label}
+          </Text>
+        </View>
+        <Text style={[styles.disclaimer, { color: theme.accentText + "99" }]}>
+          {i18n("account.linkBankDisclaimer")}
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
+  card: {
+    borderWidth: 1,
+    borderRadius: 14,
+    overflow: "hidden",
+    marginBottom: 16,
+  },
+  cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 14,
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   label: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "700",
+  },
+  disclaimer: {
+    fontSize: 12,
+    textAlign: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 14,
   },
 });

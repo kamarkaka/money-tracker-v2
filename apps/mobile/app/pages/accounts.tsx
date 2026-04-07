@@ -212,19 +212,27 @@ export default function AccountsPage() {
       {/* Link Bank Account via Plaid */}
       <PlaidLinkButton onSuccess={loadData} />
 
-      {/* Add Account */}
-      <View style={[styles.card, showAddForm ? { backgroundColor: theme.brand + "10", borderColor: theme.brand + "40" } : { backgroundColor: theme.brand, borderColor: theme.brand }]}>
-        <TouchableOpacity
-          style={styles.cardHeader}
-          onPress={() => { setShowAddForm(!showAddForm); if (showAddForm) resetForm(); }}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.cardTitle, { color: showAddForm ? theme.text : theme.brandText, textAlign: "center", flex: 1 }]}>
-            {i18n("account.addManual")}
+      {/* Or add manually */}
+      <TouchableOpacity
+        style={styles.divider}
+        onPress={() => { setShowAddForm(!showAddForm); if (showAddForm) resetForm(); }}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.dividerLine, { backgroundColor: theme.cardBorder }]} />
+        <View style={styles.dividerContent}>
+          <Text style={[styles.dividerText, { color: theme.accent }]}>
+            {i18n("account.orAddManually")}
           </Text>
-        </TouchableOpacity>
+          <View style={[styles.dividerIcon, { borderColor: theme.accent }]}>
+            <Ionicons name="add" size={14} color={theme.accent} />
+          </View>
+        </View>
+        <View style={[styles.dividerLine, { backgroundColor: theme.cardBorder }]} />
+      </TouchableOpacity>
 
-        {showAddForm && (
+      {/* Manual Add Form */}
+      {showAddForm && (
+        <View style={[styles.card, { backgroundColor: theme.brand + "10", borderColor: theme.brand + "40" }]}>
           <View style={styles.formContent}>
             <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n("account.institutionName")}</Text>
             <TextInput
@@ -291,8 +299,8 @@ export default function AccountsPage() {
               )}
             </TouchableOpacity>
           </View>
-        )}
-      </View>
+        </View>
+      )}
 
       {/* Institution List */}
       {institutions.length === 0 ? (
@@ -387,20 +395,40 @@ export default function AccountsPage() {
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   content: { padding: 16, paddingBottom: 40 },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  dividerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  dividerIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dividerText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
   card: {
     borderWidth: 1,
     borderRadius: 14,
     overflow: "hidden",
     marginBottom: 16,
   },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 16,
-  },
-  cardTitle: { fontSize: 18, fontWeight: "700" },
-  formContent: { paddingHorizontal: 16, paddingBottom: 16 },
+  formContent: { padding: 16 },
   label: { fontSize: 13, fontWeight: "600", marginBottom: 6 },
   input: {
     borderWidth: 1,

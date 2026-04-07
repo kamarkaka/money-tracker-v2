@@ -148,6 +148,8 @@
     "totalAssets": "Total Assets",
     "totalLiabilities": "Total Liabilities",
     "linkBank": "Link Bank Account",
+    "linkBankDisclaimer": "Synced securely via Plaid.",
+    "orAddManually": "or add manually",
     "addManual": "Add Your Account",
     "removeInstitution": "Remove Institution",
     "removeWarning": "Are you sure you want to remove this institution? All associated accounts and transactions will be deleted.",

@@ -11,28 +11,22 @@ if (Platform.OS === "ios") {
   try {
     iap = require("react-native-iap");
   } catch (e) {
-    console.log("[IAP] require error:", e);
+    // native module not available (e.g. Expo Go)
   }
 }
 
 export async function initStore(): Promise<void> {
-  console.log("[IAP] iap loaded:", !!iap);
   if (!iap) return;
   await iap.initConnection();
-  console.log("[IAP] Connection initialized");
 }
 
 export async function getProducts(): Promise<any[]> {
-  if (!iap) {
-    console.log("[IAP] No IAP module, returning empty products");
-    return [];
-  }
+  if (!iap) return [];
   try {
     const result = await iap.fetchProducts({ skus: PRODUCT_IDS, type: "subs" });
-    console.log("[IAP] Products fetched:", result?.length ?? 0, JSON.stringify(result));
     return result ?? [];
   } catch (e) {
-    console.log("[IAP] fetchProducts error:", e);
+    // fetch failed — return empty
     return [];
   }
 }

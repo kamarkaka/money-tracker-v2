@@ -1,7 +1,7 @@
 import { ApiClient } from "@money-tracker/api-client";
 import { EMOJI_TO_NAME } from "@money-tracker/shared";
 import { getDatabase, uuid } from "./database";
-import { refreshPlaidItem } from "@/lib/plaid/sync";
+
 
 function parsePath(fullPath: string): { path: string; params: URLSearchParams } {
   const [path, qs] = fullPath.split("?");
@@ -810,6 +810,7 @@ export class LocalClient extends ApiClient {
       [id],
     );
     if (inst?.plaid_item_id) {
+      const { refreshPlaidItem } = await import("@/lib/plaid/sync");
       await refreshPlaidItem(db, id);
     }
   }

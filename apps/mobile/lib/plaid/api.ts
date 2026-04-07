@@ -47,6 +47,7 @@ export async function createLinkToken(
       products: ["transactions"],
       country_codes: ["US"],
       language: "en",
+      redirect_uri: "https://cdn.plaid.com/link/v2/stable/link.html",
     },
   );
   return data.link_token;

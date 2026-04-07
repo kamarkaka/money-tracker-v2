@@ -54,3 +54,5 @@ money_tracker_backup.sql
 
 # build/publish info
 apps/mobile/eas.json
+
+**/.watchman*

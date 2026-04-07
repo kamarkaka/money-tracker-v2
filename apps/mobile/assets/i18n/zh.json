@@ -148,6 +148,8 @@
     "totalAssets": "总资产",
     "totalLiabilities": "总负债",
     "linkBank": "关联银行账户",
+    "linkBankDisclaimer": "通过 Plaid 安全同步。",
+    "orAddManually": "或手动添加",
     "addManual": "添加您的账户",
     "removeInstitution": "移除机构",
     "removeWarning": "确定要移除此机构吗？所有关联的账户和交易都将被删除。",
