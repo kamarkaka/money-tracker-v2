@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   cardTitle: { fontSize: 18, fontWeight: "700" },
-  formContent: { padding: 16, paddingTop: 0 },
+  formContent: { padding: 16 },
   label: { fontSize: 13, fontWeight: "600", marginBottom: 6 },
   input: {
     borderWidth: 1,
