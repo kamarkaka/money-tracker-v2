@@ -236,10 +236,10 @@ export default function TagsPage() {
                         <TouchableOpacity
                           onPress={() => { setEditingId(tag.id); setEditingName(tag.name); }}
                           activeOpacity={0.7}
-                          style={{ flex: 1 }}
                         >
                           <Text style={[styles.tagName, { color: theme.text }]}>{tag.name}</Text>
                         </TouchableOpacity>
+                        <View style={{ flex: 1 }} />
                         <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={18} color={theme.textSecondary} />
                       </>
                     )}
