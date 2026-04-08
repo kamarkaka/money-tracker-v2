@@ -255,14 +255,15 @@ export default function TagsPage() {
                       No transactions with this tag
                     </Text>
                   ) : (
-                    txs.map((t, i) => {
+                    <>
+                    {txs.map((t, i) => {
                       const amt = parseAmount(t.amount);
                       return (
                         <View
                           key={t.id}
                           style={[
                             styles.txRow,
-                            i < txs.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.cardBorder },
+                            { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.cardBorder },
                           ]}
                         >
                           <Text style={{ width: 54, fontSize: 13, color: theme.textSecondary }}>
@@ -276,7 +277,19 @@ export default function TagsPage() {
                           </Text>
                         </View>
                       );
-                    })
+                    })}
+                    {(() => {
+                      const total = txs.reduce((sum, t) => sum + parseAmount(t.amount), 0);
+                      return (
+                        <View style={[styles.txRow, { backgroundColor: theme.cardBorder + "20", justifyContent: "flex-end" }]}>
+                          <Text style={{ fontSize: 15, fontWeight: "700", color: theme.textSecondary, marginRight: 6 }}>Total</Text>
+                          <Text style={{ fontSize: 15, fontWeight: "700", color: total < 0 ? theme.expense : theme.income }}>
+                            {formatCurrency(Math.abs(total))}
+                          </Text>
+                        </View>
+                      );
+                    })()}
+                    </>
                   )}
                 </View>
               )}
