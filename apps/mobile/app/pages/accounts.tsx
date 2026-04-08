@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Alert,
   TextInput,
   RefreshControl,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { createAccountApi, createInstitutionApi } from "@money-tracker/api-client";
@@ -60,8 +61,23 @@ export default function AccountsPage() {
   const [accountType, setAccountType] = useState("checking");
   const [balance, setBalance] = useState("");
   const [refreshingInstId, setRefreshingInstId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; isError: boolean } | null>(null);
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  useEffect(() => { loadData(); }, []);
+  const showToast = (message: string, isError: boolean) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ message, isError });
+    toastOpacity.setValue(1);
+    toastTimer.current = setTimeout(() => {
+      Animated.timing(toastOpacity, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => setToast(null));
+    }, 1000);
+  };
+
+  useEffect(() => {
+    loadData();
+    return () => { if (toastTimer.current) clearTimeout(toastTimer.current); };
+  }, []);
 
   const loadData = async () => {
     try {
@@ -163,10 +179,28 @@ export default function AccountsPage() {
     setRefreshingInstId(institution.id);
     try {
       const db = await getDatabase();
-      await refreshPlaidItem(db, institution.id);
+      const result = await refreshPlaidItem(db, institution.id);
       await loadData();
-    } catch {
-      Alert.alert(i18n("common.error"), i18n("account.syncFailed"));
+      if (result) {
+        const parts: string[] = [];
+        if (result.added > 0) parts.push(`${result.added} added`);
+        if (result.updated > 0) parts.push(`${result.updated} updated`);
+        if (parts.length > 0) {
+          showToast(parts.join(", "), false);
+        } else {
+          const total = await db.getFirstAsync<{ count: number }>(
+            `SELECT COUNT(*) as count FROM transactions
+             WHERE account_id IN (SELECT id FROM accounts WHERE institution_id = ?)`,
+            [institution.id],
+          );
+          showToast(`Synced ${total?.count ?? 0} transactions`, false);
+        }
+      } else {
+        showToast("Up to date", false);
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : i18n("account.syncFailed");
+      showToast(message, true);
     } finally {
       setRefreshingInstId(null);
     }
@@ -203,6 +237,7 @@ export default function AccountsPage() {
   }
 
   return (
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
     <SwipeableProvider>
     <SwipeableScrollView
       style={{ backgroundColor: theme.background }}
@@ -389,6 +424,14 @@ export default function AccountsPage() {
       )}
     </SwipeableScrollView>
     </SwipeableProvider>
+    {toast && (
+      <Animated.View style={[styles.toastContainer, { opacity: toastOpacity }]}>
+        <View style={[styles.toast, { backgroundColor: toast.isError ? "#dc2626" : "#059669" }]}>
+          <Text style={styles.toastText}>{toast.message}</Text>
+        </View>
+      </Animated.View>
+    )}
+    </View>
   );
 }
 
@@ -493,5 +536,27 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+  },
+  toastContainer: {
+    position: "absolute",
+    bottom: 40,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  toast: {
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  toastText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

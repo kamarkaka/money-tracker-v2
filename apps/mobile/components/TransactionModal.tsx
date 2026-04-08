@@ -98,6 +98,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
   const [saving, setSaving] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [pendingDate, setPendingDate] = useState(new Date());
+  const [ruleSuggested, setRuleSuggested] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -114,7 +115,23 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
         setSelectedCategoryId(editTransaction.categoryId || null);
         setAccountId(editTransaction.account?.id || "");
         setSelectedTagIds(editTransaction.transactionTags?.map((tt) => tt.tag.id) || []);
+        setRuleSuggested(false);
         dismissedAddRef.current = false;
+
+        if (!editTransaction.categoryId && editTransaction.description) {
+          getDatabase().then(async (db) => {
+            const { matchRule } = await import("@/lib/db/local-client");
+            const matched = await matchRule(db, editTransaction.description);
+            if (matched) {
+              setSelectedCategoryId(matched);
+              const cat = await db.getFirstAsync<{ emoji: string | null }>(
+                "SELECT emoji FROM categories WHERE id = ?", [matched],
+              );
+              if (cat?.emoji) setSelectedEmoji(cat.emoji);
+              setRuleSuggested(true);
+            }
+          });
+        }
       } else if (!dismissedAddRef.current) {
         // Fresh add — reset all fields
         setRawCents("");
@@ -330,7 +347,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
           { borderColor: isSelected ? item.icon.color : theme.cardBorder },
           isSelected && { backgroundColor: item.icon.color + "20" },
         ]}
-        onPress={() => setSelectedEmoji(isSelected ? null : item.emoji)}
+        onPress={() => { setSelectedEmoji(isSelected ? null : item.emoji); setRuleSuggested(false); }}
       >
         <Ionicons name={item.icon.icon} size={26} color={isSelected ? item.icon.color : theme.textSecondary} />
       </TouchableOpacity>
@@ -414,6 +431,11 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
           />
 
           {/* Category — Pro: dropdown, Free: icon grid */}
+          {ruleSuggested && (
+            <Text style={{ fontSize: 13, color: theme.accent, fontWeight: "500", marginBottom: 6 }}>
+              Category pre-selected based on a matching rule
+            </Text>
+          )}
           {isPro ? (
             <>
               <TouchableOpacity
@@ -437,7 +459,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
                 <ScrollView style={styles.dropdownList} nestedScrollEnabled>
                   <TouchableOpacity
                     style={[styles.dropdownOption, { borderBottomColor: theme.cardBorder }]}
-                    onPress={() => { setSelectedCategoryId(null); setShowCategoryPicker(false); }}
+                    onPress={() => { setSelectedCategoryId(null); setShowCategoryPicker(false); setRuleSuggested(false); }}
                     activeOpacity={0.7}
                   >
                     <Text style={{ fontSize: 15, color: !selectedCategoryId ? theme.accent : theme.textSecondary, fontStyle: "italic" }}>{i18n("transaction.none")}</Text>
@@ -449,7 +471,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
                       <TouchableOpacity
                         key={cat.id}
                         style={[styles.dropdownOption, { borderBottomColor: theme.cardBorder }]}
-                        onPress={() => { setSelectedCategoryId(cat.id); setShowCategoryPicker(false); }}
+                        onPress={() => { setSelectedCategoryId(cat.id); setShowCategoryPicker(false); setRuleSuggested(false); }}
                         activeOpacity={0.7}
                       >
                         <Ionicons name={icon.icon} size={20} color={icon.color} style={{ marginRight: 10 }} />

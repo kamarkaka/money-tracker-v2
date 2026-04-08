@@ -14,6 +14,8 @@ import { formatCurrency, formatDate, parseAmount } from "@money-tracker/shared";
 import type { Transaction, Category } from "@money-tracker/shared";
 import { apiClient } from "@/lib/api";
 import { useAppTheme } from "@/lib/themeContext";
+import { getDatabase } from "@/lib/db";
+import { matchRule } from "@/lib/db/local-client";
 
 const txApi = createTransactionApi(apiClient);
 const catApi = createCategoryApi(apiClient);
@@ -27,17 +29,27 @@ export default function TransactionDetailModal() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCategories, setShowCategories] = useState(false);
+  const [suggestedCategoryId, setSuggestedCategoryId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
     Promise.all([
       txApi.list({ pageSize: 1, search: id }),
       catApi.list(),
-    ]).then(([txData, cats]) => {
-      // Find the specific transaction
+    ]).then(async ([txData, cats]) => {
       const found = txData.transactions.find((t) => t.id === id);
       setTransaction(found || null);
       setCategories(cats);
+
+      if (found && !found.categoryId && found.description) {
+        const db = await getDatabase();
+        const matched = await matchRule(db, found.description);
+        if (matched) {
+          setSuggestedCategoryId(matched);
+          setShowCategories(true);
+        }
+      }
+
       setLoading(false);
     });
   }, [id]);
@@ -50,6 +62,7 @@ export default function TransactionDetailModal() {
     const found = txData.transactions.find((t) => t.id === id);
     setTransaction(found || null);
     setShowCategories(false);
+    setSuggestedCategoryId(null);
   };
 
   const handleDelete = () => {
@@ -84,10 +97,12 @@ export default function TransactionDetailModal() {
   }
 
   const amt = parseAmount(transaction.amount);
+  const activeCatId = transaction.categoryId || suggestedCategoryId;
+  const allCats = categories.flatMap((c) => [c, ...(c.children || [])]);
+  const activeCatName = allCats.find((c) => c.id === activeCatId)?.name;
 
   return (
     <ScrollView style={{ backgroundColor: theme.background }} contentContainerStyle={styles.content}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={{ color: theme.accent, fontSize: 16 }}>Close</Text>
@@ -98,12 +113,10 @@ export default function TransactionDetailModal() {
         </TouchableOpacity>
       </View>
 
-      {/* Amount */}
       <Text style={[styles.amount, { color: amt >= 0 ? theme.income : theme.expense }]}>
         {formatCurrency(amt)}
       </Text>
 
-      {/* Details */}
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
         <DetailRow label="Description" value={transaction.description} theme={theme} />
         <DetailRow label="Date" value={formatDate(transaction.date)} theme={theme} />
@@ -112,38 +125,44 @@ export default function TransactionDetailModal() {
           <Text style={{ color: theme.textSecondary, fontSize: 14 }}>Category</Text>
           <TouchableOpacity onPress={() => setShowCategories(!showCategories)}>
             <Text style={{ color: theme.accent, fontSize: 14, fontWeight: "500" }}>
-              {transaction.category?.name || "Uncategorized"}
+              {activeCatName || "Uncategorized"}
             </Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Category picker */}
       {showCategories && (
         <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+          {suggestedCategoryId && (
+            <View style={[styles.ruleHint, { backgroundColor: theme.accent + "15", borderBottomColor: theme.cardBorder }]}>
+              <Text style={{ fontSize: 13, color: theme.accent, fontWeight: "500" }}>
+                Category pre-selected based on a matching rule
+              </Text>
+            </View>
+          )}
           <TouchableOpacity
-            style={[styles.catItem, { borderBottomColor: theme.cardBorder }, !transaction.categoryId && { backgroundColor: theme.accent + "20" }]}
+            style={[styles.catItem, { borderBottomColor: theme.cardBorder }, !activeCatId && { backgroundColor: theme.accent + "20" }]}
             onPress={() => handleUpdateCategory(null)}
           >
-            <Text style={{ color: !transaction.categoryId ? theme.accent : theme.text }}>Uncategorized</Text>
+            <Text style={{ color: !activeCatId ? theme.accent : theme.text }}>Uncategorized</Text>
           </TouchableOpacity>
           {categories.filter((c) => !c.parentId).map((cat) => (
             <View key={cat.id}>
               <TouchableOpacity
-                style={[styles.catItem, { borderBottomColor: theme.cardBorder }, transaction.categoryId === cat.id && { backgroundColor: theme.accent + "20" }]}
+                style={[styles.catItem, { borderBottomColor: theme.cardBorder }, activeCatId === cat.id && { backgroundColor: theme.accent + "20" }]}
                 onPress={() => handleUpdateCategory(cat.id)}
               >
-                <Text style={{ color: transaction.categoryId === cat.id ? theme.accent : theme.text, fontWeight: "600" }}>
+                <Text style={{ color: activeCatId === cat.id ? theme.accent : theme.text, fontWeight: "600" }}>
                   {cat.name}
                 </Text>
               </TouchableOpacity>
               {cat.children?.map((sub) => (
                 <TouchableOpacity
                   key={sub.id}
-                  style={[styles.catItem, { paddingLeft: 28, borderBottomColor: theme.cardBorder }, transaction.categoryId === sub.id && { backgroundColor: theme.accent + "20" }]}
+                  style={[styles.catItem, { paddingLeft: 28, borderBottomColor: theme.cardBorder }, activeCatId === sub.id && { backgroundColor: theme.accent + "20" }]}
                   onPress={() => handleUpdateCategory(sub.id)}
                 >
-                  <Text style={{ color: transaction.categoryId === sub.id ? theme.accent : theme.text }}>
+                  <Text style={{ color: activeCatId === sub.id ? theme.accent : theme.text }}>
                     {sub.name}
                   </Text>
                 </TouchableOpacity>
@@ -174,4 +193,5 @@ const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: 14, overflow: "hidden", marginBottom: 16 },
   detailRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, borderBottomWidth: StyleSheet.hairlineWidth },
   catItem: { padding: 12, borderBottomWidth: StyleSheet.hairlineWidth },
+  ruleHint: { padding: 12, borderBottomWidth: StyleSheet.hairlineWidth },
 });

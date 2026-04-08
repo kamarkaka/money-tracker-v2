@@ -1,6 +1,65 @@
+import type { SQLiteDatabase } from "expo-sqlite";
 import { ApiClient } from "@money-tracker/api-client";
 import { EMOJI_TO_NAME } from "@money-tracker/shared";
 import { getDatabase, uuid } from "./database";
+
+/**
+ * Match a transaction description against category rules.
+ * Returns the category_id of the first matching rule, or null.
+ */
+export async function matchRule(
+  db: SQLiteDatabase,
+  description: string,
+): Promise<string | null> {
+  const rules = await db.getAllAsync<{ category_id: string; match: string }>(
+    "SELECT category_id, match FROM category_rules ORDER BY sequence",
+  );
+  const lower = description.toLowerCase();
+  for (const rule of rules) {
+    if (lower.includes(rule.match.toLowerCase())) {
+      return rule.category_id;
+    }
+  }
+  return null;
+}
+
+/**
+ * Upsert a category rule from a transaction's description.
+ * - If a rule with the same match string exists with a different category, update it.
+ * - If no rule exists, create one.
+ * - If the same rule already exists, no-op.
+ */
+export async function upsertRule(
+  db: SQLiteDatabase,
+  description: string,
+  categoryId: string,
+): Promise<void> {
+  const match = description.toLowerCase().trim();
+  if (!match) return;
+
+  const existing = await db.getFirstAsync<{ id: string; category_id: string }>(
+    "SELECT id, category_id FROM category_rules WHERE LOWER(match) = ?",
+    [match],
+  );
+
+  if (existing) {
+    if (existing.category_id !== categoryId) {
+      await db.runAsync(
+        "UPDATE category_rules SET category_id = ?, updated_at = datetime('now') WHERE id = ?",
+        [categoryId, existing.id],
+      );
+    }
+    return;
+  }
+
+  const maxSeq = await db.getFirstAsync<{ m: number }>(
+    "SELECT COALESCE(MAX(sequence), -1) as m FROM category_rules",
+  );
+  await db.runAsync(
+    "INSERT INTO category_rules (id, sequence, match, category_id) VALUES (?, ?, ?, ?)",
+    [uuid(), (maxSeq?.m ?? -1) + 1, match, categoryId],
+  );
+}
 
 
 function parsePath(fullPath: string): { path: string; params: URLSearchParams } {
@@ -359,6 +418,7 @@ export class LocalClient extends ApiClient {
     const id = uuid();
 
     let categoryId = (body.categoryId as string) || null;
+    let categoryFromUser = !!categoryId;
 
     // If emoji is provided but no categoryId, find or create category
     if (!categoryId && body.emoji) {
@@ -378,6 +438,7 @@ export class LocalClient extends ApiClient {
           [categoryId, name, body.emoji as string],
         );
       }
+      categoryFromUser = true;
     }
 
     // If still no category, try to match against rules based on description
@@ -408,6 +469,11 @@ export class LocalClient extends ApiClient {
         body.date as string,
       ],
     );
+
+    // Auto-create rule if user explicitly chose a category
+    if (categoryFromUser && categoryId && body.description) {
+      await upsertRule(db, body.description as string, categoryId);
+    }
 
     // Handle tagIds
     const tagIds = body.tagIds as string[] | undefined;
@@ -463,6 +529,17 @@ export class LocalClient extends ApiClient {
         `UPDATE transactions SET ${sets.join(", ")} WHERE id = ?`,
         args,
       );
+    }
+
+    // Auto-create rule if user set a category
+    if (body.categoryId) {
+      const description = (body.description as string) ||
+        (await db.getFirstAsync<{ description: string }>(
+          "SELECT description FROM transactions WHERE id = ?", [id],
+        ))?.description;
+      if (description) {
+        await upsertRule(db, description, body.categoryId as string);
+      }
     }
 
     // Update tags if provided

@@ -16,13 +16,18 @@ try {
 } catch {
   // Not available (Expo Go)
 }
+import Constants from "expo-constants";
 import { createSettingsApi } from "@money-tracker/api-client";
 import { apiClient } from "@/lib/api";
 import { useAppTheme, type ThemeSetting } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
 import { exportToFile, pickAndImport } from "@/lib/db";
+import { getDatabase } from "@/lib/db";
 import { MENU_COLORS } from "@/lib/colors";
 import { useSubscription } from "@/lib/subscription";
+import { PLAID_MONTHLY_QUOTA } from "@/lib/plaid/sync";
+
+const DEV_MODE = Constants.expoConfig?.extra?.devMode === true || process.env.EXPO_PUBLIC_DEV_MODE === "true";
 
 const TAB_OPTIONS: { value: string; icon: keyof typeof Ionicons.glyphMap; labelKey: string }[] = [
   { value: "overview", icon: "pie-chart-outline", labelKey: "nav.overview" },
@@ -56,13 +61,28 @@ export default function SettingsPage() {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [bypassQuota, setBypassQuota] = useState(false);
+  const [quotaPoints, setQuotaPoints] = useState<number | null>(null);
   const { restore } = useSubscription();
+
+  const loadDevSettings = async () => {
+    const db = await getDatabase();
+    const row = await db.getFirstAsync<{ plaid_bypass_quota: number; plaid_quota_points: number | null }>(
+      "SELECT plaid_bypass_quota, plaid_quota_points FROM settings WHERE id = 'default'",
+    );
+    setBypassQuota(row?.plaid_bypass_quota === 1);
+    setQuotaPoints(row?.plaid_quota_points ?? null);
+  };
 
   useEffect(() => {
     api.get().then((s) => {
       if (s.language) setLangSetting(s.language === "auto" ? "auto" : s.language);
       setLoading(false);
     }).catch(() => setLoading(false));
+
+    if (DEV_MODE) {
+      loadDevSettings().catch(() => {});
+    }
   }, []);
 
   const handleThemeChange = (value: ThemeSetting) => {
@@ -130,6 +150,15 @@ export default function SettingsPage() {
     );
   };
 
+
+  const handleToggleBypassQuota = async (value: boolean) => {
+    setBypassQuota(value);
+    const db = await getDatabase();
+    await db.runAsync(
+      "UPDATE settings SET plaid_bypass_quota = ? WHERE id = 'default'",
+      [value ? 1 : 0],
+    );
+  };
 
   const handleRestore = async () => {
     setRestoring(true);
@@ -397,6 +426,50 @@ export default function SettingsPage() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Dev Tools */}
+      {DEV_MODE && (
+        <View style={[styles.card, { backgroundColor: theme.card, borderColor: "#f59e0b40" }]}>
+          <Text style={[styles.cardTitle, { color: "#f59e0b" }]}>Dev Tools</Text>
+          <Text style={[styles.cardDesc, { color: theme.textSecondary }]}>Developer-only options</Text>
+
+          <View style={styles.fireworksRow}>
+            <Ionicons name="bug-outline" size={22} color={bypassQuota ? "#f59e0b" : theme.textSecondary} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16, fontWeight: "600", color: theme.text }}>Bypass Plaid Quota</Text>
+              <Text style={{ fontSize: 13, color: theme.textSecondary }}>Skip cooldown and point checks on refresh</Text>
+            </View>
+            <Switch
+              value={bypassQuota}
+              onValueChange={handleToggleBypassQuota}
+              trackColor={{ false: theme.cardBorder, true: "#f59e0b" }}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.dataBtn, { borderColor: "#f59e0b40" }]}
+            onPress={async () => {
+              const db = await getDatabase();
+              await db.runAsync(
+                `UPDATE settings SET plaid_quota_month = NULL, plaid_quota_points = ${PLAID_MONTHLY_QUOTA} WHERE id = 'default'`,
+              );
+              await db.runAsync(
+                "UPDATE institutions SET plaid_free_refresh_month = NULL, plaid_last_synced_at = NULL WHERE plaid_item_id IS NOT NULL",
+              );
+              await loadDevSettings();
+              Alert.alert("Quota Reset", "Monthly quota, free refreshes, and cooldowns have been reset.");
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="refresh-circle-outline" size={20} color="#f59e0b" />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, fontWeight: "600", color: theme.text }}>Reset Refresh Quota</Text>
+              <Text style={{ fontSize: 13, color: theme.textSecondary }}>{quotaPoints != null ? `${quotaPoints} points remaining` : "Not initialized"}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+          </TouchableOpacity>
+        </View>
+      )}
 
     </ScrollView>
   );

@@ -24,6 +24,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     plaidClientId: process.env.PLAID_CLIENT_ID ?? "",
     plaidSecret: process.env.PLAID_SECRET ?? "",
     plaidEnv: process.env.PLAID_ENV ?? "sandbox",
+    devMode: process.env.EXPO_PUBLIC_DEV_MODE === "true",
   },
   plugins: ["expo-router", "expo-secure-store", "expo-sqlite", "expo-document-picker"],
 });
