@@ -3,7 +3,7 @@ import { prisma } from "../lib/db.js";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { requireActiveSubscription, verifyAppleJWS } from "../lib/subscription.js";
 import { encryptToken, decryptToken } from "../lib/crypto.js";
-import { checkLinkQuota, checkRefreshQuota, deductQuota, refundQuota, markFreeRefreshUsed, LINK_COST, REFRESH_COST } from "../lib/quota.js";
+import { checkLinkQuota, checkRefreshQuota, deductQuota, refundQuota, tryClaimFreeRefresh, LINK_COST, REFRESH_COST } from "../lib/quota.js";
 import {
   createLinkToken,
   exchangePublicToken,
@@ -18,6 +18,17 @@ import {
 import { verifyLimiter, linkLimiter, exchangeLimiter, syncLimiter, institutionsLimiter, unlinkLimiter } from "../lib/rate-limit.js";
 
 const router = Router();
+
+/** Atomically deduct quota or throw a 429 error caught by the outer try/catch */
+async function requireQuota(userId: string, cost: number): Promise<void> {
+  const ok = await deductQuota(userId, cost);
+  if (!ok) {
+    const err = new Error("Insufficient quota") as Error & { statusCode: number; code: string };
+    err.statusCode = 429;
+    err.code = "QUOTA_EXCEEDED";
+    throw err;
+  }
+}
 
 // All plaid routes require auth
 router.use(requireAuth);
@@ -134,11 +145,7 @@ router.post("/exchange", exchangeLimiter, async (req: AuthRequest, res) => {
       res.status(429).json({ error: quotaCheck.reason, code: "QUOTA_EXCEEDED" });
       return;
     }
-    const deducted = await deductQuota(userId, LINK_COST);
-    if (!deducted) {
-      res.status(429).json({ error: "Insufficient quota", code: "QUOTA_EXCEEDED" });
-      return;
-    }
+    await requireQuota(userId, LINK_COST);
 
     try {
       // 1. Exchange token
@@ -224,14 +231,10 @@ router.post("/sync", syncLimiter, async (req: AuthRequest, res) => {
     }
 
     // Deduct/mark upfront (atomic — prevents TOCTOU race)
-    if (quotaCheck.isFreeRefresh) {
-      await markFreeRefreshUsed(plaidItemId);
-    } else {
-      const deducted = await deductQuota(userId, REFRESH_COST);
-      if (!deducted) {
-        res.status(429).json({ error: "Insufficient quota", code: "QUOTA_EXCEEDED" });
-        return;
-      }
+    // Try free refresh first; if unavailable or lost to a concurrent request, fall back to paid
+    const paidRefresh = !(quotaCheck.isFreeRefresh && await tryClaimFreeRefresh(plaidItemId));
+    if (paidRefresh) {
+      await requireQuota(userId, REFRESH_COST);
     }
 
     try {
@@ -259,7 +262,7 @@ router.post("/sync", syncLimiter, async (req: AuthRequest, res) => {
       });
     } catch (plaidErr) {
       // Plaid call failed — refund if it was a paid refresh
-      if (!quotaCheck.isFreeRefresh) {
+      if (paidRefresh) {
         await refundQuota(userId, REFRESH_COST);
       }
       throw plaidErr;

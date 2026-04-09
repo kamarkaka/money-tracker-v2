@@ -147,13 +147,15 @@ export async function checkRefreshQuota(userId: string, plaidItemId: string): Pr
 }
 
 /**
- * Record a free refresh for this month on the given PlaidItem.
+ * Atomically claim the free refresh for this month.
+ * Returns true if claimed, false if already used (concurrent request won the race).
  */
-export async function markFreeRefreshUsed(plaidItemId: string): Promise<void> {
+export async function tryClaimFreeRefresh(plaidItemId: string): Promise<boolean> {
   const month = currentMonth();
-  await prisma.plaidItem.update({
-    where: { plaidItemId },
-    data: { freeRefreshMonth: month },
-  });
-  if (process.env.NODE_ENV !== "production") console.log(`[Quota] Free refresh used for item ${plaidItemId} in ${month}`);
+  const result = await prisma.$executeRaw`
+    UPDATE "plaid_item" SET free_refresh_month = ${month}, updated_at = NOW()
+    WHERE plaid_item_id = ${plaidItemId} AND (free_refresh_month IS NULL OR free_refresh_month != ${month})
+  `;
+  if (process.env.NODE_ENV !== "production") console.log(`[Quota] Free refresh ${result > 0 ? "claimed" : "already used"} for item ${plaidItemId} in ${month}`);
+  return result > 0;
 }

@@ -21,11 +21,15 @@ export function encryptToken(plaintext: string): string {
 }
 
 export function decryptToken(encrypted: string): string {
+  const parts = encrypted.split(":");
+  if (parts.length !== 3) {
+    throw new Error("Decryption failed");
+  }
+
   const key = getKey();
-  const [ivB64, cipherB64, tagB64] = encrypted.split(":");
-  const iv = Buffer.from(ivB64, "base64");
-  const ciphertext = Buffer.from(cipherB64, "base64");
-  const tag = Buffer.from(tagB64, "base64");
+  const iv = Buffer.from(parts[0], "base64");
+  const ciphertext = Buffer.from(parts[1], "base64");
+  const tag = Buffer.from(parts[2], "base64");
 
   const decipher = createDecipheriv(ALGORITHM, key, iv);
   decipher.setAuthTag(tag);
