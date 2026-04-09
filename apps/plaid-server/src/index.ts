@@ -6,7 +6,9 @@ import plaidRoutes from "./routes/plaid.js";
 const app = express();
 const PORT = parseInt(process.env.PORT || "3001", 10);
 
-app.use(cors());
+if (process.env.NODE_ENV !== "production") {
+  app.use(cors());
+}
 app.use(express.json());
 
 // Health check
