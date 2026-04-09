@@ -37,8 +37,8 @@ router.post("/register", registerLimiter, async (req, res) => {
     const token = await signToken({ userId: user.id, email: user.email });
     res.status(201).json({ token, user: { id: user.id, email: user.email, name: user.name } });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(500).json({ error: message });
+    console.error("[Auth]", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -70,8 +70,8 @@ router.post("/login", loginLimiter, async (req, res) => {
     const token = await signToken({ userId: user.id, email: user.email });
     res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(500).json({ error: message });
+    console.error("[Auth]", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -87,8 +87,8 @@ router.post("/refresh", refreshLimiter, requireAuth, async (req: AuthRequest, re
     const token = await signToken({ userId: user.id, email: user.email });
     res.json({ token });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(500).json({ error: message });
+    console.error("[Auth]", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -115,8 +115,8 @@ router.delete("/account", deleteAccountLimiter, requireAuth, async (req: AuthReq
 
     res.json({ success: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(500).json({ error: message });
+    console.error("[Auth]", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

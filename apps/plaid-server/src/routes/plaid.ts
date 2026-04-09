@@ -91,8 +91,8 @@ router.post("/verify-subscription", verifyLimiter, async (req: AuthRequest, res)
       productId: payload.productId,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(400).json({ error: message });
+    console.error("[Plaid] verify-subscription:", err);
+    res.status(400).json({ error: "Subscription verification failed" });
   }
 });
 
@@ -105,7 +105,12 @@ router.post("/link-token", linkLimiter, async (req: AuthRequest, res) => {
     res.json({ linkToken });
   } catch (err) {
     const e = err as Error & { statusCode?: number; code?: string };
-    res.status(e.statusCode || 500).json({ error: e.message, code: e.code });
+    if (e.statusCode && e.statusCode < 500) {
+      res.status(e.statusCode).json({ error: e.message, code: e.code });
+    } else {
+      console.error("[Plaid]", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 });
 
@@ -172,7 +177,12 @@ router.post("/exchange", exchangeLimiter, async (req: AuthRequest, res) => {
     });
   } catch (err) {
     const e = err as Error & { statusCode?: number; code?: string };
-    res.status(e.statusCode || 500).json({ error: e.message, code: e.code });
+    if (e.statusCode && e.statusCode < 500) {
+      res.status(e.statusCode).json({ error: e.message, code: e.code });
+    } else {
+      console.error("[Plaid]", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 });
 
@@ -236,7 +246,12 @@ router.post("/sync", syncLimiter, async (req: AuthRequest, res) => {
     });
   } catch (err) {
     const e = err as Error & { statusCode?: number; code?: string };
-    res.status(e.statusCode || 500).json({ error: e.message, code: e.code });
+    if (e.statusCode && e.statusCode < 500) {
+      res.status(e.statusCode).json({ error: e.message, code: e.code });
+    } else {
+      console.error("[Plaid]", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 });
 
@@ -275,7 +290,12 @@ router.get("/institutions", institutionsLimiter, async (req: AuthRequest, res) =
     res.json(result);
   } catch (err) {
     const e = err as Error & { statusCode?: number; code?: string };
-    res.status(e.statusCode || 500).json({ error: e.message, code: e.code });
+    if (e.statusCode && e.statusCode < 500) {
+      res.status(e.statusCode).json({ error: e.message, code: e.code });
+    } else {
+      console.error("[Plaid]", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 });
 
@@ -310,7 +330,12 @@ router.delete("/institutions/:plaidItemId", unlinkLimiter, async (req: AuthReque
     res.json({ success: true });
   } catch (err) {
     const e = err as Error & { statusCode?: number; code?: string };
-    res.status(e.statusCode || 500).json({ error: e.message, code: e.code });
+    if (e.statusCode && e.statusCode < 500) {
+      res.status(e.statusCode).json({ error: e.message, code: e.code });
+    } else {
+      console.error("[Plaid]", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 });
 
