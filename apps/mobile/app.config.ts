@@ -1,5 +1,8 @@
 import { ExpoConfig, ConfigContext } from "expo/config";
 
+const now = new Date();
+const buildNumber = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: "Money Tracker 2",
@@ -12,7 +15,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: "xyz.mengcao.money-tracker-2",
-    buildNumber: "202604082049",
+    buildNumber,
     icon: {
       light: "./assets/icon.png",
       dark: "./assets/icon-dark.png",
