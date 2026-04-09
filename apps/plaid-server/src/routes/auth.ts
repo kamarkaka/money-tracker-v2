@@ -4,11 +4,12 @@ import { prisma } from "../lib/db.js";
 import { signToken, verifyToken } from "../lib/jwt.js";
 import type { AuthRequest } from "../lib/auth.js";
 import { requireAuth } from "../lib/auth.js";
+import { registerLimiter, loginLimiter, refreshLimiter, deleteAccountLimiter } from "../lib/rate-limit.js";
 
 const router = Router();
 
 // POST /auth/register
-router.post("/register", async (req, res) => {
+router.post("/register", registerLimiter, async (req, res) => {
   try {
     const { email, password, name } = req.body;
     if (!email || !password || password.length < 6) {
@@ -36,7 +37,7 @@ router.post("/register", async (req, res) => {
 });
 
 // POST /auth/login
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -65,7 +66,7 @@ router.post("/login", async (req, res) => {
 });
 
 // POST /auth/refresh
-router.post("/refresh", requireAuth, async (req: AuthRequest, res) => {
+router.post("/refresh", refreshLimiter, requireAuth, async (req: AuthRequest, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
     if (!user) {
@@ -82,7 +83,7 @@ router.post("/refresh", requireAuth, async (req: AuthRequest, res) => {
 });
 
 // DELETE /auth/account — permanently delete user and all associated data
-router.delete("/account", requireAuth, async (req: AuthRequest, res) => {
+router.delete("/account", deleteAccountLimiter, requireAuth, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
 

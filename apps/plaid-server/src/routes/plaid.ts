@@ -15,6 +15,7 @@ import {
   type PlaidAccount,
   type PlaidTransaction,
 } from "../lib/plaid.js";
+import { verifyLimiter, linkLimiter, exchangeLimiter, syncLimiter, institutionsLimiter, unlinkLimiter } from "../lib/rate-limit.js";
 
 const router = Router();
 
@@ -47,7 +48,7 @@ function formatTransactions(txns: PlaidTransaction[]) {
 
 // ── POST /plaid/verify-subscription ──
 
-router.post("/verify-subscription", async (req: AuthRequest, res) => {
+router.post("/verify-subscription", verifyLimiter, async (req: AuthRequest, res) => {
   try {
     const { jws } = req.body;
     if (!jws || typeof jws !== "string") {
@@ -97,7 +98,7 @@ router.post("/verify-subscription", async (req: AuthRequest, res) => {
 
 // ── POST /plaid/link-token ──
 
-router.post("/link-token", async (req: AuthRequest, res) => {
+router.post("/link-token", linkLimiter, async (req: AuthRequest, res) => {
   try {
     await requireActiveSubscription(req.user!.userId);
     const linkToken = await createLinkToken(req.user!.userId);
@@ -110,7 +111,7 @@ router.post("/link-token", async (req: AuthRequest, res) => {
 
 // ── POST /plaid/exchange ──
 
-router.post("/exchange", async (req: AuthRequest, res) => {
+router.post("/exchange", exchangeLimiter, async (req: AuthRequest, res) => {
   const userId = req.user!.userId;
 
   try {
@@ -177,7 +178,7 @@ router.post("/exchange", async (req: AuthRequest, res) => {
 
 // ── POST /plaid/sync ──
 
-router.post("/sync", async (req: AuthRequest, res) => {
+router.post("/sync", syncLimiter, async (req: AuthRequest, res) => {
   const userId = req.user!.userId;
 
   try {
@@ -241,7 +242,7 @@ router.post("/sync", async (req: AuthRequest, res) => {
 
 // ── GET /plaid/institutions ──
 
-router.get("/institutions", async (req: AuthRequest, res) => {
+router.get("/institutions", institutionsLimiter, async (req: AuthRequest, res) => {
   try {
     await requireActiveSubscription(req.user!.userId);
 
@@ -280,7 +281,7 @@ router.get("/institutions", async (req: AuthRequest, res) => {
 
 // ── DELETE /plaid/institutions/:plaidItemId ──
 
-router.delete("/institutions/:plaidItemId", async (req: AuthRequest, res) => {
+router.delete("/institutions/:plaidItemId", unlinkLimiter, async (req: AuthRequest, res) => {
   const userId = req.user!.userId;
   const plaidItemId = req.params.plaidItemId as string;
 
