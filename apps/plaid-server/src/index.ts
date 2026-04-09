@@ -1,11 +1,13 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import authRoutes from "./routes/auth.js";
 import plaidRoutes from "./routes/plaid.js";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3001", 10);
 
+app.use(helmet());
 if (process.env.NODE_ENV !== "production") {
   app.use(cors());
 }
