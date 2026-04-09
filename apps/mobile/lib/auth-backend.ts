@@ -103,3 +103,21 @@ export async function refreshToken(): Promise<{ token: string }> {
 export async function logout(): Promise<void> {
   await clearAuthToken();
 }
+
+export async function deleteAccount(): Promise<void> {
+  const token = await getAuthToken();
+  if (!token) throw new Error("Not authenticated");
+
+  const baseUrl = await getBackendBaseUrl();
+  const res = await fetch(`${baseUrl}/auth/account`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error(data?.error || "Failed to delete account");
+  }
+
+  await clearAuthToken();
+}

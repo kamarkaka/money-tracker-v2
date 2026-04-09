@@ -81,4 +81,32 @@ router.post("/refresh", requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
+// DELETE /auth/account — permanently delete user and all associated data
+router.delete("/account", requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+
+    // PlaidItems cascade-delete with User, but revoke tokens at Plaid first
+    const items = await prisma.plaidItem.findMany({ where: { userId } });
+    for (const item of items) {
+      try {
+        const { decryptToken } = await import("../lib/crypto.js");
+        const { removeItem } = await import("../lib/plaid.js");
+        const accessToken = decryptToken(item.accessToken);
+        await removeItem(accessToken);
+      } catch {
+        // Continue even if Plaid revocation fails
+      }
+    }
+
+    // Delete user (cascades to PlaidItems)
+    await prisma.user.delete({ where: { id: userId } });
+
+    res.json({ success: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: message });
+  }
+});
+
 export default router;

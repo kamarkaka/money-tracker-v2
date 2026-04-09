@@ -27,7 +27,7 @@ import { getDatabase } from "@/lib/db";
 import { MENU_COLORS } from "@/lib/colors";
 import { useSubscription, syncSubscriptionToBackend } from "@/lib/subscription";
 import { getPlaidCredentials, savePlaidCredentials, clearPlaidCredentials, getPlaidEnv, savePlaidEnv } from "@/lib/plaid/storage";
-import { isAuthenticated, login, register, logout, getBackendBaseUrl, saveBackendBaseUrl } from "@/lib/auth-backend";
+import { isAuthenticated, login, register, logout, deleteAccount, getBackendBaseUrl, saveBackendBaseUrl } from "@/lib/auth-backend";
 
 const DEV_MODE = Constants.expoConfig?.extra?.devMode === true;
 
@@ -72,6 +72,7 @@ export default function SettingsPage() {
   const [backendPassword, setBackendPassword] = useState("");
   const [backendUrl, setBackendUrl] = useState("");
   const [backendLoading, setBackendLoading] = useState(false);
+  const [backendInfoExpanded, setBackendInfoExpanded] = useState(false);
   const { restore } = useSubscription();
 
 
@@ -430,35 +431,100 @@ export default function SettingsPage() {
 
       {/* Backend Account */}
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-        <Text style={[styles.cardTitle, { color: theme.text }]}>Money Tracker Account</Text>
+        <Text style={[styles.cardTitle, { color: theme.text }]}>{i18n("setting.backendAccount")}</Text>
+
+        {/* Foldable info section */}
+        <TouchableOpacity
+          style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 }}
+          onPress={() => setBackendInfoExpanded(!backendInfoExpanded)}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name={backendInfoExpanded ? "chevron-down" : "chevron-forward"}
+            size={16}
+            color={theme.accent}
+          />
+          <Text style={{ fontSize: 14, color: theme.accent, fontWeight: "500" }}>
+            {i18n("setting.backendWhyTitle")}
+          </Text>
+        </TouchableOpacity>
+        {backendInfoExpanded && (
+          <View style={{ backgroundColor: theme.inputBg, borderRadius: 10, padding: 14, marginBottom: 14 }}>
+            <Text style={{ fontSize: 13, lineHeight: 20, color: theme.textSecondary }}>
+              {i18n("setting.backendWhyBody")}
+            </Text>
+            <Text style={{ fontSize: 13, lineHeight: 20, color: theme.textSecondary, marginTop: 10, fontWeight: "600" }}>
+              {i18n("setting.backendWeStore")}
+            </Text>
+            <Text style={{ fontSize: 13, lineHeight: 20, color: theme.textSecondary }}>
+              {i18n("setting.backendWeStoreBody")}
+            </Text>
+            <Text style={{ fontSize: 13, lineHeight: 20, color: theme.textSecondary, marginTop: 10, fontWeight: "600" }}>
+              {i18n("setting.backendWeDoNotStore")}
+            </Text>
+            <Text style={{ fontSize: 13, lineHeight: 20, color: theme.textSecondary }}>
+              {i18n("setting.backendWeDoNotStoreBody")}
+            </Text>
+          </View>
+        )}
+
         {backendAuthed ? (
           <>
             <Text style={[styles.cardDesc, { color: theme.accent }]}>
-              Connected — bank linking is managed automatically
+              {i18n("setting.backendConnected")}
             </Text>
-            <TouchableOpacity
-              style={[styles.plaidBtn, { backgroundColor: theme.dangerBg, marginTop: 12 }]}
-              onPress={() => {
-                Alert.alert("Log Out", "Disconnect from Money Tracker backend?", [
-                  { text: i18n("common.cancel"), style: "cancel" },
-                  {
-                    text: "Log Out", style: "destructive",
-                    onPress: async () => { await logout(); setBackendAuthed(false); },
-                  },
-                ]);
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={{ color: theme.danger, fontSize: 15, fontWeight: "600" }}>Log Out</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
+              <TouchableOpacity
+                style={[styles.plaidBtn, { backgroundColor: theme.dangerBg, flex: 1 }]}
+                onPress={() => {
+                  Alert.alert(i18n("setting.backendLogOut"), i18n("setting.backendLogOutConfirm"), [
+                    { text: i18n("common.cancel"), style: "cancel" },
+                    {
+                      text: i18n("setting.backendLogOut"), style: "destructive",
+                      onPress: async () => { await logout(); setBackendAuthed(false); },
+                    },
+                  ]);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ color: theme.danger, fontSize: 15, fontWeight: "600" }}>{i18n("setting.backendLogOut")}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.plaidBtn, { backgroundColor: theme.danger, flex: 1 }]}
+                onPress={() => {
+                  Alert.alert(
+                    i18n("setting.backendDeleteAccount"),
+                    i18n("setting.backendDeleteConfirm"),
+                    [
+                      { text: i18n("common.cancel"), style: "cancel" },
+                      {
+                        text: i18n("common.delete"), style: "destructive",
+                        onPress: async () => {
+                          try {
+                            await deleteAccount();
+                            setBackendAuthed(false);
+                            Alert.alert(i18n("setting.backendDeleteSuccess"), i18n("setting.backendDeleteSuccessBody"));
+                          } catch (e) {
+                            Alert.alert(i18n("common.error"), e instanceof Error ? e.message : i18n("setting.backendDeleteFailed"));
+                          }
+                        },
+                      },
+                    ],
+                  );
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ color: "#fff", fontSize: 15, fontWeight: "600" }}>{i18n("setting.backendDeleteAccount")}</Text>
+              </TouchableOpacity>
+            </View>
           </>
         ) : (
           <>
             <Text style={[styles.cardDesc, { color: theme.textSecondary }]}>
-              Log in to link bank accounts without your own Plaid credentials
+              {i18n("setting.backendLoginPrompt")}
             </Text>
 
-            <Text style={[styles.label, { color: theme.textSecondary }]}>Server URL</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n("setting.backendServerUrl")}</Text>
             <TextInput
               style={[styles.plaidInput, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder, color: theme.text }]}
               value={backendUrl}
@@ -503,9 +569,9 @@ export default function SettingsPage() {
                     setBackendAuthed(true);
                     setBackendPassword("");
                     await syncSubscriptionToBackend(isProTheme);
-                    Alert.alert("Success", "Logged in successfully.");
+                    Alert.alert(i18n("common.success"), i18n("setting.backendLoggedIn"));
                   } catch (e) {
-                    Alert.alert(i18n("common.error"), e instanceof Error ? e.message : "Login failed");
+                    Alert.alert(i18n("common.error"), e instanceof Error ? e.message : i18n("setting.backendLoginFailed"));
                   } finally {
                     setBackendLoading(false);
                   }
@@ -515,7 +581,7 @@ export default function SettingsPage() {
                 {backendLoading ? (
                   <ActivityIndicator size="small" color={theme.accentText} />
                 ) : (
-                  <Text style={{ color: theme.accentText, fontSize: 15, fontWeight: "600" }}>Log In</Text>
+                  <Text style={{ color: theme.accentText, fontSize: 15, fontWeight: "600" }}>{i18n("setting.backendLogin")}</Text>
                 )}
               </TouchableOpacity>
               <TouchableOpacity
@@ -528,16 +594,16 @@ export default function SettingsPage() {
                     setBackendAuthed(true);
                     setBackendPassword("");
                     await syncSubscriptionToBackend(isProTheme);
-                    Alert.alert("Success", "Account created and logged in.");
+                    Alert.alert(i18n("common.success"), i18n("setting.backendRegistered"));
                   } catch (e) {
-                    Alert.alert(i18n("common.error"), e instanceof Error ? e.message : "Registration failed");
+                    Alert.alert(i18n("common.error"), e instanceof Error ? e.message : i18n("setting.backendRegisterFailed"));
                   } finally {
                     setBackendLoading(false);
                   }
                 }}
                 activeOpacity={0.7}
               >
-                <Text style={{ color: theme.accent, fontSize: 15, fontWeight: "600" }}>Register</Text>
+                <Text style={{ color: theme.accent, fontSize: 15, fontWeight: "600" }}>{i18n("setting.backendRegister")}</Text>
               </TouchableOpacity>
             </View>
           </>
@@ -546,39 +612,39 @@ export default function SettingsPage() {
 
       {/* Plaid API (Direct Mode) */}
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-        <Text style={[styles.cardTitle, { color: theme.text }]}>Plaid API (Direct Mode)</Text>
+        <Text style={[styles.cardTitle, { color: theme.text }]}>{i18n("setting.plaidDirect")}</Text>
         <Text style={[styles.cardDesc, { color: theme.textSecondary }]}>
           {backendAuthed
-            ? "Optional — you are already connected via your Money Tracker account"
+            ? i18n("setting.plaidDirectConnected")
             : plaidConfigured
-              ? "Configured"
-              : "Not configured — enter your Plaid credentials to link bank accounts"}
+              ? i18n("setting.plaidDirectConfigured")
+              : i18n("setting.plaidDirectNotConfigured")}
         </Text>
 
-        <Text style={[styles.label, { color: theme.textSecondary }]}>Client ID</Text>
+        <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n("setting.plaidClientId")}</Text>
         <TextInput
           style={[styles.plaidInput, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder, color: theme.text }]}
           value={plaidClientId}
           onChangeText={setPlaidClientId}
-          placeholder="Enter Plaid Client ID"
+          placeholder={i18n("setting.plaidClientIdPlaceholder")}
           placeholderTextColor={theme.textSecondary}
           autoCapitalize="none"
           autoCorrect={false}
         />
 
-        <Text style={[styles.label, { color: theme.textSecondary, marginTop: 12 }]}>Secret</Text>
+        <Text style={[styles.label, { color: theme.textSecondary, marginTop: 12 }]}>{i18n("setting.plaidSecret")}</Text>
         <TextInput
           style={[styles.plaidInput, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder, color: theme.text }]}
           value={plaidSecret}
           onChangeText={setPlaidSecret}
-          placeholder="Enter Plaid Secret"
+          placeholder={i18n("setting.plaidSecretPlaceholder")}
           placeholderTextColor={theme.textSecondary}
           autoCapitalize="none"
           autoCorrect={false}
           secureTextEntry
         />
 
-        <Text style={[styles.label, { color: theme.textSecondary, marginTop: 12 }]}>Environment</Text>
+        <Text style={[styles.label, { color: theme.textSecondary, marginTop: 12 }]}>{i18n("setting.plaidEnvironment")}</Text>
         <View style={[styles.segmentedControl, { borderColor: theme.cardBorder, backgroundColor: theme.inputBg }]}>
           {(["sandbox", "production"] as const).map((env) => {
             const selected = plaidEnvSetting === env;
@@ -604,20 +670,20 @@ export default function SettingsPage() {
             onPress={async () => {
               await savePlaidCredentials(plaidClientId.trim(), plaidSecret.trim());
               setPlaidConfigured(true);
-              Alert.alert("Saved", "Plaid credentials saved securely.");
+              Alert.alert(i18n("setting.plaidSaved"), i18n("setting.plaidSavedBody"));
             }}
             activeOpacity={0.7}
           >
-            <Text style={{ color: theme.accentText, fontSize: 15, fontWeight: "600" }}>Save</Text>
+            <Text style={{ color: theme.accentText, fontSize: 15, fontWeight: "600" }}>{i18n("common.save")}</Text>
           </TouchableOpacity>
           {plaidConfigured && (
             <TouchableOpacity
               style={[styles.plaidBtn, { backgroundColor: theme.dangerBg }]}
               onPress={() => {
-                Alert.alert("Clear Credentials", "Remove saved Plaid credentials?", [
+                Alert.alert(i18n("setting.plaidClearCredentials"), i18n("setting.plaidClearConfirm"), [
                   { text: i18n("common.cancel"), style: "cancel" },
                   {
-                    text: "Clear", style: "destructive",
+                    text: i18n("setting.plaidClear"), style: "destructive",
                     onPress: async () => {
                       await clearPlaidCredentials();
                       setPlaidClientId("");
@@ -629,7 +695,7 @@ export default function SettingsPage() {
               }}
               activeOpacity={0.7}
             >
-              <Text style={{ color: theme.danger, fontSize: 15, fontWeight: "600" }}>Clear</Text>
+              <Text style={{ color: theme.danger, fontSize: 15, fontWeight: "600" }}>{i18n("setting.plaidClear")}</Text>
             </TouchableOpacity>
           )}
         </View>
