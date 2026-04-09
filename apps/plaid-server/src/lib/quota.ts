@@ -55,13 +55,18 @@ export async function ensureQuota(userId: string): Promise<number> {
  * Deduct points from user's quota. Returns remaining points.
  */
 export async function deductQuota(userId: string, amount: number): Promise<number> {
-  const user = await prisma.user.update({
-    where: { id: userId },
-    data: { quotaPoints: { decrement: amount } },
-    select: { quotaPoints: true },
-  });
-  console.log(`[Quota] Deducted ${amount} points, ${user.quotaPoints} remaining`);
-  return user.quotaPoints;
+  // Atomic deduction with floor check — only deducts if points >= amount
+  const result = await prisma.$executeRawUnsafe(
+    `UPDATE "user" SET quota_points = quota_points - $1, updated_at = NOW() WHERE id = $2 AND quota_points >= $1`,
+    amount, userId,
+  );
+  if (result === 0) {
+    console.log(`[Quota] Deduction rejected: not enough points for ${amount}`);
+    return 0;
+  }
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { quotaPoints: true } });
+  console.log(`[Quota] Deducted ${amount} points, ${user?.quotaPoints ?? 0} remaining`);
+  return user?.quotaPoints ?? 0;
 }
 
 export interface QuotaCheckResult {
