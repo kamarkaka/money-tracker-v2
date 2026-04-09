@@ -5,7 +5,7 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
 }
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 const ISSUER = "plaid-server";
-const EXPIRATION = "30d";
+const EXPIRATION = "7d";
 
 export interface TokenPayload {
   userId: string;
