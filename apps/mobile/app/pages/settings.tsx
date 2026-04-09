@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Switch,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 let DraggableFlatList: any = null;
@@ -26,8 +27,9 @@ import { getDatabase } from "@/lib/db";
 import { MENU_COLORS } from "@/lib/colors";
 import { useSubscription } from "@/lib/subscription";
 import { PLAID_MONTHLY_QUOTA } from "@/lib/plaid/sync";
+import { getPlaidCredentials, savePlaidCredentials, clearPlaidCredentials, getPlaidEnv, savePlaidEnv } from "@/lib/plaid/storage";
 
-const DEV_MODE = Constants.expoConfig?.extra?.devMode === true || process.env.EXPO_PUBLIC_DEV_MODE === "true";
+const DEV_MODE = Constants.expoConfig?.extra?.devMode === true;
 
 const TAB_OPTIONS: { value: string; icon: keyof typeof Ionicons.glyphMap; labelKey: string }[] = [
   { value: "overview", icon: "pie-chart-outline", labelKey: "nav.overview" },
@@ -63,6 +65,10 @@ export default function SettingsPage() {
   const [restoring, setRestoring] = useState(false);
   const [bypassQuota, setBypassQuota] = useState(false);
   const [quotaPoints, setQuotaPoints] = useState<number | null>(null);
+  const [plaidClientId, setPlaidClientId] = useState("");
+  const [plaidSecret, setPlaidSecret] = useState("");
+  const [plaidConfigured, setPlaidConfigured] = useState(false);
+  const [plaidEnvSetting, setPlaidEnvSetting] = useState("production");
   const { restore } = useSubscription();
 
   const loadDevSettings = async () => {
@@ -79,6 +85,15 @@ export default function SettingsPage() {
       if (s.language) setLangSetting(s.language === "auto" ? "auto" : s.language);
       setLoading(false);
     }).catch(() => setLoading(false));
+
+    getPlaidCredentials().then((creds) => {
+      if (creds) {
+        setPlaidClientId(creds.clientId);
+        setPlaidSecret(creds.secret);
+        setPlaidConfigured(true);
+      }
+    });
+    getPlaidEnv().then(setPlaidEnvSetting);
 
     if (DEV_MODE) {
       loadDevSettings().catch(() => {});
@@ -427,6 +442,93 @@ export default function SettingsPage() {
         </TouchableOpacity>
       </View>
 
+      {/* Plaid API */}
+      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+        <Text style={[styles.cardTitle, { color: theme.text }]}>Plaid API</Text>
+        <Text style={[styles.cardDesc, { color: theme.textSecondary }]}>
+          {plaidConfigured ? "Configured" : "Not configured — enter your Plaid credentials to link bank accounts"}
+        </Text>
+
+        <Text style={[styles.label, { color: theme.textSecondary }]}>Client ID</Text>
+        <TextInput
+          style={[styles.plaidInput, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder, color: theme.text }]}
+          value={plaidClientId}
+          onChangeText={setPlaidClientId}
+          placeholder="Enter Plaid Client ID"
+          placeholderTextColor={theme.textSecondary}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+
+        <Text style={[styles.label, { color: theme.textSecondary, marginTop: 12 }]}>Secret</Text>
+        <TextInput
+          style={[styles.plaidInput, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder, color: theme.text }]}
+          value={plaidSecret}
+          onChangeText={setPlaidSecret}
+          placeholder="Enter Plaid Secret"
+          placeholderTextColor={theme.textSecondary}
+          autoCapitalize="none"
+          autoCorrect={false}
+          secureTextEntry
+        />
+
+        <Text style={[styles.label, { color: theme.textSecondary, marginTop: 12 }]}>Environment</Text>
+        <View style={[styles.segmentedControl, { borderColor: theme.cardBorder, backgroundColor: theme.inputBg }]}>
+          {(["sandbox", "production"] as const).map((env) => {
+            const selected = plaidEnvSetting === env;
+            return (
+              <TouchableOpacity
+                key={env}
+                style={[styles.segmentedOption, selected && { backgroundColor: theme.accent }]}
+                onPress={() => { setPlaidEnvSetting(env); savePlaidEnv(env); }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ fontSize: 14, fontWeight: "600", color: selected ? theme.accentText : theme.textSecondary, textTransform: "capitalize" }}>
+                  {env}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <View style={{ flexDirection: "row", gap: 10, marginTop: 16 }}>
+          <TouchableOpacity
+            style={[styles.plaidBtn, { backgroundColor: theme.accent, opacity: !plaidClientId.trim() || !plaidSecret.trim() ? 0.5 : 1 }]}
+            disabled={!plaidClientId.trim() || !plaidSecret.trim()}
+            onPress={async () => {
+              await savePlaidCredentials(plaidClientId.trim(), plaidSecret.trim());
+              setPlaidConfigured(true);
+              Alert.alert("Saved", "Plaid credentials saved securely.");
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={{ color: theme.accentText, fontSize: 15, fontWeight: "600" }}>Save</Text>
+          </TouchableOpacity>
+          {plaidConfigured && (
+            <TouchableOpacity
+              style={[styles.plaidBtn, { backgroundColor: theme.dangerBg }]}
+              onPress={() => {
+                Alert.alert("Clear Credentials", "Remove saved Plaid credentials?", [
+                  { text: i18n("common.cancel"), style: "cancel" },
+                  {
+                    text: "Clear", style: "destructive",
+                    onPress: async () => {
+                      await clearPlaidCredentials();
+                      setPlaidClientId("");
+                      setPlaidSecret("");
+                      setPlaidConfigured(false);
+                    },
+                  },
+                ]);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={{ color: theme.danger, fontSize: 15, fontWeight: "600" }}>Clear</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
       {/* Dev Tools */}
       {DEV_MODE && (
         <View style={[styles.card, { backgroundColor: theme.card, borderColor: "#f59e0b40" }]}>
@@ -539,5 +641,32 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 14,
     borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  label: { fontSize: 13, fontWeight: "600", marginBottom: 6 },
+  plaidInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+  },
+  plaidBtn: {
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  segmentedControl: {
+    flexDirection: "row",
+    borderWidth: 1,
+    borderRadius: 20,
+    overflow: "hidden",
+    padding: 3,
+  },
+  segmentedOption: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderRadius: 17,
   },
 });

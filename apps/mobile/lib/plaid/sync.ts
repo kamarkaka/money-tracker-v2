@@ -7,7 +7,7 @@ import {
   type PlaidAccount,
   type PlaidTransaction,
 } from "./api";
-import { getPlaidToken, deletePlaidToken } from "./storage";
+import { getPlaidToken, deletePlaidToken, getPlaidCredentials } from "./storage";
 
 // ── Quota configuration ──────────────────────────────────
 
@@ -127,12 +127,16 @@ export async function syncPlaidItem(
       );
     }
 
-    // 2. Sync accounts
-    const { accounts } = await getAccounts(accessToken);
+    // 2. Load credentials
+    const creds = await getPlaidCredentials();
+    if (!creds) throw new Error("Plaid credentials not configured");
+
+    // 3. Sync accounts
+    const { accounts } = await getAccounts(creds, accessToken);
     await syncAccountsToDb(db, accounts, institutionId);
 
-    // 3. Sync transactions
-    const result = await syncTransactions(accessToken);
+    // 4. Sync transactions
+    const result = await syncTransactions(creds, accessToken);
     await syncTransactionsToDb(db, result.added, result.modified, result.removed);
 
     // 4. Save cursor and last synced timestamp
@@ -209,6 +213,9 @@ export async function refreshPlaidItem(
   const accessToken = await getPlaidToken(inst.plaid_item_id);
   if (!accessToken) return null;
 
+  const creds = await getPlaidCredentials();
+  if (!creds) throw new Error("Plaid credentials not configured");
+
   if (bypassQuota) {
     console.log(`[Plaid] Quota bypass enabled — skipping quota/cooldown checks`);
   }
@@ -217,11 +224,12 @@ export async function refreshPlaidItem(
 
   await db.withTransactionAsync(async () => {
     // Update account balances
-    const { accounts } = await getAccounts(accessToken);
+    const { accounts } = await getAccounts(creds, accessToken);
     await syncAccountsToDb(db, accounts, institutionId);
 
     // Incremental transaction sync
     const result = await syncTransactions(
+      creds,
       accessToken,
       inst.plaid_sync_cursor || undefined,
     );

@@ -1,25 +1,21 @@
-import Constants from "expo-constants";
-
-const extra = Constants.expoConfig?.extra ?? {};
-const CLIENT_ID: string = extra.plaidClientId ?? "";
-const SECRET: string = extra.plaidSecret ?? "";
-const PLAID_ENV: string = extra.plaidEnv ?? "sandbox";
-
-const BASE_URL =
-  PLAID_ENV === "production"
-    ? "https://production.plaid.com"
-    : "https://sandbox.plaid.com";
+import type { PlaidCredentials } from "./storage";
+import { getPlaidEnv } from "./storage";
 
 async function plaidRequest<T>(
+  creds: PlaidCredentials,
   path: string,
   body: Record<string, unknown>,
 ): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const env = await getPlaidEnv();
+  const baseUrl = env === "production"
+    ? "https://production.plaid.com"
+    : "https://sandbox.plaid.com";
+  const res = await fetch(`${baseUrl}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      client_id: CLIENT_ID,
-      secret: SECRET,
+      client_id: creds.clientId,
+      secret: creds.secret,
       ...body,
     }),
   });
@@ -37,9 +33,11 @@ async function plaidRequest<T>(
 // ── Link Token ────────────────────────────────────────────
 
 export async function createLinkToken(
+  creds: PlaidCredentials,
   clientUserId: string,
 ): Promise<string> {
   const data = await plaidRequest<{ link_token: string }>(
+    creds,
     "/link/token/create",
     {
       user: { client_user_id: clientUserId },
@@ -56,12 +54,13 @@ export async function createLinkToken(
 // ── Token Exchange ────────────────────────────────────────
 
 export async function exchangePublicToken(
+  creds: PlaidCredentials,
   publicToken: string,
 ): Promise<{ accessToken: string; itemId: string }> {
   const data = await plaidRequest<{
     access_token: string;
     item_id: string;
-  }>("/item/public_token/exchange", {
+  }>(creds, "/item/public_token/exchange", {
     public_token: publicToken,
   });
   return { accessToken: data.access_token, itemId: data.item_id };
@@ -82,12 +81,13 @@ export interface PlaidAccount {
 }
 
 export async function getAccounts(
+  creds: PlaidCredentials,
   accessToken: string,
 ): Promise<{ accounts: PlaidAccount[]; institutionId: string | null }> {
   const data = await plaidRequest<{
     accounts: PlaidAccount[];
     item: { institution_id: string | null };
-  }>("/accounts/get", {
+  }>(creds, "/accounts/get", {
     access_token: accessToken,
   });
   return {
@@ -99,11 +99,12 @@ export async function getAccounts(
 // ── Institution Info ──────────────────────────────────────
 
 export async function getInstitutionName(
+  creds: PlaidCredentials,
   institutionId: string,
 ): Promise<string> {
   const data = await plaidRequest<{
     institution: { name: string };
-  }>("/institutions/get_by_id", {
+  }>(creds, "/institutions/get_by_id", {
     institution_id: institutionId,
     country_codes: ["US"],
   });
@@ -135,6 +136,7 @@ export interface SyncResult {
 }
 
 export async function syncTransactions(
+  creds: PlaidCredentials,
   accessToken: string,
   cursor?: string,
 ): Promise<SyncResult> {
@@ -152,7 +154,7 @@ export async function syncTransactions(
       removed: { transaction_id: string }[];
       next_cursor: string;
       has_more: boolean;
-    }>("/transactions/sync", {
+    }>(creds, "/transactions/sync", {
       access_token: accessToken,
       cursor: currentCursor || undefined,
     });
