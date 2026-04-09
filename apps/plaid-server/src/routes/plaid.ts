@@ -134,8 +134,8 @@ router.post("/exchange", exchangeLimiter, async (req: AuthRequest, res) => {
     await requireActiveSubscription(userId);
 
     const { publicToken, institutionName } = req.body;
-    if (!publicToken || typeof publicToken !== "string") {
-      res.status(400).json({ error: "Missing publicToken" });
+    if (!publicToken || typeof publicToken !== "string" || publicToken.length > 500) {
+      res.status(400).json({ error: "Invalid publicToken" });
       return;
     }
     const providedName = (institutionName && typeof institutionName === "string")
@@ -213,8 +213,8 @@ router.post("/sync", syncLimiter, async (req: AuthRequest, res) => {
     await requireActiveSubscription(userId);
 
     const { plaidItemId } = req.body;
-    if (!plaidItemId || typeof plaidItemId !== "string") {
-      res.status(400).json({ error: "Missing plaidItemId" });
+    if (!plaidItemId || typeof plaidItemId !== "string" || plaidItemId.length > 100) {
+      res.status(400).json({ error: "Invalid plaidItemId" });
       return;
     }
 

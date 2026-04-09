@@ -3,7 +3,10 @@ import type { Request } from "express";
 
 function env(key: string, fallback: number): number {
   const val = process.env[key];
-  return val ? parseInt(val, 10) : fallback;
+  if (!val) return fallback;
+  const parsed = parseInt(val, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
 }
 
 const msg = (text: string) => ({ error: text });

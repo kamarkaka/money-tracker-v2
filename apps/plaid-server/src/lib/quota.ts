@@ -85,11 +85,11 @@ export async function deductQuota(userId: string, amount: number): Promise<boole
  * Refund points back to user's quota (used when a Plaid call fails after deduction).
  */
 export async function refundQuota(userId: string, amount: number): Promise<void> {
-  await prisma.user.update({
-    where: { id: userId },
-    data: { quotaPoints: { increment: amount } },
-  });
-  if (process.env.NODE_ENV !== "production") console.log(`[Quota] Refunded ${amount} points`);
+  await prisma.$executeRaw`
+    UPDATE "user" SET quota_points = LEAST(quota_points + ${amount}, ${MONTHLY_QUOTA}), updated_at = NOW()
+    WHERE id = ${userId}
+  `;
+  if (process.env.NODE_ENV !== "production") console.log(`[Quota] Refunded ${amount} points (capped at ${MONTHLY_QUOTA})`);
 }
 
 export interface QuotaCheckResult {

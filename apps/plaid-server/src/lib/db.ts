@@ -8,9 +8,12 @@ prisma.$connect().catch((err) => {
   process.exit(1);
 });
 
-// Graceful shutdown
+// Graceful shutdown (guard against duplicate signals)
+let isShuttingDown = false;
 for (const signal of ["SIGTERM", "SIGINT"] as const) {
   process.on(signal, async () => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
     await prisma.$disconnect();
     process.exit(0);
   });
