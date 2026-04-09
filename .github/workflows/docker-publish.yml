@@ -37,6 +37,7 @@ jobs:
         uses: docker/build-push-action@v7.0.0
         with:
           context: .
+          file: apps/web/Dockerfile
           push: true
           no-cache: true
           tags: kamarkaka4/money-tracker-v2:latest,kamarkaka4/money-tracker-v2:${{ github.sha }}
