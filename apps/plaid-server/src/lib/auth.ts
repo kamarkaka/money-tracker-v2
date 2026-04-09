@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { verifyToken, type TokenPayload } from "./jwt.js";
+import { prisma } from "./db.js";
 
 export interface AuthRequest extends Request {
   user?: TokenPayload;
@@ -16,6 +17,16 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
   const payload = await verifyToken(token);
   if (!payload) {
     res.status(401).json({ error: "Invalid or expired token" });
+    return;
+  }
+
+  // Verify user still exists (handles deleted accounts and token revocation)
+  const user = await prisma.user.findUnique({
+    where: { id: payload.userId },
+    select: { id: true },
+  });
+  if (!user) {
+    res.status(401).json({ error: "User no longer exists" });
     return;
   }
 
