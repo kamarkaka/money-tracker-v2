@@ -4,7 +4,7 @@ import { prisma } from "../lib/db.js";
 import { signToken, verifyToken } from "../lib/jwt.js";
 import type { AuthRequest } from "../lib/auth.js";
 import { requireAuth } from "../lib/auth.js";
-import { registerLimiter, loginLimiter, refreshLimiter, deleteAccountLimiter } from "../lib/rate-limit.js";
+import { registerLimiter, loginLimiter, loginByEmailLimiter, refreshLimiter, deleteAccountLimiter } from "../lib/rate-limit.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -14,8 +14,8 @@ const router = Router();
 router.post("/register", registerLimiter, async (req, res) => {
   try {
     const { email, password, name } = req.body;
-    if (!email || !password || password.length < 6) {
-      res.status(400).json({ error: "Email and password (min 6 chars) required" });
+    if (!email || !password || password.length < 6 || password.length > 72) {
+      res.status(400).json({ error: "Email and password (6-72 chars) required" });
       return;
     }
     if (!EMAIL_RE.test(email)) {
@@ -25,13 +25,14 @@ router.post("/register", registerLimiter, async (req, res) => {
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
-      res.status(409).json({ error: "Email already registered" });
+      res.status(400).json({ error: "Registration failed" });
       return;
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 12);
+    const trimmedName = name ? String(name).slice(0, 100) : null;
     const user = await prisma.user.create({
-      data: { email, passwordHash, name: name || null },
+      data: { email, passwordHash, name: trimmedName },
     });
 
     const token = await signToken({ userId: user.id, email: user.email });
@@ -43,7 +44,7 @@ router.post("/register", registerLimiter, async (req, res) => {
 });
 
 // POST /auth/login
-router.post("/login", loginLimiter, async (req, res) => {
+router.post("/login", loginLimiter, loginByEmailLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {

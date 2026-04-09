@@ -52,21 +52,34 @@ export async function ensureQuota(userId: string): Promise<number> {
 }
 
 /**
- * Deduct points from user's quota. Returns remaining points.
+ * Atomically deduct points from user's quota.
+ * Returns true if deduction succeeded, false if insufficient points.
  */
-export async function deductQuota(userId: string, amount: number): Promise<number> {
-  // Atomic deduction with floor check — only deducts if points >= amount
-  const result = await prisma.$executeRawUnsafe(
-    `UPDATE "user" SET quota_points = quota_points - $1, updated_at = NOW() WHERE id = $2 AND quota_points >= $1`,
-    amount, userId,
-  );
+export async function deductQuota(userId: string, amount: number): Promise<boolean> {
+  const result = await prisma.$executeRaw`
+    UPDATE "user" SET quota_points = quota_points - ${amount}, updated_at = NOW()
+    WHERE id = ${userId} AND quota_points >= ${amount}
+  `;
   if (result === 0) {
     if (process.env.NODE_ENV !== "production") console.log(`[Quota] Deduction rejected: not enough points for ${amount}`);
-    return 0;
+    return false;
   }
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { quotaPoints: true } });
-  if (process.env.NODE_ENV !== "production") console.log(`[Quota] Deducted ${amount} points, ${user?.quotaPoints ?? 0} remaining`);
-  return user?.quotaPoints ?? 0;
+  if (process.env.NODE_ENV !== "production") {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { quotaPoints: true } });
+    console.log(`[Quota] Deducted ${amount} points, ${user?.quotaPoints ?? 0} remaining`);
+  }
+  return true;
+}
+
+/**
+ * Refund points back to user's quota (used when a Plaid call fails after deduction).
+ */
+export async function refundQuota(userId: string, amount: number): Promise<void> {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { quotaPoints: { increment: amount } },
+  });
+  if (process.env.NODE_ENV !== "production") console.log(`[Quota] Refunded ${amount} points`);
 }
 
 export interface QuotaCheckResult {

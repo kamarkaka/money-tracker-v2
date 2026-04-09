@@ -31,6 +31,11 @@ export async function verifyAppleJWS(jws: string): Promise<AppleTransactionPaylo
   if (!VALID_PRODUCT_IDS.includes(productId)) throw new Error(`Invalid product ID: ${productId}`);
   if (!expiresDate || expiresDate < Date.now()) throw new Error("Subscription has expired");
 
+  const environment = p.environment as string;
+  if (process.env.NODE_ENV === "production" && environment !== "Production") {
+    throw new Error("Sandbox receipts are not accepted in production");
+  }
+
   return {
     originalTransactionId: p.originalTransactionId as string,
     transactionId: p.transactionId as string,

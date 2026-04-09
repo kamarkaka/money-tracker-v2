@@ -1,4 +1,5 @@
 import rateLimit from "express-rate-limit";
+import type { Request } from "express";
 
 function env(key: string, fallback: number): number {
   const val = process.env[key];
@@ -9,7 +10,15 @@ const msg = (text: string) => ({ error: text });
 
 // Auth routes
 export const registerLimiter = rateLimit({ windowMs: env("RL_REGISTER_WINDOW_MS", 3_600_000), limit: env("RL_REGISTER_LIMIT", 3), message: msg("Too many registrations. Try again later.") });
+// Per-IP login limiter
 export const loginLimiter = rateLimit({ windowMs: env("RL_LOGIN_WINDOW_MS", 900_000), limit: env("RL_LOGIN_LIMIT", 5), message: msg("Too many login attempts. Try again later.") });
+// Per-email login limiter — prevents brute-force against a single account across multiple IPs
+export const loginByEmailLimiter = rateLimit({
+  windowMs: env("RL_LOGIN_EMAIL_WINDOW_MS", 900_000),
+  limit: env("RL_LOGIN_EMAIL_LIMIT", 10),
+  keyGenerator: (req: Request) => (req.body?.email || "unknown").toLowerCase(),
+  message: msg("Too many login attempts for this account. Try again later."),
+});
 export const refreshLimiter = rateLimit({ windowMs: env("RL_REFRESH_WINDOW_MS", 60_000), limit: env("RL_REFRESH_LIMIT", 10), message: msg("Too many requests. Try again later.") });
 export const deleteAccountLimiter = rateLimit({ windowMs: env("RL_DELETE_WINDOW_MS", 3_600_000), limit: env("RL_DELETE_LIMIT", 3), message: msg("Too many requests. Try again later.") });
 

@@ -5,6 +5,7 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
 }
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 const ISSUER = "plaid-server";
+const AUDIENCE = "plaid-server";
 const EXPIRATION = "7d";
 
 export interface TokenPayload {
@@ -16,6 +17,7 @@ export async function signToken(payload: TokenPayload): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuer(ISSUER)
+    .setAudience(AUDIENCE)
     .setIssuedAt()
     .setExpirationTime(EXPIRATION)
     .sign(SECRET);
@@ -23,7 +25,7 @@ export async function signToken(payload: TokenPayload): Promise<string> {
 
 export async function verifyToken(token: string): Promise<TokenPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, SECRET, { issuer: ISSUER });
+    const { payload } = await jwtVerify(token, SECRET, { issuer: ISSUER, audience: AUDIENCE });
     return { userId: payload.userId as string, email: payload.email as string };
   } catch {
     return null;

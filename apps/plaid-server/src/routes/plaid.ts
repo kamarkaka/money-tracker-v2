@@ -3,7 +3,7 @@ import { prisma } from "../lib/db.js";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { requireActiveSubscription, verifyAppleJWS } from "../lib/subscription.js";
 import { encryptToken, decryptToken } from "../lib/crypto.js";
-import { checkLinkQuota, checkRefreshQuota, deductQuota, markFreeRefreshUsed, LINK_COST, REFRESH_COST } from "../lib/quota.js";
+import { checkLinkQuota, checkRefreshQuota, deductQuota, refundQuota, markFreeRefreshUsed, LINK_COST, REFRESH_COST } from "../lib/quota.js";
 import {
   createLinkToken,
   exchangePublicToken,
@@ -128,53 +128,61 @@ router.post("/exchange", exchangeLimiter, async (req: AuthRequest, res) => {
       return;
     }
 
-    // Check link quota
+    // Deduct link cost upfront (atomic — prevents TOCTOU race)
     const quotaCheck = await checkLinkQuota(userId);
     if (!quotaCheck.allowed) {
       res.status(429).json({ error: quotaCheck.reason, code: "QUOTA_EXCEEDED" });
       return;
     }
-
-    // 1. Exchange token
-    const { accessToken, itemId } = await exchangePublicToken(publicToken);
-
-    // 2. Get accounts and institution info
-    const { accounts: plaidAccounts, institutionId: plaidInstId } = await getAccounts(accessToken);
-
-    let instName = providedName || "Linked Institution";
-    if (!providedName && plaidInstId) {
-      try { instName = await getInstitutionName(plaidInstId); } catch { /* keep fallback */ }
+    const deducted = await deductQuota(userId, LINK_COST);
+    if (!deducted) {
+      res.status(429).json({ error: "Insufficient quota", code: "QUOTA_EXCEEDED" });
+      return;
     }
 
-    // 3. Initial transaction sync
-    const syncResult = await syncTransactions(accessToken);
+    try {
+      // 1. Exchange token
+      const { accessToken, itemId } = await exchangePublicToken(publicToken);
 
-    // 4. Store encrypted access token
-    await prisma.plaidItem.create({
-      data: {
-        userId,
-        plaidItemId: itemId,
-        accessToken: encryptToken(accessToken),
-        institutionName: instName,
-        plaidInstitutionId: plaidInstId,
-        syncCursor: syncResult.nextCursor,
-        lastSyncedAt: new Date(),
-      },
-    });
+      // 2. Get accounts and institution info
+      const { accounts: plaidAccounts, institutionId: plaidInstId } = await getAccounts(accessToken);
 
-    // 5. Deduct link cost from quota
-    await deductQuota(userId, LINK_COST);
+      let instName = providedName || "Linked Institution";
+      if (!providedName && plaidInstId) {
+        try { instName = await getInstitutionName(plaidInstId); } catch { /* keep fallback */ }
+      }
 
-    // 6. Return formatted data for mobile to store locally
-    res.status(201).json({
-      institution: { plaidItemId: itemId, name: instName, plaidInstitutionId: plaidInstId },
-      accounts: formatAccounts(plaidAccounts),
-      transactions: {
-        added: formatTransactions(syncResult.added),
-        modified: formatTransactions(syncResult.modified),
-        removedIds: syncResult.removed.map((r) => r.transaction_id),
-      },
-    });
+      // 3. Initial transaction sync
+      const syncResult = await syncTransactions(accessToken);
+
+      // 4. Store encrypted access token
+      await prisma.plaidItem.create({
+        data: {
+          userId,
+          plaidItemId: itemId,
+          accessToken: encryptToken(accessToken),
+          institutionName: instName,
+          plaidInstitutionId: plaidInstId,
+          syncCursor: syncResult.nextCursor,
+          lastSyncedAt: new Date(),
+        },
+      });
+
+      // 5. Return formatted data for mobile to store locally
+      res.status(201).json({
+        institution: { plaidItemId: itemId, name: instName, plaidInstitutionId: plaidInstId },
+        accounts: formatAccounts(plaidAccounts),
+        transactions: {
+          added: formatTransactions(syncResult.added),
+          modified: formatTransactions(syncResult.modified),
+          removedIds: syncResult.removed.map((r) => r.transaction_id),
+        },
+      });
+    } catch (plaidErr) {
+      // Plaid call failed — refund the quota
+      await refundQuota(userId, LINK_COST);
+      throw plaidErr;
+    }
   } catch (err) {
     const e = err as Error & { statusCode?: number; code?: string };
     if (e.statusCode && e.statusCode < 500) {
@@ -215,35 +223,47 @@ router.post("/sync", syncLimiter, async (req: AuthRequest, res) => {
       return;
     }
 
-    const accessToken = decryptToken(item.accessToken);
-
-    // Sync accounts
-    const { accounts: plaidAccounts } = await getAccounts(accessToken);
-
-    // Incremental transaction sync
-    const syncResult = await syncTransactions(accessToken, item.syncCursor || undefined);
-
-    // Update cursor and record sync
-    await prisma.plaidItem.update({
-      where: { id: item.id },
-      data: { syncCursor: syncResult.nextCursor, lastSyncedAt: new Date() },
-    });
-
-    // Deduct quota or mark free refresh
+    // Deduct/mark upfront (atomic — prevents TOCTOU race)
     if (quotaCheck.isFreeRefresh) {
       await markFreeRefreshUsed(plaidItemId);
     } else {
-      await deductQuota(userId, REFRESH_COST);
+      const deducted = await deductQuota(userId, REFRESH_COST);
+      if (!deducted) {
+        res.status(429).json({ error: "Insufficient quota", code: "QUOTA_EXCEEDED" });
+        return;
+      }
     }
 
-    res.json({
-      accounts: formatAccounts(plaidAccounts),
-      transactions: {
-        added: formatTransactions(syncResult.added),
-        modified: formatTransactions(syncResult.modified),
-        removedIds: syncResult.removed.map((r) => r.transaction_id),
-      },
-    });
+    try {
+      const accessToken = decryptToken(item.accessToken);
+
+      // Sync accounts
+      const { accounts: plaidAccounts } = await getAccounts(accessToken);
+
+      // Incremental transaction sync
+      const syncResult = await syncTransactions(accessToken, item.syncCursor || undefined);
+
+      // Update cursor and record sync
+      await prisma.plaidItem.update({
+        where: { id: item.id },
+        data: { syncCursor: syncResult.nextCursor, lastSyncedAt: new Date() },
+      });
+
+      res.json({
+        accounts: formatAccounts(plaidAccounts),
+        transactions: {
+          added: formatTransactions(syncResult.added),
+          modified: formatTransactions(syncResult.modified),
+          removedIds: syncResult.removed.map((r) => r.transaction_id),
+        },
+      });
+    } catch (plaidErr) {
+      // Plaid call failed — refund if it was a paid refresh
+      if (!quotaCheck.isFreeRefresh) {
+        await refundQuota(userId, REFRESH_COST);
+      }
+      throw plaidErr;
+    }
   } catch (err) {
     const e = err as Error & { statusCode?: number; code?: string };
     if (e.statusCode && e.statusCode < 500) {

@@ -8,12 +8,15 @@ import plaidRoutes from "./routes/plaid.js";
 const app = express();
 const PORT = parseInt(process.env.PORT || "3001", 10);
 
+// Trust first proxy (load balancer / reverse proxy) so req.ip reflects the real client IP
+app.set("trust proxy", 1);
+
 app.use(helmet());
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 if (process.env.NODE_ENV !== "production") {
   app.use(cors());
 }
-app.use(express.json());
+app.use(express.json({ limit: "16kb" }));
 
 // Health check
 app.get("/health", (_req, res) => {
