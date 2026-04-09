@@ -3,6 +3,37 @@ import { Alert } from "react-native";
 import { initStore, endStore, getProducts, checkActiveSubscription, purchaseSubscription, restorePurchases, setupListeners, PRODUCT_IDS } from "./store";
 import { getDatabase } from "./db";
 import { useAppTheme } from "./themeContext";
+import { verifySubscriptionViaBackend } from "./plaid/backend-client";
+
+/**
+ * Sync the local subscription status to the backend.
+ * Tries StoreKit receipt first; falls back to client attestation if StoreKit is unavailable.
+ * @param isPro — pass the current isPro state from the app (accounts for dev mode override)
+ */
+export async function syncSubscriptionToBackend(isPro: boolean): Promise<boolean> {
+  if (!isPro) return false;
+
+  try {
+    // Try to get a real receipt from StoreKit
+    const purchases = await restorePurchases();
+    const activePurchase = purchases.find((p: any) => PRODUCT_IDS.includes(p.productId));
+
+    if (activePurchase) {
+      const jws = activePurchase.transactionReceipt;
+      if (jws && typeof jws === "string") {
+        await verifySubscriptionViaBackend(jws);
+        return true;
+      }
+    }
+
+    // Fallback: StoreKit unavailable (simulator/Expo Go) or no receipt.
+    // The caller already confirmed isPro, so attest to the backend.
+    await verifySubscriptionViaBackend("LOCAL_PRO");
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export interface StoreProduct {
   id?: string | null;
@@ -50,6 +81,18 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       );
     } catch {
       // ignore
+    }
+  }, []);
+
+  /** Send JWS to backend if authenticated, so server knows subscription is active */
+  const verifyWithBackend = useCallback(async (purchase: any) => {
+    try {
+      const jws = purchase?.transactionReceipt;
+      if (jws && typeof jws === "string") {
+        await verifySubscriptionViaBackend(jws);
+      }
+    } catch {
+      // Non-critical: backend verification failed, local subscription still works
     }
   }, []);
 
@@ -101,9 +144,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   // Listen for purchase updates
   useEffect(() => {
     const listener = setupListeners(
-      () => {
+      (purchase: any) => {
         setIsPro(true);
         persistIsPro(true);
+        verifyWithBackend(purchase);
       },
       (error: { message?: string }) => {
         Alert.alert("Purchase failed", error.message || "An error occurred");
@@ -131,14 +175,18 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const restore = useCallback(async (): Promise<boolean> => {
     try {
       const purchases = await restorePurchases();
-      const hasActive = purchases.some((p: any) => PRODUCT_IDS.includes(p.productId));
+      const activePurchase = purchases.find((p: any) => PRODUCT_IDS.includes(p.productId));
+      const hasActive = !!activePurchase;
       setIsPro(hasActive);
       persistIsPro(hasActive);
+      if (hasActive && activePurchase) {
+        verifyWithBackend(activePurchase);
+      }
       return hasActive;
     } catch {
       return false;
     }
-  }, []);
+  }, [verifyWithBackend]);
 
   const value = useMemo(
     () => ({ isPro, loading, products, purchase, restore }),

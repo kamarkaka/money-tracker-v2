@@ -20,6 +20,9 @@ import { getDatabase } from "@/lib/db";
 import { createLinkToken, exchangePublicToken, getInstitutionName } from "@/lib/plaid/api";
 import { savePlaidToken, getOrCreateClientUserId, getPlaidCredentials } from "@/lib/plaid/storage";
 import { syncPlaidItem } from "@/lib/plaid/sync";
+import { getPlaidMode, type PlaidMode } from "@/lib/plaid/mode";
+import { createLinkTokenViaBackend, exchangeViaBackend } from "@/lib/plaid/backend-client";
+import { ingestBackendExchange } from "@/lib/plaid/backend-sync";
 
 interface PlaidLinkProps {
   onSuccess: () => void;
@@ -31,19 +34,16 @@ export function PlaidLinkButton({ onSuccess, onDismiss }: PlaidLinkProps) {
   const { i18n } = useI18n();
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [hasCredentials, setHasCredentials] = useState<boolean | null>(null);
+  const [plaidMode, setPlaidMode] = useState<PlaidMode | null>(null);
 
   useEffect(() => {
-    getPlaidCredentials().then((creds) => setHasCredentials(creds !== null));
+    getPlaidMode().then(setPlaidMode);
   }, []);
 
-  const handlePress = useCallback(async () => {
+  const handleDirectLink = useCallback(async () => {
     const creds = await getPlaidCredentials();
     if (!creds) {
-      Alert.alert(
-        i18n("account.plaidNotConfigured"),
-        i18n("account.plaidNotConfiguredDesc"),
-      );
+      Alert.alert(i18n("account.plaidNotConfigured"), i18n("account.plaidNotConfiguredDesc"));
       return;
     }
 
@@ -58,19 +58,13 @@ export function PlaidLinkButton({ onSuccess, onDismiss }: PlaidLinkProps) {
         onSuccess: async (success: LinkSuccess) => {
           setSyncing(true);
           try {
-            const { accessToken, itemId } = await exchangePublicToken(
-              creds,
-              success.publicToken,
-            );
+            const { accessToken, itemId } = await exchangePublicToken(creds, success.publicToken);
             await savePlaidToken(itemId, accessToken);
 
             let institutionName = success.metadata?.institution?.name ?? "";
             if (!institutionName && success.metadata?.institution?.id) {
               try {
-                institutionName = await getInstitutionName(
-                  creds,
-                  success.metadata.institution.id,
-                );
+                institutionName = await getInstitutionName(creds, success.metadata.institution.id);
               } catch {
                 institutionName = "Linked Institution";
               }
@@ -81,10 +75,7 @@ export function PlaidLinkButton({ onSuccess, onDismiss }: PlaidLinkProps) {
             await syncPlaidItem(db, itemId, institutionName, accessToken);
             onSuccess();
           } catch (err) {
-            Alert.alert(
-              i18n("common.error"),
-              err instanceof Error ? err.message : "Failed to sync accounts",
-            );
+            Alert.alert(i18n("common.error"), err instanceof Error ? err.message : "Failed to sync accounts");
           } finally {
             setSyncing(false);
           }
@@ -94,24 +85,74 @@ export function PlaidLinkButton({ onSuccess, onDismiss }: PlaidLinkProps) {
         },
       });
     } catch (err) {
-      Alert.alert(
-        i18n("common.error"),
-        err instanceof Error ? err.message : "Failed to open Plaid Link",
-      );
+      Alert.alert(i18n("common.error"), err instanceof Error ? err.message : "Failed to open Plaid Link");
     } finally {
       setLoading(false);
     }
   }, [i18n, onSuccess, onDismiss]);
 
-  const isDisabled = loading || syncing || hasCredentials === false;
-  const label = syncing
-    ? i18n("account.syncing")
-    : i18n("account.linkBank");
+  const handleBackendLink = useCallback(async () => {
+    setLoading(true);
+    try {
+      const linkToken = await createLinkTokenViaBackend();
+
+      createPlaidLink({ token: linkToken });
+
+      openPlaidLink({
+        onSuccess: async (success: LinkSuccess) => {
+          setSyncing(true);
+          try {
+            const institutionName = success.metadata?.institution?.name || "Linked Institution";
+            const result = await exchangeViaBackend(success.publicToken, institutionName);
+
+            const db = await getDatabase();
+            await ingestBackendExchange(db, result);
+            onSuccess();
+          } catch (err) {
+            const code = (err as Error & { code?: string }).code;
+            if (code === "SUBSCRIPTION_EXPIRED") {
+              Alert.alert(i18n("common.error"), i18n("account.subscriptionRequired"));
+            } else {
+              Alert.alert(i18n("common.error"), err instanceof Error ? err.message : "Failed to sync accounts");
+            }
+          } finally {
+            setSyncing(false);
+          }
+        },
+        onExit: (_exit: LinkExit) => {
+          onDismiss?.();
+        },
+      });
+    } catch (err) {
+      const code = (err as Error & { code?: string }).code;
+      if (code === "SUBSCRIPTION_EXPIRED") {
+        Alert.alert(i18n("common.error"), i18n("account.subscriptionRequired"));
+      } else {
+        Alert.alert(i18n("common.error"), err instanceof Error ? err.message : "Failed to open Plaid Link");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [i18n, onSuccess, onDismiss]);
+
+  const handlePress = useCallback(async () => {
+    const mode = await getPlaidMode();
+    if (mode === "backend") {
+      await handleBackendLink();
+    } else if (mode === "direct") {
+      await handleDirectLink();
+    } else {
+      Alert.alert(i18n("account.plaidNotConfigured"), i18n("account.plaidNotConfiguredDesc"));
+    }
+  }, [handleDirectLink, handleBackendLink, i18n]);
+
+  const isAvailable = plaidMode !== "none";
+  const label = syncing ? i18n("account.syncing") : i18n("account.linkBank");
 
   return (
     <View style={[styles.card, {
-      backgroundColor: hasCredentials === false ? theme.cardBorder : theme.accent,
-      borderColor: hasCredentials === false ? theme.cardBorder : theme.accent,
+      backgroundColor: !isAvailable ? theme.cardBorder : theme.accent,
+      borderColor: !isAvailable ? theme.cardBorder : theme.accent,
       opacity: loading || syncing ? 0.6 : 1,
     }]}>
       <TouchableOpacity
@@ -124,14 +165,18 @@ export function PlaidLinkButton({ onSuccess, onDismiss }: PlaidLinkProps) {
           {(loading || syncing) ? (
             <ActivityIndicator size="small" color={theme.accentText} />
           ) : (
-            <Ionicons name="business-outline" size={20} color={hasCredentials === false ? theme.textSecondary : theme.accentText} />
+            <Ionicons name="business-outline" size={20} color={!isAvailable ? theme.textSecondary : theme.accentText} />
           )}
-          <Text style={[styles.label, { color: hasCredentials === false ? theme.textSecondary : theme.accentText }]}>
+          <Text style={[styles.label, { color: !isAvailable ? theme.textSecondary : theme.accentText }]}>
             {label}
           </Text>
         </View>
-        <Text style={[styles.disclaimer, { color: hasCredentials === false ? theme.textSecondary + "99" : theme.accentText + "99" }]}>
-          {hasCredentials === false ? i18n("account.plaidNotConfiguredShort") : i18n("account.linkBankDisclaimer")}
+        <Text style={[styles.disclaimer, { color: !isAvailable ? theme.textSecondary + "99" : theme.accentText + "99" }]}>
+          {!isAvailable
+            ? i18n("account.plaidNotConfiguredShort")
+            : plaidMode === "backend"
+              ? i18n("account.linkBankViaBackend")
+              : i18n("account.linkBankDisclaimer")}
         </Text>
       </TouchableOpacity>
     </View>

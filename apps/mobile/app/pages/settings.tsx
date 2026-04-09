@@ -25,9 +25,9 @@ import { useI18n } from "@/lib/i18n";
 import { exportToFile, pickAndImport } from "@/lib/db";
 import { getDatabase } from "@/lib/db";
 import { MENU_COLORS } from "@/lib/colors";
-import { useSubscription } from "@/lib/subscription";
-import { PLAID_MONTHLY_QUOTA } from "@/lib/plaid/sync";
+import { useSubscription, syncSubscriptionToBackend } from "@/lib/subscription";
 import { getPlaidCredentials, savePlaidCredentials, clearPlaidCredentials, getPlaidEnv, savePlaidEnv } from "@/lib/plaid/storage";
+import { isAuthenticated, login, register, logout, getBackendBaseUrl, saveBackendBaseUrl } from "@/lib/auth-backend";
 
 const DEV_MODE = Constants.expoConfig?.extra?.devMode === true;
 
@@ -63,22 +63,17 @@ export default function SettingsPage() {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [restoring, setRestoring] = useState(false);
-  const [bypassQuota, setBypassQuota] = useState(false);
-  const [quotaPoints, setQuotaPoints] = useState<number | null>(null);
   const [plaidClientId, setPlaidClientId] = useState("");
   const [plaidSecret, setPlaidSecret] = useState("");
   const [plaidConfigured, setPlaidConfigured] = useState(false);
   const [plaidEnvSetting, setPlaidEnvSetting] = useState("production");
+  const [backendAuthed, setBackendAuthed] = useState(false);
+  const [backendEmail, setBackendEmail] = useState("");
+  const [backendPassword, setBackendPassword] = useState("");
+  const [backendUrl, setBackendUrl] = useState("");
+  const [backendLoading, setBackendLoading] = useState(false);
   const { restore } = useSubscription();
 
-  const loadDevSettings = async () => {
-    const db = await getDatabase();
-    const row = await db.getFirstAsync<{ plaid_bypass_quota: number; plaid_quota_points: number | null }>(
-      "SELECT plaid_bypass_quota, plaid_quota_points FROM settings WHERE id = 'default'",
-    );
-    setBypassQuota(row?.plaid_bypass_quota === 1);
-    setQuotaPoints(row?.plaid_quota_points ?? null);
-  };
 
   useEffect(() => {
     api.get().then((s) => {
@@ -95,9 +90,9 @@ export default function SettingsPage() {
     });
     getPlaidEnv().then(setPlaidEnvSetting);
 
-    if (DEV_MODE) {
-      loadDevSettings().catch(() => {});
-    }
+    isAuthenticated().then(setBackendAuthed);
+    getBackendBaseUrl().then(setBackendUrl);
+
   }, []);
 
   const handleThemeChange = (value: ThemeSetting) => {
@@ -165,15 +160,6 @@ export default function SettingsPage() {
     );
   };
 
-
-  const handleToggleBypassQuota = async (value: boolean) => {
-    setBypassQuota(value);
-    const db = await getDatabase();
-    await db.runAsync(
-      "UPDATE settings SET plaid_bypass_quota = ? WHERE id = 'default'",
-      [value ? 1 : 0],
-    );
-  };
 
   const handleRestore = async () => {
     setRestoring(true);
@@ -442,11 +428,131 @@ export default function SettingsPage() {
         </TouchableOpacity>
       </View>
 
-      {/* Plaid API */}
+      {/* Backend Account */}
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-        <Text style={[styles.cardTitle, { color: theme.text }]}>Plaid API</Text>
+        <Text style={[styles.cardTitle, { color: theme.text }]}>Money Tracker Account</Text>
+        {backendAuthed ? (
+          <>
+            <Text style={[styles.cardDesc, { color: theme.accent }]}>
+              Connected — bank linking is managed automatically
+            </Text>
+            <TouchableOpacity
+              style={[styles.plaidBtn, { backgroundColor: theme.dangerBg, marginTop: 12 }]}
+              onPress={() => {
+                Alert.alert("Log Out", "Disconnect from Money Tracker backend?", [
+                  { text: i18n("common.cancel"), style: "cancel" },
+                  {
+                    text: "Log Out", style: "destructive",
+                    onPress: async () => { await logout(); setBackendAuthed(false); },
+                  },
+                ]);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={{ color: theme.danger, fontSize: 15, fontWeight: "600" }}>Log Out</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <Text style={[styles.cardDesc, { color: theme.textSecondary }]}>
+              Log in to link bank accounts without your own Plaid credentials
+            </Text>
+
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Server URL</Text>
+            <TextInput
+              style={[styles.plaidInput, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder, color: theme.text }]}
+              value={backendUrl}
+              onChangeText={(v) => { setBackendUrl(v); saveBackendBaseUrl(v); }}
+              placeholder="http://localhost:3001"
+              placeholderTextColor={theme.textSecondary}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+            />
+
+            <Text style={[styles.label, { color: theme.textSecondary, marginTop: 12 }]}>Email</Text>
+            <TextInput
+              style={[styles.plaidInput, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder, color: theme.text }]}
+              value={backendEmail}
+              onChangeText={setBackendEmail}
+              placeholder="Email"
+              placeholderTextColor={theme.textSecondary}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+            />
+
+            <Text style={[styles.label, { color: theme.textSecondary, marginTop: 12 }]}>Password</Text>
+            <TextInput
+              style={[styles.plaidInput, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder, color: theme.text }]}
+              value={backendPassword}
+              onChangeText={setBackendPassword}
+              placeholder="Password"
+              placeholderTextColor={theme.textSecondary}
+              secureTextEntry
+            />
+
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 16 }}>
+              <TouchableOpacity
+                style={[styles.plaidBtn, { backgroundColor: theme.accent, flex: 1, opacity: !backendEmail.trim() || !backendPassword.trim() || backendLoading ? 0.5 : 1 }]}
+                disabled={!backendEmail.trim() || !backendPassword.trim() || backendLoading}
+                onPress={async () => {
+                  setBackendLoading(true);
+                  try {
+                    await login(backendEmail.trim(), backendPassword);
+                    setBackendAuthed(true);
+                    setBackendPassword("");
+                    await syncSubscriptionToBackend(isProTheme);
+                    Alert.alert("Success", "Logged in successfully.");
+                  } catch (e) {
+                    Alert.alert(i18n("common.error"), e instanceof Error ? e.message : "Login failed");
+                  } finally {
+                    setBackendLoading(false);
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                {backendLoading ? (
+                  <ActivityIndicator size="small" color={theme.accentText} />
+                ) : (
+                  <Text style={{ color: theme.accentText, fontSize: 15, fontWeight: "600" }}>Log In</Text>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.plaidBtn, { borderWidth: 1, borderColor: theme.accent, flex: 1, opacity: !backendEmail.trim() || !backendPassword.trim() || backendLoading ? 0.5 : 1 }]}
+                disabled={!backendEmail.trim() || !backendPassword.trim() || backendLoading}
+                onPress={async () => {
+                  setBackendLoading(true);
+                  try {
+                    await register(backendEmail.trim(), backendPassword);
+                    setBackendAuthed(true);
+                    setBackendPassword("");
+                    await syncSubscriptionToBackend(isProTheme);
+                    Alert.alert("Success", "Account created and logged in.");
+                  } catch (e) {
+                    Alert.alert(i18n("common.error"), e instanceof Error ? e.message : "Registration failed");
+                  } finally {
+                    setBackendLoading(false);
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ color: theme.accent, fontSize: 15, fontWeight: "600" }}>Register</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+      </View>
+
+      {/* Plaid API (Direct Mode) */}
+      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+        <Text style={[styles.cardTitle, { color: theme.text }]}>Plaid API (Direct Mode)</Text>
         <Text style={[styles.cardDesc, { color: theme.textSecondary }]}>
-          {plaidConfigured ? "Configured" : "Not configured — enter your Plaid credentials to link bank accounts"}
+          {backendAuthed
+            ? "Optional — you are already connected via your Money Tracker account"
+            : plaidConfigured
+              ? "Configured"
+              : "Not configured — enter your Plaid credentials to link bank accounts"}
         </Text>
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Client ID</Text>
@@ -529,49 +635,6 @@ export default function SettingsPage() {
         </View>
       </View>
 
-      {/* Dev Tools */}
-      {DEV_MODE && (
-        <View style={[styles.card, { backgroundColor: theme.card, borderColor: "#f59e0b40" }]}>
-          <Text style={[styles.cardTitle, { color: "#f59e0b" }]}>Dev Tools</Text>
-          <Text style={[styles.cardDesc, { color: theme.textSecondary }]}>Developer-only options</Text>
-
-          <View style={styles.fireworksRow}>
-            <Ionicons name="bug-outline" size={22} color={bypassQuota ? "#f59e0b" : theme.textSecondary} />
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16, fontWeight: "600", color: theme.text }}>Bypass Plaid Quota</Text>
-              <Text style={{ fontSize: 13, color: theme.textSecondary }}>Skip cooldown and point checks on refresh</Text>
-            </View>
-            <Switch
-              value={bypassQuota}
-              onValueChange={handleToggleBypassQuota}
-              trackColor={{ false: theme.cardBorder, true: "#f59e0b" }}
-            />
-          </View>
-
-          <TouchableOpacity
-            style={[styles.dataBtn, { borderColor: "#f59e0b40" }]}
-            onPress={async () => {
-              const db = await getDatabase();
-              await db.runAsync(
-                `UPDATE settings SET plaid_quota_month = NULL, plaid_quota_points = ${PLAID_MONTHLY_QUOTA} WHERE id = 'default'`,
-              );
-              await db.runAsync(
-                "UPDATE institutions SET plaid_free_refresh_month = NULL, plaid_last_synced_at = NULL WHERE plaid_item_id IS NOT NULL",
-              );
-              await loadDevSettings();
-              Alert.alert("Quota Reset", "Monthly quota, free refreshes, and cooldowns have been reset.");
-            }}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="refresh-circle-outline" size={20} color="#f59e0b" />
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: "600", color: theme.text }}>Reset Refresh Quota</Text>
-              <Text style={{ fontSize: 13, color: theme.textSecondary }}>{quotaPoints != null ? `${quotaPoints} points remaining` : "Not initialized"}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
-          </TouchableOpacity>
-        </View>
-      )}
 
     </ScrollView>
   );

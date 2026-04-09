@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String      @id @default(uuid())
+  email         String      @unique @db.VarChar(255)
+  passwordHash  String      @map("password_hash") @db.VarChar(255)
+  name          String?     @db.VarChar(100)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @default(now()) @updatedAt @map("updated_at")
+
+  // Apple subscription
+  appleOriginalTransactionId String?   @unique @map("apple_original_transaction_id") @db.VarChar(255)
+  appleSubscriptionExpiresAt DateTime? @map("apple_subscription_expires_at")
+  appleSubscriptionProductId String?   @map("apple_subscription_product_id") @db.VarChar(100)
+  appleSubscriptionStatus    String?   @map("apple_subscription_status") @db.VarChar(20)
+
+  // Plaid quota
+  quotaMonth    String?   @map("quota_month") @db.VarChar(7)   // "YYYY-MM"
+  quotaPoints   Int       @default(300) @map("quota_points")
+
+  plaidItems    PlaidItem[]
+
+  @@map("user")
+}
+
+model PlaidItem {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  plaidItemId   String    @unique @map("plaid_item_id") @db.VarChar(255)
+  accessToken   String    @map("access_token") @db.VarChar(500) // AES-256-GCM encrypted
+  institutionName String  @default("Linked Institution") @map("institution_name") @db.VarChar(255)
+  plaidInstitutionId String? @map("plaid_institution_id") @db.VarChar(255)
+  syncCursor         String?   @map("sync_cursor")
+  lastSyncedAt       DateTime? @map("last_synced_at")
+  freeRefreshMonth   String?   @map("free_refresh_month") @db.VarChar(7) // "YYYY-MM"
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("plaid_item")
+}

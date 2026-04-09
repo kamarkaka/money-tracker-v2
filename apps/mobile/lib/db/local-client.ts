@@ -882,11 +882,22 @@ export class LocalClient extends ApiClient {
 
   private async refreshInstitution(id: string) {
     const db = await getDatabase();
-    const inst = await db.getFirstAsync<{ plaid_item_id: string | null }>(
-      "SELECT plaid_item_id FROM institutions WHERE id = ?",
+    const inst = await db.getFirstAsync<{
+      plaid_item_id: string | null;
+      plaid_backend_managed: number;
+    }>(
+      "SELECT plaid_item_id, plaid_backend_managed FROM institutions WHERE id = ?",
       [id],
     );
-    if (inst?.plaid_item_id) {
+
+    if (inst?.plaid_backend_managed && inst.plaid_item_id) {
+      // Backend mode: sync through our server
+      const { syncViaBackend } = await import("@/lib/plaid/backend-client");
+      const { ingestBackendSync } = await import("@/lib/plaid/backend-sync");
+      const result = await syncViaBackend(inst.plaid_item_id);
+      await ingestBackendSync(db, id, result);
+    } else if (inst?.plaid_item_id) {
+      // Direct mode: sync through user's own Plaid credentials
       const { refreshPlaidItem } = await import("@/lib/plaid/sync");
       await refreshPlaidItem(db, id);
     }

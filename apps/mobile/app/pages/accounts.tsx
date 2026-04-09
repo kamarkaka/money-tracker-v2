@@ -22,6 +22,8 @@ import { formatCurrency } from "@money-tracker/shared";
 import type { Account, Institution } from "@money-tracker/shared";
 import { getDatabase } from "@/lib/db";
 import { refreshPlaidItem, unlinkPlaidItem } from "@/lib/plaid/sync";
+import { syncViaBackend, unlinkViaBackend } from "@/lib/plaid/backend-client";
+import { ingestBackendSync } from "@/lib/plaid/backend-sync";
 
 const accApi = createAccountApi(apiClient);
 const instApi = createInstitutionApi(apiClient);
@@ -179,28 +181,39 @@ export default function AccountsPage() {
     setRefreshingInstId(institution.id);
     try {
       const db = await getDatabase();
-      const result = await refreshPlaidItem(db, institution.id);
-      await loadData();
-      if (result) {
-        const parts: string[] = [];
-        if (result.added > 0) parts.push(`${result.added} added`);
-        if (result.updated > 0) parts.push(`${result.updated} updated`);
-        if (parts.length > 0) {
-          showToast(parts.join(", "), false);
-        } else {
-          const total = await db.getFirstAsync<{ count: number }>(
-            `SELECT COUNT(*) as count FROM transactions
-             WHERE account_id IN (SELECT id FROM accounts WHERE institution_id = ?)`,
-            [institution.id],
-          );
-          showToast(`Synced ${total?.count ?? 0} transactions`, false);
-        }
+      const inst = await db.getFirstAsync<{ plaid_backend_managed: number; plaid_item_id: string | null }>(
+        "SELECT plaid_backend_managed, plaid_item_id FROM institutions WHERE id = ?",
+        [institution.id],
+      );
+
+      if (inst?.plaid_backend_managed && inst.plaid_item_id) {
+        // Backend mode
+        const result = await syncViaBackend(inst.plaid_item_id);
+        await ingestBackendSync(db, institution.id, result);
+        await loadData();
+        const count = result.transactions.added.length + result.transactions.modified.length;
+        showToast(count > 0 ? `${count} transactions synced` : "Up to date", false);
       } else {
-        showToast("Up to date", false);
+        // Direct mode
+        const result = await refreshPlaidItem(db, institution.id);
+        await loadData();
+        if (result) {
+          const parts: string[] = [];
+          if (result.added > 0) parts.push(`${result.added} added`);
+          if (result.updated > 0) parts.push(`${result.updated} updated`);
+          showToast(parts.length > 0 ? parts.join(", ") : "Up to date", false);
+        } else {
+          showToast("Up to date", false);
+        }
       }
     } catch (e) {
-      const message = e instanceof Error ? e.message : i18n("account.syncFailed");
-      showToast(message, true);
+      const code = (e as Error & { code?: string }).code;
+      if (code === "QUOTA_EXCEEDED") {
+        showToast("Up to date", false);
+      } else {
+        const message = e instanceof Error ? e.message : i18n("account.syncFailed");
+        showToast(message, true);
+      }
     } finally {
       setRefreshingInstId(null);
     }
@@ -217,7 +230,21 @@ export default function AccountsPage() {
           onPress: async () => {
             try {
               const db = await getDatabase();
-              await unlinkPlaidItem(db, institution.id);
+              const inst = await db.getFirstAsync<{ plaid_backend_managed: number; plaid_item_id: string | null }>(
+                "SELECT plaid_backend_managed, plaid_item_id FROM institutions WHERE id = ?",
+                [institution.id],
+              );
+
+              if (inst?.plaid_backend_managed && inst.plaid_item_id) {
+                await unlinkViaBackend(inst.plaid_item_id);
+                // Remove from local SQLite
+                await db.runAsync(
+                  "UPDATE institutions SET plaid_item_id = NULL, plaid_institution_id = NULL, plaid_backend_managed = 0, is_manual = 1 WHERE id = ?",
+                  [institution.id],
+                );
+              } else {
+                await unlinkPlaidItem(db, institution.id);
+              }
               await loadData();
             } catch {
               Alert.alert(i18n("common.error"), "Failed to unlink institution");

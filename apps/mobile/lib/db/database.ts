@@ -157,10 +157,7 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase) {
     "ALTER TABLE accounts ADD COLUMN plaid_account_id TEXT",
     "ALTER TABLE transactions ADD COLUMN plaid_transaction_id TEXT",
     "ALTER TABLE institutions ADD COLUMN plaid_last_synced_at TEXT",
-    "ALTER TABLE institutions ADD COLUMN plaid_free_refresh_month TEXT",
-    "ALTER TABLE settings ADD COLUMN plaid_quota_month TEXT",
-    "ALTER TABLE settings ADD COLUMN plaid_quota_points INTEGER DEFAULT 300",
-    "ALTER TABLE settings ADD COLUMN plaid_bypass_quota INTEGER DEFAULT 0",
+    "ALTER TABLE institutions ADD COLUMN plaid_backend_managed INTEGER DEFAULT 0",
   ];
   for (const sql of plaidMigrations) {
     try { await database.runAsync(sql); } catch { /* Column already exists */ }
