@@ -7,13 +7,14 @@ COPY apps/plaid-server/package.json ./apps/plaid-server/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/api-client/package.json ./packages/api-client/
 COPY packages/hooks/package.json ./packages/hooks/
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 # Stage 2: Build the application
 FROM node:24-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN npm ci
 
 RUN cd apps/web && DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma generate
 
@@ -33,10 +34,11 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy necessary files from builder
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder /app/apps/web/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
 
 USER nextjs
 EXPOSE 3000
