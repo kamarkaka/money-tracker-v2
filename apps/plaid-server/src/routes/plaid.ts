@@ -55,9 +55,9 @@ router.post("/verify-subscription", async (req: AuthRequest, res) => {
       return;
     }
 
-    // Client-attested Pro status (StoreKit unavailable — simulator/dev).
-    // Grant a short 7-day window; the app will re-verify on next login.
-    if (jws === "LOCAL_PRO") {
+    // Client-attested Pro status (StoreKit unavailable — simulator/dev only).
+    // Blocked in production to prevent subscription bypass.
+    if (jws === "LOCAL_PRO" && process.env.NODE_ENV !== "production") {
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       await prisma.user.update({
         where: { id: req.user!.userId },
