@@ -1,9 +1,11 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { createContext, useEffect, useState, useCallback, useMemo } from "react";
 import { useColorScheme, ActivityIndicator, View } from "react-native";
 import { getLocales } from "expo-localization";
 import { Stack } from "expo-router";
 import { ThemeProvider, DarkTheme, DefaultTheme } from "@react-navigation/native";
-import { ApiClientContext } from "@money-tracker/hooks";
+import type { ApiClient } from "@money-tracker/api-client";
+
+const ApiClientContext = createContext<ApiClient | null>(null);
 import { createSettingsApi } from "@money-tracker/api-client";
 import { apiClient } from "@/lib/api";
 import { ThemeContext, type ThemeSetting, DEFAULT_TAB_CONFIG } from "@/lib/themeContext";

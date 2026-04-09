@@ -6,7 +6,6 @@ COPY apps/web/package.json ./apps/web/
 COPY apps/plaid-server/package.json ./apps/plaid-server/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/api-client/package.json ./packages/api-client/
-COPY packages/hooks/package.json ./packages/hooks/
 RUN npm ci --ignore-scripts
 
 # Stage 2: Build the application
