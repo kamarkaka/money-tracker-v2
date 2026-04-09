@@ -6,6 +6,8 @@ import type { AuthRequest } from "../lib/auth.js";
 import { requireAuth } from "../lib/auth.js";
 import { registerLimiter, loginLimiter, refreshLimiter, deleteAccountLimiter } from "../lib/rate-limit.js";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const router = Router();
 
 // POST /auth/register
@@ -14,6 +16,10 @@ router.post("/register", registerLimiter, async (req, res) => {
     const { email, password, name } = req.body;
     if (!email || !password || password.length < 6) {
       res.status(400).json({ error: "Email and password (min 6 chars) required" });
+      return;
+    }
+    if (!EMAIL_RE.test(email)) {
+      res.status(400).json({ error: "Invalid email format" });
       return;
     }
 
@@ -42,6 +48,10 @@ router.post("/login", loginLimiter, async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
       res.status(400).json({ error: "Email and password required" });
+      return;
+    }
+    if (!EMAIL_RE.test(email)) {
+      res.status(400).json({ error: "Invalid email format" });
       return;
     }
 

@@ -563,6 +563,10 @@ export default function SettingsPage() {
                 style={[styles.plaidBtn, { backgroundColor: theme.accent, flex: 1, opacity: !backendEmail.trim() || !backendPassword.trim() || backendLoading ? 0.5 : 1 }]}
                 disabled={!backendEmail.trim() || !backendPassword.trim() || backendLoading}
                 onPress={async () => {
+                  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(backendEmail.trim())) {
+                    Alert.alert(i18n("common.error"), i18n("setting.backendInvalidEmail"));
+                    return;
+                  }
                   setBackendLoading(true);
                   try {
                     await login(backendEmail.trim(), backendPassword);
@@ -588,6 +592,10 @@ export default function SettingsPage() {
                 style={[styles.plaidBtn, { borderWidth: 1, borderColor: theme.accent, flex: 1, opacity: !backendEmail.trim() || !backendPassword.trim() || backendLoading ? 0.5 : 1 }]}
                 disabled={!backendEmail.trim() || !backendPassword.trim() || backendLoading}
                 onPress={async () => {
+                  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(backendEmail.trim())) {
+                    Alert.alert(i18n("common.error"), i18n("setting.backendInvalidEmail"));
+                    return;
+                  }
                   setBackendLoading(true);
                   try {
                     await register(backendEmail.trim(), backendPassword);

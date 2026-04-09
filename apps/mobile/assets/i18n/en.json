@@ -305,6 +305,7 @@
     "backendLogOutConfirm": "Disconnect from Money Tracker backend?",
     "backendLoggedIn": "Logged in successfully.",
     "backendRegistered": "Account created and logged in.",
+    "backendInvalidEmail": "Please enter a valid email address.",
     "backendLoginFailed": "Login failed",
     "backendRegisterFailed": "Registration failed",
     "backendDeleteAccount": "Delete Account",

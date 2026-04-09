@@ -305,6 +305,7 @@
     "backendLogOutConfirm": "断开与 Money Tracker 后端的连接？",
     "backendLoggedIn": "登录成功。",
     "backendRegistered": "账户已创建并登录。",
+    "backendInvalidEmail": "请输入有效的邮箱地址。",
     "backendLoginFailed": "登录失败",
     "backendRegisterFailed": "注册失败",
     "backendDeleteAccount": "删除账户",
