@@ -2,6 +2,11 @@
 FROM node:24-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+COPY apps/web/package.json ./apps/web/
+COPY apps/plaid-server/package.json ./apps/plaid-server/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/api-client/package.json ./packages/api-client/
+COPY packages/hooks/package.json ./packages/hooks/
 RUN npm ci
 
 # Stage 2: Build the application
@@ -10,7 +15,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN cd apps/web && DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma generate --schema=prisma/schema.prisma --no-config
+RUN cd apps/web && DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma generate
 
 # Disable telemetry during build
 ENV NEXT_TELEMETRY_DISABLED=1
