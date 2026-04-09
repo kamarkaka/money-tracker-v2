@@ -32,23 +32,33 @@ export async function ensureQuota(userId: string): Promise<number> {
     return user.quotaPoints;
   }
 
-  // Reset for new month
-  const linkedCount = await prisma.plaidItem.count({ where: { userId } });
-  const points = MONTHLY_QUOTA - LINK_COST * linkedCount;
+  // Atomic reset for new month — transaction prevents double-reset from concurrent requests
+  const result = await prisma.$transaction(async (tx) => {
+    // Re-check inside transaction to prevent race
+    const fresh = await tx.user.findUnique({
+      where: { id: userId },
+      select: { quotaMonth: true, quotaPoints: true },
+    });
+    if (fresh?.quotaMonth === month) return fresh.quotaPoints;
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: { quotaMonth: month, quotaPoints: points },
+    const linkedCount = await tx.plaidItem.count({ where: { userId } });
+    const points = MONTHLY_QUOTA - LINK_COST * linkedCount;
+
+    await tx.user.update({
+      where: { id: userId },
+      data: { quotaMonth: month, quotaPoints: points },
+    });
+
+    await tx.plaidItem.updateMany({
+      where: { userId },
+      data: { freeRefreshMonth: null },
+    });
+
+    return points;
   });
 
-  // Reset free refresh flags for all items
-  await prisma.plaidItem.updateMany({
-    where: { userId },
-    data: { freeRefreshMonth: null },
-  });
-
-  if (process.env.NODE_ENV !== "production") console.log(`[Quota] Reset for ${month}: ${points} points (${MONTHLY_QUOTA} - ${linkedCount} × ${LINK_COST})`);
-  return points;
+  if (process.env.NODE_ENV !== "production") console.log(`[Quota] Reset for ${month}: ${result} points`);
+  return result;
 }
 
 /**

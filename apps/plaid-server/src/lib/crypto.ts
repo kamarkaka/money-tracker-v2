@@ -31,7 +31,12 @@ export function decryptToken(encrypted: string): string {
   const ciphertext = Buffer.from(parts[1], "base64");
   const tag = Buffer.from(parts[2], "base64");
 
-  const decipher = createDecipheriv(ALGORITHM, key, iv);
-  decipher.setAuthTag(tag);
-  return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
+  try {
+    const decipher = createDecipheriv(ALGORITHM, key, iv);
+    decipher.setAuthTag(tag);
+    return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
+  } catch (err) {
+    if (process.env.NODE_ENV !== "production") console.error("[Crypto] Decryption error:", err);
+    throw new Error("Decryption failed");
+  }
 }

@@ -133,11 +133,14 @@ router.post("/exchange", exchangeLimiter, async (req: AuthRequest, res) => {
   try {
     await requireActiveSubscription(userId);
 
-    const { publicToken, institutionName: providedName } = req.body;
+    const { publicToken, institutionName } = req.body;
     if (!publicToken || typeof publicToken !== "string") {
       res.status(400).json({ error: "Missing publicToken" });
       return;
     }
+    const providedName = (institutionName && typeof institutionName === "string")
+      ? institutionName.slice(0, 255).trim()
+      : null;
 
     // Deduct link cost upfront (atomic — prevents TOCTOU race)
     const quotaCheck = await checkLinkQuota(userId);
@@ -284,33 +287,18 @@ router.get("/institutions", institutionsLimiter, async (req: AuthRequest, res) =
   try {
     await requireActiveSubscription(req.user!.userId);
 
+    // Return cached metadata only — no live Plaid API calls
     const items = await prisma.plaidItem.findMany({
       where: { userId: req.user!.userId },
       orderBy: { createdAt: "desc" },
     });
 
-    // For each item, fetch current accounts from Plaid
-    const result = [];
-    for (const item of items) {
-      let accounts: ReturnType<typeof formatAccounts> = [];
-      try {
-        const accessToken = decryptToken(item.accessToken);
-        const { accounts: plaidAccounts } = await getAccounts(accessToken);
-        accounts = formatAccounts(plaidAccounts);
-      } catch {
-        // Token may be invalid — return empty accounts
-      }
-
-      result.push({
-        plaidItemId: item.plaidItemId,
-        name: item.institutionName,
-        plaidInstitutionId: item.plaidInstitutionId,
-        lastSyncedAt: item.lastSyncedAt?.toISOString() || null,
-        accounts,
-      });
-    }
-
-    res.json(result);
+    res.json(items.map((item) => ({
+      plaidItemId: item.plaidItemId,
+      name: item.institutionName,
+      plaidInstitutionId: item.plaidInstitutionId,
+      lastSyncedAt: item.lastSyncedAt?.toISOString() || null,
+    })));
   } catch (err) {
     const e = err as Error & { statusCode?: number; code?: string };
     if (e.statusCode && e.statusCode < 500) {

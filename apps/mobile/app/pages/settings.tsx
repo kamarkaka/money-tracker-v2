@@ -492,16 +492,17 @@ export default function SettingsPage() {
               <TouchableOpacity
                 style={[styles.plaidBtn, { backgroundColor: theme.danger, flex: 1 }]}
                 onPress={() => {
-                  Alert.alert(
+                  Alert.prompt(
                     i18n("setting.backendDeleteAccount"),
                     i18n("setting.backendDeleteConfirm"),
                     [
                       { text: i18n("common.cancel"), style: "cancel" },
                       {
                         text: i18n("common.delete"), style: "destructive",
-                        onPress: async () => {
+                        onPress: async (pwd?: string) => {
+                          if (!pwd) return;
                           try {
-                            await deleteAccount();
+                            await deleteAccount(pwd);
                             setBackendAuthed(false);
                             Alert.alert(i18n("setting.backendDeleteSuccess"), i18n("setting.backendDeleteSuccessBody"));
                           } catch (e) {
@@ -510,6 +511,7 @@ export default function SettingsPage() {
                         },
                       },
                     ],
+                    "secure-text",
                   );
                 }}
                 activeOpacity={0.7}

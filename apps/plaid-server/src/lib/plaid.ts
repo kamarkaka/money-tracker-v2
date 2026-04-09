@@ -48,7 +48,8 @@ async function plaidRequest<T>(path: string, body: Record<string, unknown>): Pro
   });
   if (!res.ok) {
     const err = await res.json().catch(() => null);
-    throw new Error(err?.error_message ?? `Plaid error ${res.status}`);
+    console.error(`[Plaid] ${path} failed: ${err?.error_code || res.status}`);
+    throw new Error("Plaid request failed");
   }
   return res.json() as Promise<T>;
 }

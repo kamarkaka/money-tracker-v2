@@ -23,14 +23,15 @@ router.post("/register", registerLimiter, async (req, res) => {
       return;
     }
 
+    // Hash before checking existence to prevent timing-based email enumeration
+    const passwordHash = await bcrypt.hash(password, 12);
+
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       res.status(400).json({ error: "Registration failed" });
       return;
     }
-
-    const passwordHash = await bcrypt.hash(password, 12);
-    const trimmedName = name ? String(name).slice(0, 100) : null;
+    const trimmedName = (name && typeof name === "string") ? name.slice(0, 100).trim() : null;
     const user = await prisma.user.create({
       data: { email, passwordHash, name: trimmedName },
     });
@@ -97,6 +98,18 @@ router.post("/refresh", refreshLimiter, requireAuth, async (req: AuthRequest, re
 router.delete("/account", deleteAccountLimiter, requireAuth, async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
+    const { password } = req.body || {};
+
+    if (!password || typeof password !== "string") {
+      res.status(400).json({ error: "Password required to delete account" });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      res.status(401).json({ error: "Invalid password" });
+      return;
+    }
 
     // PlaidItems cascade-delete with User, but revoke tokens at Plaid first
     const items = await prisma.plaidItem.findMany({ where: { userId } });
