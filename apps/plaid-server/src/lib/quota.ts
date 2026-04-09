@@ -28,7 +28,7 @@ export async function ensureQuota(userId: string): Promise<number> {
   });
 
   if (user?.quotaMonth === month) {
-    console.log(`[Quota] ${month} already initialized: ${user.quotaPoints} points remaining`);
+    if (process.env.NODE_ENV !== "production") console.log(`[Quota] ${month} already initialized: ${user.quotaPoints} points remaining`);
     return user.quotaPoints;
   }
 
@@ -47,7 +47,7 @@ export async function ensureQuota(userId: string): Promise<number> {
     data: { freeRefreshMonth: null },
   });
 
-  console.log(`[Quota] Reset for ${month}: ${points} points (${MONTHLY_QUOTA} - ${linkedCount} × ${LINK_COST})`);
+  if (process.env.NODE_ENV !== "production") console.log(`[Quota] Reset for ${month}: ${points} points (${MONTHLY_QUOTA} - ${linkedCount} × ${LINK_COST})`);
   return points;
 }
 
@@ -61,11 +61,11 @@ export async function deductQuota(userId: string, amount: number): Promise<numbe
     amount, userId,
   );
   if (result === 0) {
-    console.log(`[Quota] Deduction rejected: not enough points for ${amount}`);
+    if (process.env.NODE_ENV !== "production") console.log(`[Quota] Deduction rejected: not enough points for ${amount}`);
     return 0;
   }
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { quotaPoints: true } });
-  console.log(`[Quota] Deducted ${amount} points, ${user?.quotaPoints ?? 0} remaining`);
+  if (process.env.NODE_ENV !== "production") console.log(`[Quota] Deducted ${amount} points, ${user?.quotaPoints ?? 0} remaining`);
   return user?.quotaPoints ?? 0;
 }
 
@@ -82,10 +82,10 @@ export interface QuotaCheckResult {
 export async function checkLinkQuota(userId: string): Promise<QuotaCheckResult> {
   const points = await ensureQuota(userId);
   if (points < LINK_COST) {
-    console.log(`[Quota] Link denied: ${points} points remaining, need ${LINK_COST}`);
+    if (process.env.NODE_ENV !== "production") console.log(`[Quota] Link denied: ${points} points remaining, need ${LINK_COST}`);
     return { allowed: false, reason: `Insufficient quota: ${points} points remaining, need ${LINK_COST}`, remainingPoints: points };
   }
-  console.log(`[Quota] Link allowed: ${points} points remaining, will cost ${LINK_COST}`);
+  if (process.env.NODE_ENV !== "production") console.log(`[Quota] Link allowed: ${points} points remaining, will cost ${LINK_COST}`);
   return { allowed: true, remainingPoints: points };
 }
 
@@ -108,7 +108,7 @@ export async function checkRefreshQuota(userId: string, plaidItemId: string): Pr
   // First refresh of the month is free
   const isFreeRefresh = item.freeRefreshMonth !== month;
   if (isFreeRefresh) {
-    console.log(`[Quota] Refresh allowed (free): first refresh this month for item ${plaidItemId}`);
+    if (process.env.NODE_ENV !== "production") console.log(`[Quota] Refresh allowed (free): first refresh this month for item ${plaidItemId}`);
     return { allowed: true, isFreeRefresh: true, remainingPoints: points };
   }
 
@@ -118,18 +118,18 @@ export async function checkRefreshQuota(userId: string, plaidItemId: string): Pr
     const elapsed = Date.now() - item.lastSyncedAt.getTime();
     if (elapsed < cooldownMs) {
       const remainingHrs = ((cooldownMs - elapsed) / (60 * 60 * 1000)).toFixed(1);
-      console.log(`[Quota] Refresh denied: cooldown active, ${remainingHrs}h remaining for item ${plaidItemId}`);
+      if (process.env.NODE_ENV !== "production") console.log(`[Quota] Refresh denied: cooldown active, ${remainingHrs}h remaining for item ${plaidItemId}`);
       return { allowed: false, reason: `Refresh cooldown: try again in ${remainingHrs}h`, remainingPoints: points };
     }
   }
 
   // Check points
   if (points < REFRESH_COST) {
-    console.log(`[Quota] Refresh denied: ${points} points remaining, need ${REFRESH_COST}`);
+    if (process.env.NODE_ENV !== "production") console.log(`[Quota] Refresh denied: ${points} points remaining, need ${REFRESH_COST}`);
     return { allowed: false, reason: `Insufficient quota: ${points} points remaining, need ${REFRESH_COST}`, remainingPoints: points };
   }
 
-  console.log(`[Quota] Refresh allowed (paid): ${points} points remaining, will cost ${REFRESH_COST}`);
+  if (process.env.NODE_ENV !== "production") console.log(`[Quota] Refresh allowed (paid): ${points} points remaining, will cost ${REFRESH_COST}`);
   return { allowed: true, isFreeRefresh: false, remainingPoints: points };
 }
 
@@ -142,5 +142,5 @@ export async function markFreeRefreshUsed(plaidItemId: string): Promise<void> {
     where: { plaidItemId },
     data: { freeRefreshMonth: month },
   });
-  console.log(`[Quota] Free refresh used for item ${plaidItemId} in ${month}`);
+  if (process.env.NODE_ENV !== "production") console.log(`[Quota] Free refresh used for item ${plaidItemId} in ${month}`);
 }
