@@ -429,7 +429,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
 
           {/* Quick-fill from frequent transactions (add mode only) */}
           {!isEdit && frequentTxs.length > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxHeight: 36, marginBottom: 8 }} contentContainerStyle={{ gap: 8 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxHeight: 36, marginBottom: 16 }} contentContainerStyle={{ gap: 8 }}>
               {frequentTxs.map((freq, idx) => {
                 const isExp = freq.amount < 0;
                 const emojiIcon = getEmojiIcon(freq.emoji);
