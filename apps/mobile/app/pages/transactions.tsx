@@ -205,22 +205,34 @@ export default function TransactionsPage() {
     return `${date.toLocaleString("en-US", { month: "short", timeZone: "UTC" })} ${date.getUTCDate()}`;
   };
 
+  const createWithTodayDate = useCallback(async (params: {
+    accountId: string; description: string; amount: number;
+    categoryId?: string | null; tagIds?: string[];
+  }) => {
+    await txApi.create({
+      accountId: params.accountId,
+      description: params.description,
+      amount: params.amount,
+      date: new Date().toISOString().split("T")[0],
+      ...(params.categoryId ? { categoryId: params.categoryId } : {}),
+      ...(params.tagIds?.length ? { tagIds: params.tagIds } : {}),
+    });
+    await refreshInPlace();
+  }, [refreshInPlace]);
+
   const handleDuplicate = useCallback(async (item: Transaction) => {
     try {
-      const amount = parseAmount(item.amount);
-      await txApi.create({
+      await createWithTodayDate({
         accountId: item.account.id,
         description: item.description,
-        amount,
-        date: new Date().toISOString().split("T")[0],
-        ...(item.categoryId ? { categoryId: item.categoryId } : {}),
-        ...(item.transactionTags?.length ? { tagIds: item.transactionTags.map((tt) => tt.tag.id) } : {}),
+        amount: parseAmount(item.amount),
+        categoryId: item.categoryId,
+        tagIds: item.transactionTags?.map((tt) => tt.tag.id),
       });
-      await refreshInPlace();
     } catch {
       Alert.alert(i18n("common.error"), i18n("transaction.duplicateFailed"));
     }
-  }, [refreshInPlace, i18n]);
+  }, [createWithTodayDate, i18n]);
 
   const handleLongPress = useCallback((item: Transaction) => {
     Alert.alert(item.description || i18n("overview.uncategorized"), undefined, [

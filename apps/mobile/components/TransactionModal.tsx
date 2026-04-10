@@ -18,7 +18,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { createTransactionApi, createAccountApi, createCategoryApi, createInstitutionApi, createTagApi } from "@money-tracker/api-client";
 import type { Account, Transaction, Category, Institution, Tag } from "@money-tracker/shared";
-import { parseAmount } from "@money-tracker/shared";
+import { parseAmount, formatCurrency } from "@money-tracker/shared";
 import { apiClient } from "@/lib/api";
 import { getDatabase } from "@/lib/db";
 import { useAppTheme } from "@/lib/themeContext";
@@ -45,6 +45,8 @@ function flattenCategories(cats: Category[]): { id: string; name: string; emoji?
 
 const ICONS_ROW_1 = DEFAULT_CATEGORY_ICONS.slice(0, Math.ceil(DEFAULT_CATEGORY_ICONS.length / 2));
 const ICONS_ROW_2 = DEFAULT_CATEGORY_ICONS.slice(Math.ceil(DEFAULT_CATEGORY_ICONS.length / 2));
+
+interface FrequentTx { description: string; amount: number; categoryId: string | null; emoji: string | null; accountId: string }
 
 interface Props {
   open: boolean;
@@ -99,6 +101,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [pendingDate, setPendingDate] = useState(new Date());
   const [ruleSuggested, setRuleSuggested] = useState(false);
+  const [frequentTxs, setFrequentTxs] = useState<FrequentTx[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -141,6 +144,24 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
         setSelectedCategoryId(null);
         setSelectedTagIds([]);
         setIsExpense(true);
+
+        // Load frequent transactions for quick-fill
+        getDatabase().then((db) => {
+          db.getAllAsync<{ description: string; amount: number; category_id: string | null; emoji: string | null; account_id: string }>(
+            `SELECT t.description, t.amount, t.account_id, t.category_id, c.emoji
+             FROM transactions t LEFT JOIN categories c ON t.category_id = c.id
+             WHERE t.description != ''
+             GROUP BY t.category_id, t.description, t.amount
+             ORDER BY COUNT(*) DESC, MAX(t.date) DESC
+             LIMIT 10`,
+          ).then((rows) => setFrequentTxs(rows.map((r) => ({
+            description: r.description,
+            amount: r.amount,
+            categoryId: r.category_id,
+            emoji: r.emoji,
+            accountId: r.account_id,
+          }))));
+        });
       }
       // else: resuming a dismissed add — keep existing state
 
@@ -354,6 +375,16 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
     );
   }
 
+  const handleQuickFill = (freq: FrequentTx) => {
+    setRawCents(String(Math.round(Math.abs(freq.amount) * 100)));
+    setIsExpense(freq.amount < 0);
+    setDescription(freq.description);
+    if (freq.categoryId) setSelectedCategoryId(freq.categoryId);
+    if (freq.emoji) setSelectedEmoji(freq.emoji);
+    if (freq.accountId) setAccountId(freq.accountId);
+    setDate(new Date());
+  };
+
   return (
     <>
       <Animated.View
@@ -394,6 +425,31 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
                 <Ionicons name="checkmark-circle" size={36} color={theme.brand} />
               </TouchableOpacity>
             </View>
+          )}
+
+          {/* Quick-fill from frequent transactions (add mode only) */}
+          {!isEdit && frequentTxs.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxHeight: 36, marginBottom: 8 }} contentContainerStyle={{ gap: 8 }}>
+              {frequentTxs.map((freq, idx) => {
+                const isExp = freq.amount < 0;
+                const emojiIcon = getEmojiIcon(freq.emoji);
+                const truncated = freq.description.length > 16 ? freq.description.slice(0, 15) + "…" : freq.description;
+                return (
+                  <TouchableOpacity
+                    key={`${freq.description}-${freq.amount}-${idx}`}
+                    style={[styles.quickFillChip, { borderColor: theme.cardBorder, backgroundColor: theme.inputBg }]}
+                    onPress={() => handleQuickFill(freq)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name={emojiIcon.icon} size={13} color={emojiIcon.color} />
+                    <Text style={{ fontSize: 12, color: theme.text, fontWeight: "500" }} numberOfLines={1}>{truncated}</Text>
+                    <Text style={{ fontSize: 11, color: isExp ? theme.expense : theme.income, fontWeight: "600" }}>
+                      {formatCurrency(Math.abs(freq.amount))}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           )}
 
           {/* Toggle */}
@@ -781,5 +837,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 8,
     marginTop: 2,
+  },
+  quickFillChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    height: 30,
+    borderWidth: 1,
+    borderRadius: 15,
   },
 });
