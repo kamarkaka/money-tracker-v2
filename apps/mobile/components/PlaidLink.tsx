@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import {
   View,
   TouchableOpacity,
@@ -14,6 +14,7 @@ import {
   LinkExit,
 } from "react-native-plaid-link-sdk";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
 import { useAppTheme } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
 import { getDatabase } from "@/lib/db";
@@ -36,9 +37,13 @@ export function PlaidLinkButton({ onSuccess, onDismiss }: PlaidLinkProps) {
   const [syncing, setSyncing] = useState(false);
   const [plaidMode, setPlaidMode] = useState<PlaidMode | null>(null);
 
-  useEffect(() => {
-    getPlaidMode().then(setPlaidMode);
-  }, []);
+  // Re-check mode each time the screen gains focus
+  // (e.g. after navigating to Settings to log in or enter Plaid credentials)
+  useFocusEffect(useCallback(() => {
+    getPlaidMode().then((mode) => {
+      setPlaidMode((prev) => prev === mode ? prev : mode);
+    });
+  }, []));
 
   const handleDirectLink = useCallback(async () => {
     const creds = await getPlaidCredentials();
