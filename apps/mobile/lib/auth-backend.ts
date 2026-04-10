@@ -6,7 +6,7 @@ const AUTH_TOKEN_KEY = "backend_auth_token";
 const BACKEND_URL_KEY = "backend_url";
 
 const DEFAULT_BACKEND_URL =
-  Constants.expoConfig?.extra?.PLAID_BACKEND_URL || "http://localhost:3001";
+  Constants.expoConfig?.extra?.PLAID_BACKEND_URL || "";
 
 export async function getAuthToken(): Promise<string | null> {
   return SecureStore.getItemAsync(AUTH_TOKEN_KEY);

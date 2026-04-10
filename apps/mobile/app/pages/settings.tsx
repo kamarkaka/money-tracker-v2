@@ -526,19 +526,23 @@ export default function SettingsPage() {
               {i18n("setting.backendLoginPrompt")}
             </Text>
 
-            <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n("setting.backendServerUrl")}</Text>
-            <TextInput
-              style={[styles.plaidInput, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder, color: theme.text }]}
-              value={backendUrl}
-              onChangeText={(v) => { setBackendUrl(v); saveBackendBaseUrl(v); }}
-              placeholder="http://localhost:3001"
-              placeholderTextColor={theme.textSecondary}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="url"
-            />
+            {DEV_MODE && (
+              <>
+                <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n("setting.backendServerUrl")}</Text>
+                <TextInput
+                  style={[styles.plaidInput, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder, color: theme.text }]}
+                  value={backendUrl}
+                  onChangeText={(v) => { setBackendUrl(v); saveBackendBaseUrl(v); }}
+                  placeholder={i18n("setting.backendServerUrlPlaceholder")}
+                  placeholderTextColor={theme.textSecondary}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="url"
+                />
+              </>
+            )}
 
-            <Text style={[styles.label, { color: theme.textSecondary, marginTop: 12 }]}>Email</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Email</Text>
             <TextInput
               style={[styles.plaidInput, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder, color: theme.text }]}
               value={backendEmail}

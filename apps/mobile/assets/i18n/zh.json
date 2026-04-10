@@ -301,6 +301,7 @@
     "backendConnected": "已连接 — 银行关联由服务器自动管理",
     "backendLoginPrompt": "登录以无需自己的 Plaid 凭证即可关联银行账户",
     "backendServerUrl": "服务器地址",
+    "backendServerUrlPlaceholder": "输入服务器地址",
     "backendLogOut": "退出登录",
     "backendLogOutConfirm": "断开与 Money Tracker 后端的连接？",
     "backendLoggedIn": "登录成功。",

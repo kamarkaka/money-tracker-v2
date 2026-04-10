@@ -301,6 +301,7 @@
     "backendConnected": "Connected — bank linking is managed automatically",
     "backendLoginPrompt": "Log in to link bank accounts without your own Plaid credentials",
     "backendServerUrl": "Server URL",
+    "backendServerUrlPlaceholder": "Enter server URL",
     "backendLogOut": "Log Out",
     "backendLogOutConfirm": "Disconnect from Money Tracker backend?",
     "backendLoggedIn": "Logged in successfully.",
