@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Modal,
+  Alert,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -204,6 +205,33 @@ export default function TransactionsPage() {
     return `${date.toLocaleString("en-US", { month: "short", timeZone: "UTC" })} ${date.getUTCDate()}`;
   };
 
+  const handleDuplicate = useCallback(async (item: Transaction) => {
+    try {
+      const amount = parseAmount(item.amount);
+      await txApi.create({
+        accountId: item.account.id,
+        description: item.description,
+        amount,
+        date: new Date().toISOString().split("T")[0],
+        ...(item.categoryId ? { categoryId: item.categoryId } : {}),
+        ...(item.transactionTags?.length ? { tagIds: item.transactionTags.map((tt) => tt.tag.id) } : {}),
+      });
+      await refreshInPlace();
+    } catch {
+      Alert.alert(i18n("common.error"), i18n("transaction.duplicateFailed"));
+    }
+  }, [refreshInPlace, i18n]);
+
+  const handleLongPress = useCallback((item: Transaction) => {
+    Alert.alert(item.description || i18n("overview.uncategorized"), undefined, [
+      {
+        text: i18n("transaction.duplicate"),
+        onPress: () => handleDuplicate(item),
+      },
+      { text: i18n("common.cancel"), style: "cancel" },
+    ]);
+  }, [handleDuplicate, i18n]);
+
   const renderTransaction = ({ item }: { item: Transaction }) => {
     const amount = parseAmount(item.amount);
     const isIncome = amount > 0;
@@ -217,6 +245,7 @@ export default function TransactionsPage() {
       <TouchableOpacity
         style={[styles.transactionRow, { borderColor: theme.cardBorder }]}
         onPress={() => openEdit(item)}
+        onLongPress={() => handleLongPress(item)}
         activeOpacity={0.7}
       >
         <View style={[styles.iconCircle, { backgroundColor: emojiIcon.color + "15" }]}>

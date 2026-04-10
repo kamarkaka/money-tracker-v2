@@ -185,6 +185,8 @@
     "downloadCsv": "Download CSV",
     "deleteTransaction": "Delete Transaction",
     "deleteWarning": "Are you sure you want to delete this transaction? This cannot be undone.",
+    "duplicate": "Duplicate with Today's Date",
+    "duplicateFailed": "Failed to duplicate transaction.",
     "noTransactions": "No transactions found.",
     "description": "Description",
     "amount": "Amount",

@@ -185,6 +185,8 @@
     "downloadCsv": "下载 CSV",
     "deleteTransaction": "删除交易",
     "deleteWarning": "确定要删除此交易吗？此操作无法撤销。",
+    "duplicate": "复制到今天",
+    "duplicateFailed": "复制交易失败。",
     "noTransactions": "未找到交易记录。",
     "description": "描述",
     "amount": "金额",
