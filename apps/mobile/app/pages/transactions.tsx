@@ -47,6 +47,7 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const pageRef = useRef(1);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -110,17 +111,18 @@ export default function TransactionsPage() {
   }), [search, accountIdsKey, categoryIdsKey, startDate, endDate, minAmount, maxAmount]);
 
   const fetchTransactions = useCallback(
-    async (pageNum: number, append = false) => {
+    async (pageNum: number, append = false, pageSize = PAGE_SIZE) => {
       try {
-        const filters = { ...buildFilters(), page: pageNum };
+        const filters = { ...buildFilters(), page: pageNum, pageSize };
         const response = await txApi.list(filters);
         if (append) {
           setTransactions((prev) => [...prev, ...response.transactions]);
+          setHasMore(response.total > pageNum * pageSize);
         } else {
           setTransactions(response.transactions);
+          setHasMore(response.total > response.transactions.length);
         }
         setTotal(response.total);
-        setHasMore(response.transactions.length === PAGE_SIZE);
       } catch {
         // ignore
       }
@@ -131,14 +133,20 @@ export default function TransactionsPage() {
   const reload = useCallback(async () => {
     setLoading(true);
     setPage(1);
+    pageRef.current = 1;
     setHasMore(true);
     await fetchTransactions(1, false);
     setLoading(false);
   }, [fetchTransactions]);
 
+  const refreshInPlace = useCallback(async () => {
+    await fetchTransactions(1, false, PAGE_SIZE * pageRef.current);
+  }, [fetchTransactions]);
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     setPage(1);
+    pageRef.current = 1;
     await fetchTransactions(1, false);
     setRefreshing(false);
   }, [fetchTransactions]);
@@ -148,6 +156,7 @@ export default function TransactionsPage() {
     setLoadingMore(true);
     const nextPage = page + 1;
     setPage(nextPage);
+    pageRef.current = nextPage;
     await fetchTransactions(nextPage, true);
     setLoadingMore(false);
   }, [loadingMore, hasMore, page, fetchTransactions]);
@@ -166,8 +175,8 @@ export default function TransactionsPage() {
 
   useFocusEffect(useCallback(() => {
     reload();
-    setOnComplete(() => reload);
-  }, [reload, setOnComplete]));
+    setOnComplete(() => refreshInPlace);
+  }, [reload, refreshInPlace, setOnComplete]));
 
   const clearAllFilters = () => {
     setAccountIds([]);
