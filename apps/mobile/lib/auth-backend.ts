@@ -1,5 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
+import { fetchWithTimeout } from "./fetch";
 
 const AUTH_TOKEN_KEY = "backend_auth_token";
 const BACKEND_URL_KEY = "backend_url";
@@ -36,7 +37,7 @@ export async function saveBackendBaseUrl(url: string): Promise<void> {
 
 async function authRequest<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const baseUrl = await getBackendBaseUrl();
-  const res = await fetch(`${baseUrl}${path}`, {
+  const res = await fetchWithTimeout(`${baseUrl}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -80,7 +81,7 @@ export async function refreshToken(): Promise<{ token: string }> {
   if (!currentToken) throw new Error("Not authenticated");
 
   const baseUrl = await getBackendBaseUrl();
-  const res = await fetch(`${baseUrl}/auth/refresh`, {
+  const res = await fetchWithTimeout(`${baseUrl}/auth/refresh`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -109,7 +110,7 @@ export async function deleteAccount(password: string): Promise<void> {
   if (!token) throw new Error("Not authenticated");
 
   const baseUrl = await getBackendBaseUrl();
-  const res = await fetch(`${baseUrl}/auth/account`, {
+  const res = await fetchWithTimeout(`${baseUrl}/auth/account`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",

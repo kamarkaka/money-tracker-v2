@@ -146,8 +146,11 @@ export async function syncTransactions(
 
   let currentCursor = cursor || "";
   let hasMore = true;
+  let iterations = 0;
+  const MAX_PAGES = 100;
 
-  while (hasMore) {
+  while (hasMore && iterations < MAX_PAGES) {
+    iterations++;
     const data = await plaidRequest<{
       added: PlaidTransaction[];
       modified: PlaidTransaction[];

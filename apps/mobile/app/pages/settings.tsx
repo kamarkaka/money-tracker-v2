@@ -569,11 +569,12 @@ export default function SettingsPage() {
                     Alert.alert(i18n("common.error"), i18n("setting.backendInvalidEmail"));
                     return;
                   }
+                  const pwd = backendPassword;
+                  setBackendPassword("");
                   setBackendLoading(true);
                   try {
-                    await login(backendEmail.trim(), backendPassword);
+                    await login(backendEmail.trim(), pwd);
                     setBackendAuthed(true);
-                    setBackendPassword("");
                     await syncSubscriptionToBackend(isProTheme);
                     Alert.alert(i18n("common.success"), i18n("setting.backendLoggedIn"));
                   } catch (e) {
@@ -598,11 +599,12 @@ export default function SettingsPage() {
                     Alert.alert(i18n("common.error"), i18n("setting.backendInvalidEmail"));
                     return;
                   }
+                  const pwd = backendPassword;
+                  setBackendPassword("");
                   setBackendLoading(true);
                   try {
-                    await register(backendEmail.trim(), backendPassword);
+                    await register(backendEmail.trim(), pwd);
                     setBackendAuthed(true);
-                    setBackendPassword("");
                     await syncSubscriptionToBackend(isProTheme);
                     Alert.alert(i18n("common.success"), i18n("setting.backendRegistered"));
                   } catch (e) {

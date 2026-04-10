@@ -1,4 +1,5 @@
 import { getAuthToken, getBackendBaseUrl } from "@/lib/auth-backend";
+import { fetchWithTimeout } from "@/lib/fetch";
 
 // ── Types ──
 
@@ -53,14 +54,14 @@ async function backendRequest<T>(
   const [baseUrl, token] = await Promise.all([getBackendBaseUrl(), getAuthToken()]);
   if (!token) throw new Error("Not authenticated with backend");
 
-  const res = await fetch(`${baseUrl}${path}`, {
+  const res = await fetchWithTimeout(`${baseUrl}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: body ? JSON.stringify(body) : undefined,
-  });
+  }, 30_000);
 
   const data = await res.json();
   if (!res.ok) {
