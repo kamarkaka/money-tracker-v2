@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 import { ApiClient } from "@money-tracker/api-client";
-import { EMOJI_TO_NAME } from "@money-tracker/shared";
+import { EMOJI_TO_NAME, UNCATEGORIZED_ID } from "@money-tracker/shared";
 import { getDatabase, uuid } from "./database";
 
 /**
@@ -230,12 +230,20 @@ export class LocalClient extends ApiClient {
     }
     if (categoryId) {
       const ids = categoryId.split(",");
-      if (ids.length === 1) {
+      const realIds = ids.filter((id) => id !== UNCATEGORIZED_ID);
+      const includeUncategorized = ids.includes(UNCATEGORIZED_ID);
+
+      if (realIds.length > 0 && includeUncategorized) {
+        conditions.push(`(t.category_id IN (${realIds.map(() => "?").join(",")}) OR t.category_id IS NULL)`);
+        args.push(...realIds);
+      } else if (includeUncategorized) {
+        conditions.push("t.category_id IS NULL");
+      } else if (realIds.length === 1) {
         conditions.push("t.category_id = ?");
-        args.push(ids[0]);
+        args.push(realIds[0]);
       } else {
-        conditions.push(`t.category_id IN (${ids.map(() => "?").join(",")})`);
-        args.push(...ids);
+        conditions.push(`t.category_id IN (${realIds.map(() => "?").join(",")})`);
+        args.push(...realIds);
       }
     }
     if (search) {

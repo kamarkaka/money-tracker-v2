@@ -52,3 +52,5 @@ export const ACCOUNT_COLORS = [
   "#ef4444", "#14b8a6", "#f97316", "#6366f1",
   "#ec4899", "#06b6d4",
 ];
+
+export const UNCATEGORIZED_ID = "__uncategorized__";

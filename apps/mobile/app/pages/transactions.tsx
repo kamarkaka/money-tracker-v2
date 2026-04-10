@@ -18,7 +18,7 @@ import { apiClient } from "@/lib/api";
 import { useAppTheme } from "@/lib/themeContext";
 import { useI18n } from "@/lib/i18n";
 import { useTransactionModal } from "@/lib/addModal";
-import { formatCurrency, parseAmount } from "@money-tracker/shared";
+import { formatCurrency, parseAmount, UNCATEGORIZED_ID } from "@money-tracker/shared";
 import type { Transaction, TransactionFilters, Account, Category, Institution } from "@money-tracker/shared";
 import { getEmojiIcon } from "@/lib/emoji";
 
@@ -196,7 +196,7 @@ export default function TransactionsPage() {
   const selectedCategoryLabel = categoryIds.length === 0
     ? undefined
     : categoryIds.length === 1
-      ? allCats.find((c) => c.id === categoryIds[0])?.name
+      ? categoryIds[0] === UNCATEGORIZED_ID ? i18n("overview.uncategorized") : allCats.find((c) => c.id === categoryIds[0])?.name
       : `${categoryIds.length} categories`;
 
   const formatShortDate = (dateStr: string) => {
@@ -424,6 +424,21 @@ export default function TransactionsPage() {
             </View>
 
             <ScrollView style={{ maxHeight: 400 }}>
+              {(() => {
+                const isSelected = pendingCategoryIds.includes(UNCATEGORIZED_ID);
+                return (
+                  <TouchableOpacity
+                    style={[styles.modalOption, { borderBottomColor: theme.cardBorder }]}
+                    onPress={() => togglePendingCategory(UNCATEGORIZED_ID)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 15, color: isSelected ? theme.accent : theme.textSecondary, fontWeight: isSelected ? "600" : "400", flex: 1, fontStyle: "italic" }}>
+                      {i18n("overview.uncategorized")}
+                    </Text>
+                    {isSelected && <Ionicons name="checkmark" size={20} color={theme.accent} />}
+                  </TouchableOpacity>
+                );
+              })()}
               {allCats.map((opt) => {
                 const isSelected = pendingCategoryIds.includes(opt.id);
                 return (
