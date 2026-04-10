@@ -53,9 +53,10 @@ interface Props {
   onClose: () => void;
   onComplete?: () => void;
   editTransaction?: Transaction | null;
+  duplicateTransaction?: Transaction | null;
 }
 
-export function TransactionModal({ open, onClose, onComplete, editTransaction }: Props) {
+export function TransactionModal({ open, onClose, onComplete, editTransaction, duplicateTransaction }: Props) {
   const isEdit = !!editTransaction;
   const { theme, isDark, isPro } = useAppTheme();
   const { i18n, locale } = useI18n();
@@ -108,18 +109,22 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
       setShowDatePicker(false);
       setSaving(false);
 
-      if (editTransaction) {
-        const amt = parseAmount(editTransaction.amount);
+      const prefillFrom = (tx: Transaction, txDate: Date) => {
+        const amt = parseAmount(tx.amount);
         setRawCents(String(Math.round(Math.abs(amt) * 100)));
         setIsExpense(amt < 0);
-        setDescription(editTransaction.description || "");
-        setDate(new Date(editTransaction.date));
-        setSelectedEmoji(editTransaction.category?.emoji || null);
-        setSelectedCategoryId(editTransaction.categoryId || null);
-        setAccountId(editTransaction.account?.id || "");
-        setSelectedTagIds(editTransaction.transactionTags?.map((tt) => tt.tag.id) || []);
-        setRuleSuggested(false);
+        setDescription(tx.description || "");
+        setDate(txDate);
+        setSelectedEmoji(tx.category?.emoji || null);
+        setSelectedCategoryId(tx.categoryId || null);
+        setAccountId(tx.account?.id || "");
+        setSelectedTagIds(tx.transactionTags?.map((tt) => tt.tag.id) || []);
         dismissedAddRef.current = false;
+      };
+
+      if (editTransaction) {
+        prefillFrom(editTransaction, new Date(editTransaction.date));
+        setRuleSuggested(false);
 
         if (!editTransaction.categoryId && editTransaction.description) {
           getDatabase().then(async (db) => {
@@ -135,6 +140,9 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
             }
           });
         }
+      } else if (duplicateTransaction) {
+        prefillFrom(duplicateTransaction, new Date());
+        setFrequentTxs([]);
       } else if (!dismissedAddRef.current) {
         // Fresh add — reset all fields
         setRawCents("");
@@ -204,7 +212,7 @@ export function TransactionModal({ open, onClose, onComplete, editTransaction }:
         Animated.timing(backdropAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
       ]).start();
     }
-  }, [open, editTransaction]);
+  }, [open, editTransaction, duplicateTransaction]);
 
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardWillShow", (e) => {

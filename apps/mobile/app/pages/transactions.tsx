@@ -43,7 +43,7 @@ function flattenCategories(cats: Category[]): { id: string; name: string }[] {
 export default function TransactionsPage() {
   const { theme } = useAppTheme();
   const { i18n } = useI18n();
-  const { openEdit, setOnComplete } = useTransactionModal();
+  const { openEdit, openDuplicate, setOnComplete } = useTransactionModal();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [total, setTotal] = useState(0);
@@ -205,44 +205,15 @@ export default function TransactionsPage() {
     return `${date.toLocaleString("en-US", { month: "short", timeZone: "UTC" })} ${date.getUTCDate()}`;
   };
 
-  const createWithTodayDate = useCallback(async (params: {
-    accountId: string; description: string; amount: number;
-    categoryId?: string | null; tagIds?: string[];
-  }) => {
-    await txApi.create({
-      accountId: params.accountId,
-      description: params.description,
-      amount: params.amount,
-      date: new Date().toISOString().split("T")[0],
-      ...(params.categoryId ? { categoryId: params.categoryId } : {}),
-      ...(params.tagIds?.length ? { tagIds: params.tagIds } : {}),
-    });
-    await refreshInPlace();
-  }, [refreshInPlace]);
-
-  const handleDuplicate = useCallback(async (item: Transaction) => {
-    try {
-      await createWithTodayDate({
-        accountId: item.account.id,
-        description: item.description,
-        amount: parseAmount(item.amount),
-        categoryId: item.categoryId,
-        tagIds: item.transactionTags?.map((tt) => tt.tag.id),
-      });
-    } catch {
-      Alert.alert(i18n("common.error"), i18n("transaction.duplicateFailed"));
-    }
-  }, [createWithTodayDate, i18n]);
-
   const handleLongPress = useCallback((item: Transaction) => {
     Alert.alert(item.description || i18n("overview.uncategorized"), undefined, [
       {
         text: i18n("transaction.duplicate"),
-        onPress: () => handleDuplicate(item),
+        onPress: () => openDuplicate(item),
       },
       { text: i18n("common.cancel"), style: "cancel" },
     ]);
-  }, [handleDuplicate, i18n]);
+  }, [openDuplicate, i18n]);
 
   const renderTransaction = ({ item }: { item: Transaction }) => {
     const amount = parseAmount(item.amount);

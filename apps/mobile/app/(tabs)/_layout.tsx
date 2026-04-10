@@ -28,6 +28,7 @@ export default function TabLayout() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editTx, setEditTx] = useState<Transaction | null>(null);
+  const [dupTx, setDupTx] = useState<Transaction | null>(null);
   const [onComplete, setOnComplete] = useState<(() => void) | undefined>();
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
@@ -44,9 +45,10 @@ export default function TabLayout() {
     outputRange: ["0deg", "135deg"],
   });
 
-  const openAdd = useCallback(() => { setEditTx(null); setModalOpen(true); }, []);
-  const openEdit = useCallback((tx: Transaction) => { setEditTx(tx); setModalOpen(true); }, []);
-  const closeModal = useCallback(() => { setModalOpen(false); setEditTx(null); }, []);
+  const openAdd = useCallback(() => { setEditTx(null); setDupTx(null); setModalOpen(true); }, []);
+  const openEdit = useCallback((tx: Transaction) => { setEditTx(tx); setDupTx(null); setModalOpen(true); }, []);
+  const openDuplicate = useCallback((tx: Transaction) => { setEditTx(null); setDupTx(tx); setModalOpen(true); }, []);
+  const closeModal = useCallback(() => { setModalOpen(false); setEditTx(null); setDupTx(null); }, []);
   const toggle = useCallback(() => { if (modalOpen) closeModal(); else openAdd(); }, [modalOpen, closeModal, openAdd]);
 
   // Build ordered tab list: user's picks first, then hidden ones, then "add" and "more"
@@ -56,9 +58,9 @@ export default function TabLayout() {
 
   return (
     <ModalContext.Provider value={useMemo(() => ({
-      isModalOpen: modalOpen, openAdd, openEdit, closeModal, toggle,
-      editTransaction: editTx, onComplete, setOnComplete,
-    }), [modalOpen, openAdd, openEdit, closeModal, toggle, editTx, onComplete, setOnComplete])}>
+      isModalOpen: modalOpen, openAdd, openEdit, openDuplicate, closeModal, toggle,
+      editTransaction: editTx, duplicateTransaction: dupTx, onComplete, setOnComplete,
+    }), [modalOpen, openAdd, openEdit, openDuplicate, closeModal, toggle, editTx, dupTx, onComplete, setOnComplete])}>
       <View style={{ flex: 1 }}>
         <Tabs
           screenOptions={{
@@ -102,7 +104,7 @@ export default function TabLayout() {
           }} />
         </Tabs>
 
-        <TransactionModal open={modalOpen} onClose={closeModal} onComplete={onComplete} editTransaction={editTx} />
+        <TransactionModal open={modalOpen} onClose={closeModal} onComplete={onComplete} editTransaction={editTx} duplicateTransaction={dupTx} />
 
         <TouchableOpacity
           style={[styles.fab, isPro ? styles.fabRight : styles.fabCenter, { bottom: isPro ? insets.bottom + 56 : insets.bottom + 2, backgroundColor: theme.brand, shadowColor: theme.shadow }]}

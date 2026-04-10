@@ -2,19 +2,14 @@ import { createContext, useContext } from "react";
 import type { Transaction } from "@money-tracker/shared";
 
 interface ModalContextValue {
-  // Is any transaction modal open (add or edit)?
   isModalOpen: boolean;
-  // Open add modal
   openAdd: () => void;
-  // Open edit modal with a transaction
   openEdit: (tx: Transaction) => void;
-  // Close whatever is open
+  openDuplicate: (tx: Transaction) => void;
   closeModal: () => void;
-  // Toggle: if something is open, close it; otherwise open add
   toggle: () => void;
-  // Current edit transaction (null = add mode)
   editTransaction: Transaction | null;
-  // Callback after save/delete
+  duplicateTransaction: Transaction | null;
   onComplete?: () => void;
   setOnComplete: (cb: (() => void) | undefined) => void;
 }
@@ -23,9 +18,11 @@ export const ModalContext = createContext<ModalContextValue>({
   isModalOpen: false,
   openAdd: () => {},
   openEdit: () => {},
+  openDuplicate: () => {},
   closeModal: () => {},
   toggle: () => {},
   editTransaction: null,
+  duplicateTransaction: null,
   setOnComplete: () => {},
 });
 
