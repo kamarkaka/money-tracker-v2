@@ -235,9 +235,13 @@ export default function AccountsPage() {
                 [institution.id],
               );
 
-              if (inst?.plaid_backend_managed && inst.plaid_item_id) {
-                await unlinkViaBackend(inst.plaid_item_id);
-                // Remove from local SQLite
+              // Best-effort: remove from Plaid server's database
+              if (inst?.plaid_item_id) {
+                try { await unlinkViaBackend(inst.plaid_item_id); } catch { /* proceed even if not found on server */ }
+              }
+
+              // Local cleanup
+              if (inst?.plaid_backend_managed) {
                 await db.runAsync(
                   "UPDATE institutions SET plaid_item_id = NULL, plaid_institution_id = NULL, plaid_backend_managed = 0, is_manual = 1 WHERE id = ?",
                   [institution.id],
