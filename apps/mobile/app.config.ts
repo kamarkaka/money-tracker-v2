@@ -25,6 +25,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       NSPhotoLibraryUsageDescription: "Used to export financial data files.",
     },
   },
+  "android": {
+    "package": "xyz.mengcao.moneytracker2"
+  },
   extra: {
     eas: {
       projectId: "d838744b-1862-4e19-9179-a81b0376ff6b",
