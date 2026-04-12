@@ -44,5 +44,8 @@ yarn-error.*
 # build/publish info
 /eas.json
 
+# StoreKit testing
+*.storekit
+
 # generated binary assets
 /*.ipa
