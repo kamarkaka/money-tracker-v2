@@ -12,7 +12,16 @@ const PORT = parseInt(process.env.PORT || "3001", 10);
 app.set("trust proxy", 1);
 
 app.use(helmet());
-app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
+app.use(morgan((tokens, req, res) => JSON.stringify({
+  time: new Date().toISOString(),
+  level: "info",
+  cat: "HTTP",
+  method: tokens.method(req, res),
+  path: tokens.url(req, res),
+  status: Number(tokens.status(req, res)),
+  ip: req.ip,
+  ms: Number(tokens["response-time"](req, res)),
+})));
 if (process.env.NODE_ENV !== "production") {
   app.use(cors());
 }
