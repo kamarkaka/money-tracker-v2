@@ -13,6 +13,7 @@ interface ThemeContextValue {
   devMode: boolean;
   tabConfig: string[];
   fireworksEnabled: boolean;
+  showTutorial: (variant: "casual" | "pro") => void;
   setThemeSetting: (setting: ThemeSetting) => void;
   setIsPro: (isPro: boolean) => void;
   setDevMode: (on: boolean) => void;
@@ -29,6 +30,7 @@ export const ThemeContext = createContext<ThemeContextValue>({
   devMode: false,
   tabConfig: DEFAULT_TAB_CONFIG,
   fireworksEnabled: true,
+  showTutorial: () => {},
   setThemeSetting: () => {},
   setIsPro: () => {},
   setDevMode: () => {},

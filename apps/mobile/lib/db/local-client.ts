@@ -1113,6 +1113,8 @@ export class LocalClient extends ApiClient {
       tabConfig: (row?.tab_config as string) || "overview,transactions,budgets,accounts",
       fireworks: row?.fireworks !== undefined ? !!(row.fireworks as number) : true,
       checklistDismissed: !!(row?.checklist_dismissed as number),
+      tutorialCasualSeen: !!(row?.tutorial_casual_seen as number),
+      tutorialProSeen: !!(row?.tutorial_pro_seen as number),
     };
   }
 
@@ -1144,6 +1146,14 @@ export class LocalClient extends ApiClient {
     if (body.checklistDismissed !== undefined) {
       sets.push("checklist_dismissed = ?");
       args.push(body.checklistDismissed ? 1 : 0);
+    }
+    if (body.tutorialCasualSeen !== undefined) {
+      sets.push("tutorial_casual_seen = ?");
+      args.push(body.tutorialCasualSeen ? 1 : 0);
+    }
+    if (body.tutorialProSeen !== undefined) {
+      sets.push("tutorial_pro_seen = ?");
+      args.push(body.tutorialProSeen ? 1 : 0);
     }
 
     if (sets.length > 0) {

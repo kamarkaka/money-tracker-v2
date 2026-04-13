@@ -14,6 +14,7 @@ import { I18nProvider, t } from "@/lib/i18n";
 import { getDatabase } from "@/lib/db";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SubscriptionProvider } from "@/lib/subscription";
+import { Tutorial } from "@/components/Tutorial";
 
 export default function RootLayout() {
   const systemScheme = useColorScheme();
@@ -29,6 +30,7 @@ export default function RootLayout() {
   const isPro = devMode ? devIsPro : subIsPro;
   const [tabConfig, setTabConfigState] = useState<string[]>(DEFAULT_TAB_CONFIG);
   const [fireworksEnabled, setFireworksEnabledState] = useState(true);
+  const [tutorialVisible, setTutorialVisible] = useState<"casual" | "pro" | null>(null);
 
   const isDark =
     themeSetting === "dark" ||
@@ -66,6 +68,9 @@ export default function RootLayout() {
             const tabs = (settings as any).tabConfig.split(",").filter(Boolean);
             if (tabs.length >= 1 && tabs.length <= 4) setTabConfigState(tabs);
           }
+          if (!(settings as any).tutorialCasualSeen) {
+            setTutorialVisible("casual");
+          }
         } catch {
           // ignore
         }
@@ -74,6 +79,24 @@ export default function RootLayout() {
       }
     })();
   }, []);
+
+  const showTutorial = useCallback((variant: "casual" | "pro") => {
+    setTutorialVisible(variant);
+  }, []);
+
+  const closeTutorial = useCallback(async () => {
+    const variant = tutorialVisible;
+    setTutorialVisible(null);
+    if (!variant) return;
+    try {
+      const settingsApi = createSettingsApi(apiClient);
+      if (variant === "casual") {
+        await settingsApi.update({ tutorialCasualSeen: true } as any);
+      } else {
+        await settingsApi.update({ tutorialProSeen: true } as any);
+      }
+    } catch { /* ignore */ }
+  }, [tutorialVisible]);
 
   const setFireworksEnabled = useCallback(async (on: boolean) => {
     setFireworksEnabledState(on);
@@ -104,8 +127,8 @@ export default function RootLayout() {
   }, []);
 
   const themeContextValue = useMemo(
-    () => ({ theme, themeSetting, isDark, isPro, devMode, tabConfig, fireworksEnabled, setThemeSetting, setIsPro: setSubIsPro, setDevMode, setDevIsPro, setTabConfig, setFireworksEnabled }),
-    [theme, themeSetting, isDark, isPro, devMode, tabConfig, fireworksEnabled, setThemeSetting, setSubIsPro, setDevMode, setDevIsPro, setTabConfig, setFireworksEnabled],
+    () => ({ theme, themeSetting, isDark, isPro, devMode, tabConfig, fireworksEnabled, showTutorial, setThemeSetting, setIsPro: setSubIsPro, setDevMode, setDevIsPro, setTabConfig, setFireworksEnabled }),
+    [theme, themeSetting, isDark, isPro, devMode, tabConfig, fireworksEnabled, showTutorial, setThemeSetting, setSubIsPro, setDevMode, setDevIsPro, setTabConfig, setFireworksEnabled],
   );
 
   if (loading) {
@@ -181,6 +204,9 @@ export default function RootLayout() {
             <Stack.Screen name="index" options={{ headerShown: false }} />
           </Stack>
           </ThemeProvider>
+          {tutorialVisible && (
+            <Tutorial visible variant={tutorialVisible} onClose={closeTutorial} />
+          )}
           </SubscriptionProvider>
         </ApiClientContext.Provider>
       </I18nProvider>

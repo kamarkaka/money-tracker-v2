@@ -149,6 +149,13 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase) {
     // Column already exists
   }
 
+  try {
+    await database.runAsync("ALTER TABLE settings ADD COLUMN tutorial_casual_seen INTEGER DEFAULT 0");
+    await database.runAsync("ALTER TABLE settings ADD COLUMN tutorial_pro_seen INTEGER DEFAULT 0");
+  } catch {
+    // Columns already exist
+  }
+
   // Plaid integration columns
   const plaidMigrations = [
     "ALTER TABLE institutions ADD COLUMN plaid_item_id TEXT",

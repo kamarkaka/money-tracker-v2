@@ -54,7 +54,7 @@ const LANGUAGE_OPTIONS = [
 ];
 
 export default function SettingsPage() {
-  const { theme, themeSetting, setThemeSetting, isPro: isProTheme, tabConfig, setTabConfig, fireworksEnabled, setFireworksEnabled } = useAppTheme();
+  const { theme, themeSetting, setThemeSetting, isPro: isProTheme, tabConfig, setTabConfig, fireworksEnabled, setFireworksEnabled, showTutorial } = useAppTheme();
   const { i18n, locale, setLocale } = useI18n();
   const api = useRef(createSettingsApi(apiClient)).current;
 
@@ -371,6 +371,35 @@ export default function SettingsPage() {
           </View>
         </View>
       )}
+
+      {/* Tutorial */}
+      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+        <Text style={[styles.cardTitle, { color: theme.text, marginBottom: 8 }]}>{i18n("setting.tutorial")}</Text>
+        <TouchableOpacity
+          style={[styles.dataBtn, { borderColor: theme.cardBorder }]}
+          onPress={() => showTutorial("casual")}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="book-outline" size={20} color="#10b981" />
+          <Text style={{ fontSize: 15, fontWeight: "600", color: theme.text, flex: 1 }}>
+            {i18n("setting.viewCasualTutorial")}
+          </Text>
+          <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+        </TouchableOpacity>
+        {isProTheme && (
+          <TouchableOpacity
+            style={[styles.dataBtn, { borderColor: theme.cardBorder }]}
+            onPress={() => showTutorial("pro")}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="star-outline" size={20} color="#2563eb" />
+            <Text style={{ fontSize: 15, fontWeight: "600", color: theme.text, flex: 1 }}>
+              {i18n("setting.viewProTutorial")}
+            </Text>
+            <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+          </TouchableOpacity>
+        )}
+      </View>
 
       {/* Data */}
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>

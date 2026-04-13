@@ -321,7 +321,7 @@
     "plaidDirect": "Plaid API（直连模式）",
     "plaidDirectConnected": "可选 — 您已通过 Money Tracker 账户连接",
     "plaidDirectConfigured": "已配置",
-    "plaidDirectNotConfigured": "未配置 — 输入您的 Plaid 凭证以关联银行账户",
+    "plaidDirectNotConfigured": "输入您的 Plaid 凭证以关联银行账户。您的凭证安全存储在本设备上，不会被共享。",
     "plaidClientId": "Client ID",
     "plaidClientIdPlaceholder": "输入 Plaid Client ID",
     "plaidSecret": "Secret",
@@ -331,7 +331,10 @@
     "plaidSavedBody": "Plaid 凭证已安全保存。",
     "plaidClearCredentials": "清除凭证",
     "plaidClearConfirm": "移除已保存的 Plaid 凭证？",
-    "plaidClear": "清除"
+    "plaidClear": "清除",
+    "tutorial": "教程",
+    "viewCasualTutorial": "查看基础教程",
+    "viewProTutorial": "查看专业版教程"
   },
   "tag": {
     "title": "标签",
@@ -464,6 +467,104 @@
       "amountDesc": "直接输入数字，小数点会自动处理。",
       "noteTitle": "添加备注",
       "noteDesc": "可选择描述这笔交易的用途。可以留空。"
+    }
+  },
+  "tutorialSlides": {
+    "next": "下一步",
+    "getStarted": "开始使用",
+    "casual": {
+      "welcome": {
+        "title": "欢迎使用记账本",
+        "desc": "您的个人财务助手。追踪支出、管理账户、掌控财务——所有数据安全存储在您的设备上。"
+      },
+      "overview": {
+        "title": "月度概览",
+        "desc": "一目了然地查看收入、支出和净储蓄。点击月份胶囊切换，或从边缘滑动浏览不同月份。趋势箭头显示与上月的对比。"
+      },
+      "spending": {
+        "title": "表情支出明细",
+        "desc": "每个圆圈代表一个消费类别。外圈显示其在总支出中的占比。点击任何交易即可查看或编辑。"
+      },
+      "addTransaction": {
+        "title": "添加交易",
+        "desc": "随时点击绿色 + 按钮记录支出或收入。",
+        "bullet1": "快速填充胶囊可复用常用交易",
+        "bullet2": "切换支出和收入模式",
+        "bullet3": "输入数字——小数点自动放置",
+        "bullet4": "选择表情分类",
+        "bullet5": "长按任何交易可快速复制"
+      },
+      "accounts": {
+        "title": "管理账户",
+        "desc": "手动添加账户，包括名称、类型和余额。可按机构分组。",
+        "bullet1": "向左滑动删除账户",
+        "bullet2": "点击眼睛图标从报告中隐藏",
+        "bullet3": "支持活期、储蓄、信用卡、投资和贷款类型"
+      },
+      "dataSettings": {
+        "title": "数据与设置",
+        "desc": "完全掌控您的数据和偏好设置。",
+        "bullet1": "导出所有数据为CSV压缩包",
+        "bullet2": "从之前的导出恢复数据",
+        "bullet3": "选择浅色、深色或跟随系统主题",
+        "bullet4": "切换中英文语言"
+      }
+    },
+    "pro": {
+      "welcome": {
+        "title": "欢迎使用专业版",
+        "desc": "您已解锁完整体验。自定义导航、预算、标签、规则、银行连接等更多功能。"
+      },
+      "navigation": {
+        "title": "自定义导航栏",
+        "desc": "从7个可用板块中选择1至4个标签，并拖动排序。",
+        "bullet1": "概览、交易、账户、预算、分类、规则、标签",
+        "bullet2": "在设置 → 底部栏中配置",
+        "bullet3": "所有板块始终可从更多菜单访问"
+      },
+      "budgets": {
+        "title": "预算追踪",
+        "desc": "创建带有月度限额的预算。为每个预算分配分类以追踪支出目标。",
+        "bullet1": "概览页显示带进度条的预算卡片",
+        "bullet2": "63个图标可选",
+        "bullet3": "「其他」和「未分类」分组涵盖剩余交易"
+      },
+      "categories": {
+        "title": "分类层级",
+        "desc": "创建父子分类树进行精细追踪。交易弹窗显示完整层级下拉菜单。",
+        "bullet1": "在任何父分类下创建子分类",
+        "bullet2": "63个图标可选（免费版24个）",
+        "bullet3": "滑动删除任何分类"
+      },
+      "tags": {
+        "title": "标签",
+        "desc": "创建彩色标签并附加到交易上，实现跨分类灵活追踪。",
+        "bullet1": "标签色点显示在交易行中",
+        "bullet2": "展开标签查看所有相关交易",
+        "bullet3": "可为单笔交易添加多个标签"
+      },
+      "rules": {
+        "title": "自动分类规则",
+        "desc": "创建规则，根据交易描述自动分配分类。",
+        "bullet1": "不区分大小写的子串匹配",
+        "bullet2": "手动分类时自动创建规则",
+        "bullet3": "银行同步时自动应用规则"
+      },
+      "plaid": {
+        "title": "银行连接",
+        "desc": "通过Plaid连接银行账户，自动导入交易。",
+        "bullet1": "方式一：使用我们的服务器——只需登录",
+        "bullet2": "方式二：使用您自己的Plaid API密钥",
+        "bullet3": "随时刷新；取消连接后保留数据但停止同步"
+      },
+      "extras": {
+        "title": "更多专业功能",
+        "desc": "额外工具提升您的使用体验。",
+        "bullet1": "设置清单引导您完成初始步骤",
+        "bullet2": "正净储蓄时庆祝烟花",
+        "bullet3": "按账户、分类、日期或金额搜索和筛选交易",
+        "bullet4": "长按复制任何交易"
+      }
     }
   }
 }

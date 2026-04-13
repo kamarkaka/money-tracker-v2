@@ -321,7 +321,7 @@
     "plaidDirect": "Plaid API (Direct Mode)",
     "plaidDirectConnected": "Optional — you are already connected via your Money Tracker account",
     "plaidDirectConfigured": "Configured",
-    "plaidDirectNotConfigured": "Not configured — enter your Plaid credentials to link bank accounts",
+    "plaidDirectNotConfigured": "Enter your Plaid credentials to link bank accounts. Your credentials are stored securely on this device and are never shared.",
     "plaidClientId": "Client ID",
     "plaidClientIdPlaceholder": "Enter Plaid Client ID",
     "plaidSecret": "Secret",
@@ -331,7 +331,10 @@
     "plaidSavedBody": "Plaid credentials saved securely.",
     "plaidClearCredentials": "Clear Credentials",
     "plaidClearConfirm": "Remove saved Plaid credentials?",
-    "plaidClear": "Clear"
+    "plaidClear": "Clear",
+    "tutorial": "Tutorial",
+    "viewCasualTutorial": "View Basic Tutorial",
+    "viewProTutorial": "View Pro Tutorial"
   },
   "tag": {
     "title": "Tags",
@@ -465,5 +468,103 @@
       "noteTitle": "Add a Note",
       "noteDesc": "Optionally describe what this was for. You can leave it blank."
     }
-  }
+  },
+  "tutorialSlides": {
+    "next": "Next",
+    "getStarted": "Get Started",
+    "casual": {
+      "welcome": {
+        "title": "Welcome to Money Tracker",
+        "desc": "Your personal finance companion. Track expenses, manage accounts, and stay on top of your money — all stored privately on your device."
+      },
+      "overview": {
+        "title": "Your Monthly Overview",
+        "desc": "See income, expenses, and net savings at a glance. Tap month pills to navigate, or swipe from the edge to move between months. Trend arrows show how you compare to last month."
+      },
+      "spending": {
+        "title": "Emoji Spending Breakdown",
+        "desc": "Each circle represents a spending category. The ring around it shows its share of your total spending. Tap any transaction to view or edit it."
+      },
+      "addTransaction": {
+        "title": "Add Transactions",
+        "desc": "Tap the green + button anytime to log an expense or income.",
+        "bullet1": "Quick-fill pills re-use frequent transactions",
+        "bullet2": "Toggle between Expense and Income",
+        "bullet3": "Type digits — decimal is placed automatically",
+        "bullet4": "Pick an emoji category",
+        "bullet5": "Long-press any transaction to duplicate it"
+      },
+      "accounts": {
+        "title": "Manage Accounts",
+        "desc": "Add accounts manually with a name, type, and balance. Group them under institutions.",
+        "bullet1": "Swipe left on any account to delete it",
+        "bullet2": "Tap the eye icon to hide from reports",
+        "bullet3": "Supports checking, savings, credit, investment, and loan types"
+      },
+      "dataSettings": {
+        "title": "Data & Settings",
+        "desc": "You're in full control of your data and preferences.",
+        "bullet1": "Export all data as a ZIP of CSV files",
+        "bullet2": "Import from a previous export to restore",
+        "bullet3": "Choose light, dark, or system theme",
+        "bullet4": "Switch between English and Chinese"
+      }
+    },
+    "pro": {
+      "welcome": {
+        "title": "Welcome to Pro",
+        "desc": "You've unlocked the full experience. Customizable navigation, budgets, tags, rules, bank linking, and more."
+      },
+      "navigation": {
+        "title": "Custom Navigation Bar",
+        "desc": "Pick 1 to 4 tabs from 7 available sections and drag to reorder them.",
+        "bullet1": "Overview, Transactions, Accounts, Budgets, Categories, Rules, Tags",
+        "bullet2": "Configure in Settings → Bottom Bar",
+        "bullet3": "All sections are always accessible from the More menu"
+      },
+      "budgets": {
+        "title": "Budget Tracking",
+        "desc": "Create budgets with monthly spending limits. Assign categories to each budget to track spending against your goals.",
+        "bullet1": "Overview shows budget cards with progress bars",
+        "bullet2": "Choose from 63 icons for each budget",
+        "bullet3": "\"Others\" and \"Uncategorized\" groups catch the rest"
+      },
+      "categories": {
+        "title": "Category Hierarchy",
+        "desc": "Build parent and child category trees for fine-grained tracking. The transaction modal shows a dropdown with the full hierarchy.",
+        "bullet1": "Create subcategories under any parent",
+        "bullet2": "63 icons available (vs. 24 in free tier)",
+        "bullet3": "Swipe to delete any category"
+      },
+      "tags": {
+        "title": "Tags",
+        "desc": "Create color-coded tags and attach them to transactions for flexible cross-category tracking.",
+        "bullet1": "Tag dots appear on transaction rows",
+        "bullet2": "Expand a tag to see all its transactions",
+        "bullet3": "Attach multiple tags to a single transaction"
+      },
+      "rules": {
+        "title": "Auto-Categorization Rules",
+        "desc": "Create rules that automatically assign categories based on transaction descriptions.",
+        "bullet1": "Case-insensitive substring matching",
+        "bullet2": "Auto-created when you manually categorize",
+        "bullet3": "Applied during bank sync to categorize imports"
+      },
+      "plaid": {
+        "title": "Bank Linking",
+        "desc": "Link bank accounts via Plaid to automatically import transactions.",
+        "bullet1": "Option 1: Use our server — just log in",
+        "bullet2": "Option 2: Bring your own Plaid API keys",
+        "bullet3": "Refresh anytime; unlink to keep data but stop syncing"
+      },
+      "extras": {
+        "title": "More Pro Features",
+        "desc": "Additional tools to enhance your experience.",
+        "bullet1": "Setup Checklist guides your first steps",
+        "bullet2": "Fireworks celebrate positive net savings",
+        "bullet3": "Search & filter transactions by account, category, date, or amount",
+        "bullet4": "Long-press to duplicate any transaction"
+      }
+    }
+  },
 }

@@ -65,7 +65,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [isPro, setIsProState] = useState(false);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<StoreProduct[]>([]);
-  const { setIsPro: setThemeIsPro } = useAppTheme();
+  const { setIsPro: setThemeIsPro, showTutorial } = useAppTheme();
 
   const setIsPro = useCallback((value: boolean) => {
     setIsProState(value);
@@ -144,10 +144,18 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   // Listen for purchase updates
   useEffect(() => {
     const listener = setupListeners(
-      (purchase: any) => {
+      async (purchase: any) => {
         setIsPro(true);
         persistIsPro(true);
         verifyWithBackend(purchase);
+        // Show pro tutorial on first purchase
+        try {
+          const db = await getDatabase();
+          const row = await db.getFirstAsync<{ tutorial_pro_seen: number }>(
+            "SELECT tutorial_pro_seen FROM settings WHERE id = 'default'",
+          );
+          if (!row?.tutorial_pro_seen) showTutorial("pro");
+        } catch { /* ignore */ }
       },
       (error: { message?: string }) => {
         Alert.alert("Purchase failed", error.message || "An error occurred");
