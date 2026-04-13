@@ -37,8 +37,9 @@ COPY --from=builder /app/apps/plaid-server/prisma ./prisma
 COPY apps/plaid-server/package.json ./
 RUN npm install --omit=dev && npx prisma generate
 
+RUN mkdir -p /var/log && touch /var/log/plaid-server.log && chown plaid:nodejs /var/log/plaid-server.log
+
 USER plaid
 EXPOSE 3001
 ENV PORT=3001
-
 CMD ["sh", "-c", "node dist/index.js 2>&1 | tee -a /var/log/plaid-server.log"]
