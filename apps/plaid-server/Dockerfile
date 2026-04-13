@@ -41,4 +41,4 @@ USER plaid
 EXPOSE 3001
 ENV PORT=3001
 
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "node dist/index.js 2>&1 | tee -a /var/log/plaid-server.log"]
