@@ -23,6 +23,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     infoPlist: {
       NSPhotoLibraryUsageDescription: "Used to export financial data files.",
+      ITSAppUsesNonExemptEncryption: false,
     },
   },
   "android": {
