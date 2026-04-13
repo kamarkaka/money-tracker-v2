@@ -26,8 +26,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       ITSAppUsesNonExemptEncryption: false,
     },
   },
-  "android": {
-    "package": "xyz.mengcao.moneytracker2"
+  android: {
+    package: "xyz.mengcao.moneytracker2"
   },
   extra: {
     eas: {
