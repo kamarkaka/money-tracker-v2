@@ -16,18 +16,22 @@ import {
   type PlaidTransaction,
 } from "../lib/plaid.js";
 import { verifyLimiter, linkLimiter, exchangeLimiter, syncLimiter, institutionsLimiter, unlinkLimiter } from "../lib/rate-limit.js";
-import { logger, errMsg } from "../lib/logger.js";
+import { logger } from "../lib/logger.js";
+import type { Logger } from "pino";
 import type { Response } from "express";
+
+const plaidLog = logger.child({ cat: "plaid" });
+const subscLog = logger.child({ cat: "subsc" });
 
 const router = Router();
 
-function handleRouteError(cat: string, operation: string, err: unknown, res: Response) {
+function handleRouteError(log: Logger, operation: string, err: unknown, res: Response) {
   const e = err as Error & { statusCode?: number; code?: string };
   if (e.statusCode && e.statusCode < 500) {
-    logger.warn(cat, `${operation} failed`, { reason: e.code || e.message });
+    log.warn({ reason: e.code || e.message }, `${operation} failed`);
     res.status(e.statusCode).json({ error: e.message, code: e.code });
   } else {
-    logger.error(cat, `${operation} error`, { error: errMsg(err) });
+    log.error({ err }, `${operation} error`);
     res.status(500).json({ error: "Internal server error" });
   }
 }
@@ -92,7 +96,7 @@ router.post("/verify-subscription", verifyLimiter, async (req: AuthRequest, res)
           appleSubscriptionStatus: "active",
         },
       });
-      logger.info("Subscription", "Verified via client attestation");
+      subscLog.info("Verified via client attestation");
       res.json({ verified: true, expiresAt: expiresAt.toISOString(), productId: "client_attested" });
       return;
     }
@@ -110,14 +114,14 @@ router.post("/verify-subscription", verifyLimiter, async (req: AuthRequest, res)
       },
     });
 
-    logger.info("Subscription", "Verified via StoreKit");
+    subscLog.info("Verified via StoreKit");
     res.json({
       verified: true,
       expiresAt: new Date(payload.expiresDate).toISOString(),
       productId: payload.productId,
     });
   } catch (err) {
-    logger.warn("Subscription", "Verification failed", { error: errMsg(err) });
+    subscLog.warn({ err }, "Verification failed");
     res.status(400).json({ error: "Subscription verification failed" });
   }
 });
@@ -128,10 +132,10 @@ router.post("/link-token", linkLimiter, async (req: AuthRequest, res) => {
   try {
     await requireActiveSubscription(req.user!.userId);
     const linkToken = await createLinkToken(req.user!.userId);
-    logger.info("Plaid", "Link token created");
+    plaidLog.info("Link token created");
     res.json({ linkToken });
   } catch (err) {
-    handleRouteError("Plaid", "Link token", err, res);
+    handleRouteError(plaidLog, "Link token", err, res);
   }
 });
 
@@ -190,7 +194,7 @@ router.post("/exchange", exchangeLimiter, async (req: AuthRequest, res) => {
 
       const formattedTx = formatTransactions(syncResult.added);
 
-      logger.info("Plaid", "Exchange success", { accounts: plaidAccounts.length, transactions: formattedTx.length });
+      plaidLog.info({ accounts: plaidAccounts.length, transactions: formattedTx.length }, "Exchange success");
 
       // 5. Return formatted data for mobile to store locally
       res.status(201).json({
@@ -208,7 +212,7 @@ router.post("/exchange", exchangeLimiter, async (req: AuthRequest, res) => {
       throw plaidErr;
     }
   } catch (err) {
-    handleRouteError("Plaid", "Exchange", err, res);
+    handleRouteError(plaidLog, "Exchange", err, res);
   }
 });
 
@@ -267,7 +271,7 @@ router.post("/sync", syncLimiter, async (req: AuthRequest, res) => {
       const modified = formatTransactions(syncResult.modified);
       const removedIds = syncResult.removed.map((r) => r.transaction_id);
 
-      logger.info("Plaid", "Sync success", { added: added.length, modified: modified.length, removed: removedIds.length });
+      plaidLog.info({ added: added.length, modified: modified.length, removed: removedIds.length }, "Sync success");
 
       res.json({
         accounts: formatAccounts(plaidAccounts),
@@ -281,7 +285,7 @@ router.post("/sync", syncLimiter, async (req: AuthRequest, res) => {
       throw plaidErr;
     }
   } catch (err) {
-    handleRouteError("Plaid", "Sync", err, res);
+    handleRouteError(plaidLog, "Sync", err, res);
   }
 });
 
@@ -297,7 +301,7 @@ router.get("/institutions", institutionsLimiter, async (req: AuthRequest, res) =
       orderBy: { createdAt: "desc" },
     });
 
-    logger.info("Plaid", "Institutions listed", { count: items.length });
+    plaidLog.info({ count: items.length }, "Institutions listed");
 
     res.json(items.map((item) => ({
       plaidItemId: item.plaidItemId,
@@ -306,7 +310,7 @@ router.get("/institutions", institutionsLimiter, async (req: AuthRequest, res) =
       lastSyncedAt: item.lastSyncedAt?.toISOString() || null,
     })));
   } catch (err) {
-    handleRouteError("Plaid", "Institutions list", err, res);
+    handleRouteError(plaidLog, "Institutions list", err, res);
   }
 });
 
@@ -323,7 +327,7 @@ router.delete("/institutions/:plaidItemId", unlinkLimiter, async (req: AuthReque
       where: { plaidItemId, userId },
     });
     if (!item) {
-      logger.warn("Plaid", "Unlink failed: item not found");
+      plaidLog.warn("Unlink failed: item not found");
       res.status(404).json({ error: "Plaid item not found" });
       return;
     }
@@ -339,10 +343,10 @@ router.delete("/institutions/:plaidItemId", unlinkLimiter, async (req: AuthReque
     // Delete from our DB
     await prisma.plaidItem.delete({ where: { id: item.id } });
 
-    logger.info("Plaid", "Unlink success");
+    plaidLog.info("Unlink success");
     res.json({ success: true });
   } catch (err) {
-    handleRouteError("Plaid", "Unlink", err, res);
+    handleRouteError(plaidLog, "Unlink", err, res);
   }
 });
 

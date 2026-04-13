@@ -1,9 +1,10 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import morgan from "morgan";
+import { pinoHttp } from "pino-http";
 import authRoutes from "./routes/auth.js";
 import plaidRoutes from "./routes/plaid.js";
+import { logger } from "./lib/logger.js";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3001", 10);
@@ -12,16 +13,13 @@ const PORT = parseInt(process.env.PORT || "3001", 10);
 app.set("trust proxy", 1);
 
 app.use(helmet());
-app.use(morgan((tokens, req, res) => JSON.stringify({
-  time: new Date().toISOString(),
-  level: "info",
-  cat: "HTTP",
-  method: tokens.method(req, res),
-  path: tokens.url(req, res),
-  status: Number(tokens.status(req, res)),
-  ip: req.ip,
-  ms: Number(tokens["response-time"](req, res)),
-})));
+app.use(pinoHttp({
+  logger,
+  serializers: {
+    req: (req) => ({ method: req.method, url: req.url, remoteAddress: req.remoteAddress }),
+    res: (res) => ({ statusCode: res.statusCode }),
+  },
+}));
 if (process.env.NODE_ENV !== "production") {
   app.use(cors());
 }
@@ -37,5 +35,5 @@ app.use("/auth", authRoutes);
 app.use("/plaid", plaidRoutes);
 
 app.listen(PORT, () => {
-  console.log(`Plaid server listening on port ${PORT}`);
+  logger.info(`Plaid server listening on port ${PORT}`);
 });

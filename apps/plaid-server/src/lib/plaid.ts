@@ -1,3 +1,7 @@
+import { logger } from "./logger.js";
+
+const log = logger.child({ cat: "plaid" });
+
 // ── Types ──
 
 export interface PlaidAccount {
@@ -48,7 +52,7 @@ async function plaidRequest<T>(path: string, body: Record<string, unknown>): Pro
   });
   if (!res.ok) {
     const err = await res.json().catch(() => null);
-    console.error(`[Plaid] ${path} failed: ${err?.error_code || res.status}`);
+    log.error({ path, errorCode: err?.error_code, status: res.status }, "Plaid API request failed");
     throw new Error("Plaid request failed");
   }
   return res.json() as Promise<T>;
