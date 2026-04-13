@@ -96,7 +96,141 @@ npx prisma db push
 npm run dev             # starts on port 3001
 ```
 
-## Environment Variables
+## Logging
+
+Uses [pino](https://github.com/pinojs/pino) for structured JSON logging and `pino-http` for automatic HTTP request logging.
+
+**Log levels:** `fatal`, `error`, `warn`, `info`, `debug`, `trace` (default: `info`)
+
+Set via `LOG_LEVEL` env variable:
+
+```bash
+LOG_LEVEL=debug   # show debug and above
+LOG_LEVEL=warn    # show warn and error only
+```
+
+**Log categories:** Each module uses a child logger with a `cat` field:
+- `auth` — registration, login, token refresh, account deletion
+- `plaid` — link token, exchange, sync, institutions, unlink
+- `subsc` — subscription verification
+
+**Example output:**
+
+```json
+{"level":30,"time":1776094877745,"cat":"auth","msg":"Login success"}
+{"level":40,"time":1776094877745,"cat":"auth","msg":"Login failed: invalid credentials"}
+{"level":50,"time":1776094877745,"cat":"plaid","err":{"type":"Error","message":"Connection refused","stack":"..."},"msg":"Sync error"}
+```
+
+**Human-readable output** (development):
+
+```bash
+npm run dev | npx pino-pretty
+```
+
+## Docker
+
+```bash
+# Build from repo root
+docker build -f apps/plaid-server/Dockerfile -t plaid-server .
+
+# Test locally
+docker run --rm -p 3001:3001 --env-file apps/plaid-server/.env plaid-server
+```
+
+## Production Deployment
+
+### Docker Compose
+
+```yaml
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: plaid-db
+    restart: always
+    environment:
+      POSTGRES_DB: plaid
+      POSTGRES_USER: plaid
+      POSTGRES_PASSWORD: <your_password>
+    volumes:
+      - /apps/plaid-server/data:/var/lib/postgresql/data
+
+  plaid-server:
+    image: kamarkaka4/plaid-server:latest
+    container_name: plaid-server
+    restart: always
+    depends_on:
+      - postgres
+    ports:
+      - 30015:3001
+    env_file:
+      - /apps/plaid-server/.env
+    volumes:
+      - /apps/plaid-server/logs:/var/log
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+
+  db-backup:
+    image: prodrigestivill/postgres-backup-local:latest
+    container_name: db-backup
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: plaid
+      POSTGRES_USER: plaid
+      POSTGRES_PASSWORD: <your_password>
+      SCHEDULE: "@every 6h"
+      BACKUP_KEEP_DAYS: 7
+      BACKUP_KEEP_WEEKS: 4
+      BACKUP_KEEP_MONTHS: 6
+    volumes:
+      - /apps/plaid-server/backups/db:/backups
+```
+
+### Log Persistence
+
+The container writes logs to `/var/log/plaid-server.log` via `tee`. Mount `/var/log` to a host directory to persist logs across container restarts.
+
+**Host directory setup** (match container's plaid user UID 1001):
+
+```bash
+sudo mkdir -p /apps/plaid-server/logs
+sudo chown -R 1001:1001 /apps/plaid-server/logs
+```
+
+**Log rotation** — create `/etc/logrotate.d/plaid-server` on the host:
+
+```
+/apps/plaid-server/logs/plaid-server.log {
+    daily
+    rotate 14
+    compress
+    missingok
+    notifempty
+    copytruncate
+}
+```
+
+Test with `sudo logrotate -d /etc/logrotate.d/plaid-server` (dry-run). Logrotate runs automatically via daily cron.
+
+### Database Backup
+
+The `db-backup` service runs `pg_dump` on the configured schedule and stores backups at `/apps/plaid-server/backups/db/` on the host.
+
+**Manual backup:**
+
+```bash
+docker exec db-backup /backup.sh
+```
+
+**Backup retention:** 7 daily, 4 weekly, 6 monthly (configurable via environment variables).
+
+### Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -104,17 +238,10 @@ npm run dev             # starts on port 3001
 | `JWT_SECRET` | Yes | Min 32 chars, used for signing JWTs |
 | `PLAID_CLIENT_ID` | Yes | Plaid developer client ID |
 | `PLAID_SECRET` | Yes | Plaid developer secret |
-| `PLAID_ENV` | No | `sandbox` (default) or `production` |
+| `PLAID_ENV` | No | `sandbox` or `production` (default: `production`) |
 | `PLAID_TOKEN_ENCRYPTION_KEY` | Yes | 64-char hex string (32 bytes) for AES-256-GCM |
 | `APPLE_BUNDLE_ID` | No | iOS bundle ID for receipt verification |
 | `PORT` | No | Server port (default: 3001) |
 | `NODE_ENV` | No | Set to `production` to block `LOCAL_PRO` bypass |
+| `LOG_LEVEL` | No | Pino log level (default: `info`) |
 | `RL_*` | No | Rate limit overrides (see table above) |
-
-## Docker
-
-```bash
-# From repo root
-docker build -f apps/plaid-server/Dockerfile -t plaid-server .
-docker run -p 3001:3001 --env-file apps/plaid-server/.env plaid-server
-```
